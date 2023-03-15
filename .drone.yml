@@ -146,8 +146,8 @@ steps:
 
   - name: build_tag_push_quay
     <<: *quay_settings
-#    depends_on:
-#      - sonar
+    depends_on:
+      - sonar
     settings:
       tags:
         - latest
