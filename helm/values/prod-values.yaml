@@ -1,13 +1,13 @@
 image:
-  repository: quay.io/ukhomeofficedigital/REPLACE-SERVICE-NAME
+  repository: quay.io/ukhomeofficedigital/callisto-balance-calculator
   tag: latest
   pullPolicy: Always
 
 service:
-  port: REPLACE-SERVICE-PORT
+  port: 9090
 
 kafka:
-  defaultTopic: REPLACE-TOPIC-NAME
-  identity: REPLACE-KAFKA-IDENTITY
+  defaultTopic: callisto-timecard-timeentries
+  identity: balance-calculator
   mskSecretKeyRefName: callisto-prod-msk
   bootstrapSecretKeyRefName: callisto-prod-bootstrap

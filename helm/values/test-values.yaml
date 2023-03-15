@@ -1,16 +1,16 @@
 image:
-  repository: quay.io/ukhomeofficedigital/REPLACE-SERVICE-NAME
+  repository: quay.io/ukhomeofficedigital/callisto-balance-calculator
   tag: latest
   pullPolicy: Always
 
 service:
-  port: REPLACE-SERVICE-PORT
+  port: 9090
 
 deploymentAnnotations:
   downscaler/uptime: Mon-Fri 08:00-20:00 Europe/London
 
 kafka:
-  defaultTopic: REPLACE-TOPIC-NAME
-  identity: REPLACE-KAFKA-IDENTITY
+  defaultTopic: callisto-timecard-timeentries
+  identity: balance-calculator
   mskSecretKeyRefName: callisto-test-msk
   bootstrapSecretKeyRefName: callisto-test-bootstrap
