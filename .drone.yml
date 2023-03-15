@@ -70,7 +70,7 @@ steps:
 ---
 kind: pipeline
 type: kubernetes
-name: build_service
+name: build-service
 
 platform:
   os: linux
@@ -168,7 +168,7 @@ platform:
   arch: amd64
 
 depends_on:
-  - build_service
+  - build-service
 
 trigger:
   event:
