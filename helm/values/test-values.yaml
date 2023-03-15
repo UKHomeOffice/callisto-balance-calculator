@@ -1,0 +1,16 @@
+image:
+  repository: quay.io/ukhomeofficedigital/REPLACE-SERVICE-NAME
+  tag: latest
+  pullPolicy: Always
+
+service:
+  port: REPLACE-SERVICE-PORT
+
+deploymentAnnotations:
+  downscaler/uptime: Mon-Fri 08:00-20:00 Europe/London
+
+kafka:
+  defaultTopic: REPLACE-TOPIC-NAME
+  identity: REPLACE-KAFKA-IDENTITY
+  mskSecretKeyRefName: callisto-test-msk
+  bootstrapSecretKeyRefName: callisto-test-bootstrap
