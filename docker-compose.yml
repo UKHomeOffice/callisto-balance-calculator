@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  REPLACE-SERVICE-NAME:
+  callisto-balance-calculator:
     image: maven:3.8.3-openjdk-17
     entrypoint:
       [
@@ -15,7 +15,7 @@ services:
     user: "1000"
     working_dir: "/app"
     ports:
-      - "REPLACE-LOCAL-PORT:9090"
+      - "50500:9090"
       - "5005:5005"
     volumes:
       - ./:/app

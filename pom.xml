@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>uk.gov.homeoffice.digital.sas</groupId>
-    <artifactId>REPLACE-SERVICE-NAME</artifactId>
+    <artifactId>callisto-balance-calculator</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>REPLACE-SERVICE-NAME</name>
-    <description>Template for callisto services</description>
+    <name>callisto-balance-calculator</name>
+    <description>Callisto balance calculator service backend</description>
     <properties>
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -99,7 +99,7 @@
                 </executions>
             </plugin>
         </plugins>
-        <finalName>REPLACE-SERVICE-NAME</finalName>
+        <finalName>callisto-balance-calculator</finalName>
     </build>
 
 </project>
