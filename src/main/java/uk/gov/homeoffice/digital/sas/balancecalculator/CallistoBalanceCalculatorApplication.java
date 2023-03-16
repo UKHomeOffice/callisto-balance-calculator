@@ -1,13 +1,13 @@
-package uk.gov.homeoffice.digital.sas.callistoservice;
+package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CallistoServiceApplication {
+public class CallistoBalanceCalculatorApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(CallistoServiceApplication.class, args);
+    SpringApplication.run(CallistoBalanceCalculatorApplication.class, args);
   }
 
 }

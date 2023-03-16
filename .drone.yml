@@ -70,7 +70,7 @@ steps:
 ---
 kind: pipeline
 type: kubernetes
-name: build_service
+name: build-service
 
 platform:
   os: linux
@@ -89,7 +89,7 @@ quay_settings: &quay_settings
   image: plugins/docker
   settings:
     registry: quay.io
-    repo: quay.io/ukhomeofficedigital/REPLACE-QUAY-REPO
+    repo: quay.io/ukhomeofficedigital/callisto-balance-calculator
     username:
       from_secret: quay_robot_name
     password:
@@ -123,9 +123,9 @@ steps:
         -Dsonar.host.url=$${SONAR_HOST}
         -Dsonar.login=$${SONAR_TOKEN}
         -Dsonar.organization=ukhomeoffice
-        -Dsonar.projectKey=REPLACE-SERVICE-NAME
+        -Dsonar.projectKey=callisto-balance-calculator
         -Dsonar.branch.name=$DRONE_BRANCH
-        -Dsonar.projectName=REPLACE-SERVICE-NAME
+        -Dsonar.projectName=callisto-balance-calculator
         -Dsonar.qualitygate.wait=true
     when:
       event:
@@ -168,7 +168,7 @@ platform:
   arch: amd64
 
 depends_on:
-  - build_service
+  - build-service
 
 trigger:
   event:
@@ -187,7 +187,7 @@ steps:
         - branch=${DRONE_SOURCE_BRANCH%%/*}
       values_files:
         - ./helm/values/dev-values.yaml
-      release: REPLACE-SERVICE-NAME-${DRONE_SOURCE_BRANCH%%/*}
+      release: callisto-balance-calculator-${DRONE_SOURCE_BRANCH%%/*}
       kube_certificate:
         from_secret: notprod_kube_api_certificate
       kube_api_server:
@@ -228,7 +228,7 @@ steps:
         - image.tag=${DRONE_COMMIT_SHA}
       values_files:
         - ./helm/values/dev-values.yaml
-      release: REPLACE-SERVICE-NAME
+      release: callisto-balance-calculator
       kube_certificate:
         from_secret: notprod_kube_api_certificate
       kube_api_server:
@@ -268,7 +268,7 @@ steps:
         - image.tag=${DRONE_COMMIT_SHA}
       values_files:
         - ./helm/values/test-values.yaml
-      release: REPLACE-SERVICE-NAME
+      release: callisto-balance-calculator
       kube_certificate:
         from_secret: notprod_kube_api_certificate
       kube_api_server:
@@ -306,7 +306,7 @@ steps:
         - image.tag=${DRONE_COMMIT_SHA}
       values_files:
         - ./helm/values/prod-values.yaml
-      release: REPLACE-SERVICE-NAME
+      release: callisto-balance-calculator
       kube_certificate:
         from_secret: prod_kube_api_certificate
       kube_api_server:
