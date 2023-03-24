@@ -182,6 +182,7 @@ steps:
       mode: upgrade
       add_repos: helm_repo=https://ukhomeoffice.github.io/callisto-helm-charts/
       chart: helm_repo/callisto-base-service
+      chart_version: 0.1.2
       values:
         - image.tag=${DRONE_COMMIT_SHA}
         - branch=${DRONE_SOURCE_BRANCH%%/*}
@@ -224,6 +225,7 @@ steps:
       mode: upgrade
       add_repos: helm_repo=https://ukhomeoffice.github.io/callisto-helm-charts/
       chart: helm_repo/callisto-base-service
+      chart_version: 0.1.2
       values:
         - image.tag=${DRONE_COMMIT_SHA}
       values_files:
@@ -264,6 +266,7 @@ steps:
       mode: upgrade
       add_repos: helm_repo=https://ukhomeoffice.github.io/callisto-helm-charts/
       chart: helm_repo/callisto-base-service
+      chart_version: 0.1.2
       values:
         - image.tag=${DRONE_COMMIT_SHA}
       values_files:
@@ -302,6 +305,7 @@ steps:
       mode: upgrade
       add_repos: helm_repo=https://ukhomeoffice.github.io/callisto-helm-charts/
       chart: helm_repo/callisto-base-service
+      chart_version: 0.1.2
       values:
         - image.tag=${DRONE_COMMIT_SHA}
       values_files:
