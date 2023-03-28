@@ -20,7 +20,8 @@
         <sonar.language>java</sonar.language>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <checkstyle-maven-plugin.version>3.2.0</checkstyle-maven-plugin.version>
-        <callisto.jpa.rest.version>0.1.9</callisto.jpa.rest.version>
+        <callisto.jpa.rest.version>0.1.10</callisto.jpa.rest.version>
+        <micrometer-version>1.10.5</micrometer-version>
     </properties>
     <dependencies>
         <dependency>
@@ -34,6 +35,21 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-atlas</artifactId>
+            <version>1.10.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-core</artifactId>
+            <version>1.10.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>1.10.5</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.kafka</groupId>
@@ -60,7 +76,6 @@
             <version>1.18.22</version>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
