@@ -20,7 +20,7 @@
         <sonar.language>java</sonar.language>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <checkstyle-maven-plugin.version>3.2.0</checkstyle-maven-plugin.version>
-        <callisto.jpa.rest.version>0.1.10</callisto.jpa.rest.version>
+        <callisto.jpa.rest.version>0.1.10-EAHW-2511-SNAPSHOT</callisto.jpa.rest.version>
         <micrometer-version>1.10.5</micrometer-version>
     </properties>
     <dependencies>
