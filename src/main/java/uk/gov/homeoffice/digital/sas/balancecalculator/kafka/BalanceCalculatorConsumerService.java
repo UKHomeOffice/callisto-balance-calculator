@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
@@ -21,11 +22,10 @@ public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeE
 
   private final MeterRegistry meterRegistry;
 
-  private Counter counter;
-
   private Counter errorCounter;
 
-  protected BalanceCalculatorConsumerService(BalanceCalculatorSchemaValidator schemaValidator, MeterRegistry meterRegistry) {
+  protected BalanceCalculatorConsumerService(BalanceCalculatorSchemaValidator schemaValidator,
+                                             MeterRegistry meterRegistry) {
     super(schemaValidator);
     this.meterRegistry = meterRegistry;
   }
@@ -34,30 +34,25 @@ public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeE
       topics = {"${spring.kafka.template.default-topic}"},
       groupId = "${spring.kafka.consumer.group-id}"
   )
-  public void onMessage(@Payload String message) {
-    //setUpCounters();
-    kafkaEventMessage = consumer(message);
+  public void onMessage(@Payload String message) throws JsonProcessingException {
+    setUpCounters();
+    kafkaEventMessage = consume(message);
     if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
       TimeEntry timeEntry = mapper.convertValue(
           kafkaEventMessage.getResource(), new TypeReference<>() {
           });
-      //counter.increment(1.0);
-      log.info(String.format("Succesful desearilization of message entity [ %s ] created",
+      log.info(String.format("Successful deserialization of message entity [ %s ] created",
           timeEntry));
     } else {
-      //errorCounter.increment();
+      errorCounter.increment();
       log.error("Failed deserialization of message entity [ %s ]", kafkaEventMessage);
     }
   }
 
-  //private void setUpCounters() {
-  //  counter = this.meterRegistry.counter("balance.calculator.messages", "type", "logMessages"); //
-  //  // 1 -
-  //  // create a
-  //  // counter
-  //  errorCounter = Counter.builder("balance.calculator.messages")    // 2 - create a counter
-  //      .tag("type", "error")
-  //      .description("The number of errors messages when consuming messages")
-  //      .register(meterRegistry);
-  //}
+  private void setUpCounters() {
+    errorCounter = Counter.builder("balance.calculator.messages")    // 2 - create a counter
+        .tag("type", "error")
+        .description("The number of errors messages when consuming messages")
+        .register(meterRegistry);
+  }
 }
