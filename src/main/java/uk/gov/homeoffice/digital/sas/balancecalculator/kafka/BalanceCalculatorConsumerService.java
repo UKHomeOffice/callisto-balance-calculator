@@ -5,6 +5,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.concurrent.CountDownLatch;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -14,8 +17,11 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.validators.BalanceCalculatorSchemaValidator;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
 
+
 @Service
 @Slf4j
+@Getter
+@Setter
 public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeEntry> {
 
   private ObjectMapper mapper = new ObjectMapper();
@@ -23,6 +29,8 @@ public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeE
   private final MeterRegistry meterRegistry;
 
   private Counter errorCounter;
+  
+  private CountDownLatch latch = new CountDownLatch(1);
 
   protected BalanceCalculatorConsumerService(BalanceCalculatorSchemaValidator schemaValidator,
                                              MeterRegistry meterRegistry) {
@@ -37,6 +45,7 @@ public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeE
   public void onMessage(@Payload String message) throws JsonProcessingException {
     setUpCounters();
     kafkaEventMessage = consume(message);
+    latch.countDown();
     if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
       TimeEntry timeEntry = mapper.convertValue(
           kafkaEventMessage.getResource(), new TypeReference<>() {
