@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.test.annotation.DirtiesContext;
 
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
@@ -18,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_EXPECTED_SCHEMA;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class BalanceCalculatorConsumerServiceTest {
 
   @Autowired
@@ -33,7 +36,7 @@ class BalanceCalculatorConsumerServiceTest {
   TimeEntry expectedTimeEntry = TestUtils.createTimeEntry();
 
   @Test
-  void should_deserializeKafkaMessageAndLogSuccess_when_validMessageIsReceived
+  void onMessage_deserializeKafkaMessageAndLogSuccess_when_validMessageIsReceived
       (CapturedOutput capturedOutput) {
 
     // given
@@ -50,13 +53,25 @@ class BalanceCalculatorConsumerServiceTest {
   }
 
   @Test
-  void should_notDeserializeKafkaMessageAndLogSuccess_when_inValidMessageIsReceived
+  void onMessage_notDeserializeKafkaMessageAndLogFailure_when_inValidMessageIsReceived
       (CapturedOutput capturedOutput) {
     //given
     String message = TestUtils.createKafkaMessage(MESSAGE_INVALID_VERSION);
     // when
     balanceCalculatorConsumerService.onMessage(message);
     // then
+    assertThat(balanceCalculatorConsumerService.getKafkaEventMessage()).isNull();
+    assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION,
+        message));
+  }
+
+  @Test
+  void onMessage_notDeserializeKafkaMessage_when_schemaNotTimeEntry(CapturedOutput capturedOutput){
+    String message = TestUtils.createKafkaMessage(MESSAGE_INVALID_RESOURCE,
+        MESSAGE_INVALID_VERSION);
+
+    balanceCalculatorConsumerService.onMessage(message);
+
     assertThat(balanceCalculatorConsumerService.getKafkaEventMessage()).isNull();
     assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION,
         message));

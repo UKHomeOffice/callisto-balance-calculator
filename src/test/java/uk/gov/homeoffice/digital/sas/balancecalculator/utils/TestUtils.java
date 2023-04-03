@@ -40,6 +40,16 @@ public class TestUtils {
         "action", "CREATE"));
   }
 
+  public static <S extends Serializable> String createKafkaMessage(String schema, String version){
+    String resource = createResourceJson();
+
+    return new Gson().toJson(Map.of(
+        "schema", String.format("%s, %s",
+            schema, version),
+        "resource" , resource,
+        "action", "CREATE"));
+  }
+
   private static <S extends Serializable> String createResourceJson() {
     return new Gson().toJson(Map.of(
         "id", "c0a80018-870e-11b0-8187-0ea38cb30001",

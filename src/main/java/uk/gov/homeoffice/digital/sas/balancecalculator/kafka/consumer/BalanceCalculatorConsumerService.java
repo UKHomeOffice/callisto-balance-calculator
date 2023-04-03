@@ -1,10 +1,17 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.TIME_ENTRY_SCHEMA_NAME;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.SCHEMA_JSON_ATTRIBUTE;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.ComponentScan;
@@ -48,22 +55,37 @@ public class BalanceCalculatorConsumerService {
   )
   public void onMessage(@Payload String message) {
     setUpCounters();
-    kafkaEventMessage = kafkaConsumerService.consume(message);
+    if (isResourceTimeEntry(message)) {
+      kafkaEventMessage = kafkaConsumerService.consume(message);
+    }
+
+    createTimeEntryFromKafkaEventMessage(message);
+  }
+
+  private void createTimeEntryFromKafkaEventMessage(String message) {
     if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
-      timeEntry =  new Gson().fromJson(String.valueOf(kafkaEventMessage.getResource()),
+      timeEntry = new Gson().fromJson(String.valueOf(kafkaEventMessage.getResource()),
           new TypeToken<TimeEntry>() { }.getType());
 
-      log.info(String.format("Successful deserialization of message entity [ %s ] created",
+      log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
           timeEntry));
     } else {
       errorCounter.increment();
-      log.error(String.format("Failed deserialization of message entity [ %s ]",
+      log.error(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION,
           message));
+
     }
   }
 
+  private boolean isResourceTimeEntry(String message) {
+    JsonObject jsonMessage = JsonParser.parseString(message).getAsJsonObject();
+    String schema = jsonMessage.get(SCHEMA_JSON_ATTRIBUTE).getAsString();
+
+    return schema.contains(TIME_ENTRY_SCHEMA_NAME);
+  }
+
   private void setUpCounters() {
-    errorCounter = Counter.builder("balance.calculator.messages")    // 2 - create a counter
+    errorCounter = Counter.builder("balance.calculator.messages")
         .tag("type", "error")
         .description("The number of errors messages when consuming messages")
         .register(meterRegistry);
