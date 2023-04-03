@@ -1,22 +1,27 @@
-package uk.gov.homeoffice.digital.sas.balancecalculator.kafka;
+package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.validators.BalanceCalculatorSchemaValidator;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 @Service
 @Slf4j
-public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeEntry> {
+@Getter
+@ComponentScan({
+    "uk.gov.homeoffice.digital.sas.kafka.consumer",
+    "uk.gov.homeoffice.digital.sas.kafka.validators"})
+public class BalanceCalculatorConsumerService {
 
   private ObjectMapper mapper = new ObjectMapper();
 
@@ -24,9 +29,13 @@ public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeE
 
   private Counter errorCounter;
 
-  protected BalanceCalculatorConsumerService(BalanceCalculatorSchemaValidator schemaValidator,
-                                             MeterRegistry meterRegistry) {
-    super(schemaValidator);
+  KafkaConsumerService<TimeEntry> kafkaConsumerService;
+
+  KafkaEventMessage<TimeEntry> kafkaEventMessage;
+
+  public BalanceCalculatorConsumerService(MeterRegistry meterRegistry,
+                                          KafkaConsumerService<TimeEntry> kafkaConsumerService ) {
+    this.kafkaConsumerService = kafkaConsumerService;
     this.meterRegistry = meterRegistry;
   }
 
@@ -34,9 +43,9 @@ public class BalanceCalculatorConsumerService extends KafkaConsumerService<TimeE
       topics = {"${spring.kafka.template.default-topic}"},
       groupId = "${spring.kafka.consumer.group-id}"
   )
-  public void onMessage(@Payload String message) throws JsonProcessingException {
+  public void onMessage(@Payload String message) {
     setUpCounters();
-    kafkaEventMessage = consume(message);
+    kafkaEventMessage = kafkaConsumerService.consume(message);
     if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
       TimeEntry timeEntry = mapper.convertValue(
           kafkaEventMessage.getResource(), new TypeReference<>() {
