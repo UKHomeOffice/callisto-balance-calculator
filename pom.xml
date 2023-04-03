@@ -20,8 +20,9 @@
         <sonar.language>java</sonar.language>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <checkstyle-maven-plugin.version>3.2.0</checkstyle-maven-plugin.version>
-        <callisto.jpa.rest.version>0.1.10-EAHW-2511-SNAPSHOT</callisto.jpa.rest.version>
+        <callisto.jpa.rest.version>0.1.10</callisto.jpa.rest.version>
         <micrometer-version>1.10.5</micrometer-version>
+        <spring.kafka.version>3.0.2</spring.kafka.version>
     </properties>
     <dependencies>
         <dependency>
@@ -56,11 +57,6 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.14.2</version>
-        </dependency>
-        <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
             <version>3.0.2</version>
@@ -79,6 +75,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka-test</artifactId>
+            <version>${spring.kafka.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

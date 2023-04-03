@@ -22,27 +22,18 @@ import org.springframework.format.annotation.DateTimeFormat;
 })
 public class TimeEntry {
 
-  @JsonProperty("id")
   private String id;
 
-  @JsonProperty("tenantId")
   private String tenantId;
 
-  @JsonProperty("ownerId")
   private String ownerId;
 
-  @JsonProperty("timePeriodTypeId")
   private String timePeriodTypeId;
 
-  @JsonProperty("shiftType")
   private String shiftType;
 
-  @JsonProperty("actualStartTime")
-  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private Date actualStartTime;
+  private String actualStartTime;
 
-  @JsonProperty("actualEndTime")
-  @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private Date actualEndTime;
+  private String actualEndTime;
 
 }
