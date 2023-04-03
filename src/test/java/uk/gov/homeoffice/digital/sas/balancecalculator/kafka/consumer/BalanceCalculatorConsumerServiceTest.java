@@ -3,7 +3,6 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
@@ -21,9 +20,9 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constant
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_EXPECTED_SCHEMA;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 
-import java.util.UUID;
 
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
@@ -40,7 +39,7 @@ class BalanceCalculatorConsumerServiceTest {
       (CapturedOutput capturedOutput) {
 
     // given
-    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_VERSION);
+    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION);
 
     // when
     balanceCalculatorConsumerService.onMessage(message);
@@ -56,7 +55,7 @@ class BalanceCalculatorConsumerServiceTest {
   void onMessage_notDeserializeKafkaMessageAndLogFailure_when_inValidMessageIsReceived
       (CapturedOutput capturedOutput) {
     //given
-    String message = TestUtils.createKafkaMessage(MESSAGE_INVALID_VERSION);
+    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_INVALID_VERSION);
     // when
     balanceCalculatorConsumerService.onMessage(message);
     // then
@@ -84,7 +83,7 @@ class BalanceCalculatorConsumerServiceTest {
         expectedTimeEntry,
         KafkaAction.CREATE);
 
-    assertThat(balanceCalculatorConsumerService.getKafkaEventMessage().getSchema()).isEqualTo("uk.gov.homeoffice.digital.sas.timecard.model.TimeEntry, 0.1.0");
+    assertThat(balanceCalculatorConsumerService.getKafkaEventMessage().getSchema()).isEqualTo(MESSAGE_VALID_RESOURCE + ", " + MESSAGE_VALID_VERSION);
     assertThat(balanceCalculatorConsumerService.getKafkaEventMessage().getAction()).isEqualTo(expectedKafkaEventMessage.getAction());
 
     assertResourceIsDeserializedAsExpected(

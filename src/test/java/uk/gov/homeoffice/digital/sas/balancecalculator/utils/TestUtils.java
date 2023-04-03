@@ -30,15 +30,15 @@ public class TestUtils {
     return timeEntry;
   }
 
-  public static <S extends Serializable> String createKafkaMessage(String version){
-    String resource = createResourceJson();
-
-    return new Gson().toJson(Map.of(
-        "schema", String.format("uk.gov.homeoffice.digital.sas.timecard.model.TimeEntry, %s",
-            version),
-        "resource" , resource,
-        "action", "CREATE"));
-  }
+  //public static <S extends Serializable> String createKafkaMessage(String version){
+  //  String resource = createResourceJson();
+  //
+  //  return new Gson().toJson(Map.of(
+  //      "schema", String.format("uk.gov.homeoffice.digital.sas.timecard.model.TimeEntry, %s",
+  //          version),
+  //      "resource" , resource,
+  //      "action", "CREATE"));
+  //}
 
   public static <S extends Serializable> String createKafkaMessage(String schema, String version){
     String resource = createResourceJson();
