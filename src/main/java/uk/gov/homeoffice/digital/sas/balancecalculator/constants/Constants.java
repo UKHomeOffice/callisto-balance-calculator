@@ -10,6 +10,4 @@ public class Constants {
   public static final String KAFKA_UNSUCCESSFUL_DESERIALIZATION =
       "Failed deserialization of message entity [ %s ]";
 
-  public static final String TIME_ENTRY_SCHEMA_NAME =
-      "uk.gov.homeoffice.digital.sas.timecard.model.TimeEntry";
 }

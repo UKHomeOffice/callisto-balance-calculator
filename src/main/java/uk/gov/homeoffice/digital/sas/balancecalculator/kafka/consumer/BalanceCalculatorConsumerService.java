@@ -12,9 +12,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
-import java.util.List;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -39,13 +40,16 @@ public class BalanceCalculatorConsumerService {
   private Counter errorCounter;
 
   private TimeEntry timeEntry;
+  private final String kafkaSupportedResourceName;
 
   KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
   KafkaEventMessage<TimeEntry> kafkaEventMessage;
 
   public BalanceCalculatorConsumerService(MeterRegistry meterRegistry,
-                                          KafkaConsumerService<TimeEntry> kafkaConsumerService) {
+                                          KafkaConsumerService<TimeEntry> kafkaConsumerService,
+                                          @Value("${kafka.supported.resource.name}") String kafkaSupportedResourceName) {
+    this.kafkaSupportedResourceName = kafkaSupportedResourceName;
     this.kafkaConsumerService = kafkaConsumerService;
     this.meterRegistry = meterRegistry;
   }
@@ -82,7 +86,7 @@ public class BalanceCalculatorConsumerService {
     JsonObject jsonMessage = JsonParser.parseString(message).getAsJsonObject();
     String schema = jsonMessage.get(SCHEMA_JSON_ATTRIBUTE).getAsString();
 
-    return schema.contains(TIME_ENTRY_SCHEMA_NAME);
+    return schema.contains(kafkaSupportedResourceName);
   }
 
   private void setUpCounters() {
