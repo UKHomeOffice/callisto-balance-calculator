@@ -1,7 +1,8 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.Getter;
@@ -29,12 +30,14 @@ public class BalanceCalculatorConsumerService {
 
   private Counter errorCounter;
 
+  private TimeEntry timeEntry;
+
   KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
   KafkaEventMessage<TimeEntry> kafkaEventMessage;
 
   public BalanceCalculatorConsumerService(MeterRegistry meterRegistry,
-                                          KafkaConsumerService<TimeEntry> kafkaConsumerService ) {
+                                          KafkaConsumerService<TimeEntry> kafkaConsumerService) {
     this.kafkaConsumerService = kafkaConsumerService;
     this.meterRegistry = meterRegistry;
   }
@@ -47,14 +50,15 @@ public class BalanceCalculatorConsumerService {
     setUpCounters();
     kafkaEventMessage = kafkaConsumerService.consume(message);
     if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
-      TimeEntry timeEntry = mapper.convertValue(
-          kafkaEventMessage.getResource(), new TypeReference<>() {
-          });
+      timeEntry =  new Gson().fromJson(String.valueOf(kafkaEventMessage.getResource()),
+          new TypeToken<TimeEntry>() { }.getType());
+
       log.info(String.format("Successful deserialization of message entity [ %s ] created",
           timeEntry));
     } else {
       errorCounter.increment();
-      log.error("Failed deserialization of message entity [ %s ]", kafkaEventMessage);
+      log.error(String.format("Failed deserialization of message entity [ %s ]",
+          message));
     }
   }
 
