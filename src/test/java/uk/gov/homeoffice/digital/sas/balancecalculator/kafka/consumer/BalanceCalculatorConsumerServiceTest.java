@@ -23,7 +23,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 
-
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -48,7 +47,7 @@ class BalanceCalculatorConsumerServiceTest {
     assertThat(balanceCalculatorConsumerService.getKafkaEventMessage().getAction()).isEqualTo(KafkaAction.CREATE);
     assertMessageIsDeserializedAsExpected();
     assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
-        expectedTimeEntry));
+        expectedTimeEntry.getId()));
   }
 
   @Test
@@ -67,7 +66,7 @@ class BalanceCalculatorConsumerServiceTest {
   @Test
   void onMessage_notDeserializeKafkaMessage_when_schemaNotTimeEntry(CapturedOutput capturedOutput){
     String message = TestUtils.createKafkaMessage(MESSAGE_INVALID_RESOURCE,
-        MESSAGE_INVALID_VERSION);
+        MESSAGE_VALID_VERSION);
 
     balanceCalculatorConsumerService.onMessage(message);
 
