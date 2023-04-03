@@ -3,6 +3,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer.Intergrat
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
@@ -19,6 +20,9 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.waitAtMost;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_KEY;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 
 @SpringBootTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -28,11 +32,10 @@ import static org.awaitility.Awaitility.waitAtMost;
 @TestPropertySource(properties = {
     "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
     "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}"})
-public class KafkaConsumerIntegrationTest {
+class KafkaConsumerIntegrationTest {
 
-  private String schemaVersion = "0.1.0";
-  private String topicName = "callisto-timecard-timeentries";
-  private String messageKey = "10001";
+  @Value("${spring.kafka.template.default-topic}")
+  private String topicName;
 
   @Autowired
   KafkaTemplate<String, KafkaEventMessage<TimeEntry>> kafkaTemplate;
@@ -47,14 +50,15 @@ public class KafkaConsumerIntegrationTest {
   @BeforeEach
   void setup() {
     timeEntry = TestUtils.createTimeEntry();
-    kafkaEventMessage = new KafkaEventMessage<>(schemaVersion,  timeEntry, KafkaAction.CREATE);
+    kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_VALID_VERSION,  timeEntry,
+        KafkaAction.CREATE);
   }
 
   @Test
   void should_validateConsumedMessage_when_messageNotNull() {
     // Given
     // When
-    kafkaTemplate.send(topicName, messageKey, kafkaEventMessage);
+    kafkaTemplate.send(topicName, MESSAGE_KEY, kafkaEventMessage);
     // Then
     waitAtMost(3, TimeUnit.SECONDS)
         .untilAsserted(() -> {
@@ -62,7 +66,7 @@ public class KafkaConsumerIntegrationTest {
         });
 
     KafkaEventMessage<TimeEntry> expectedKafkaEventMessage = TestUtils.generateExpectedKafkaEventMessage(
-        schemaVersion,
+        MESSAGE_VALID_VERSION,
         timeEntry,
         KafkaAction.CREATE);
 
@@ -72,9 +76,9 @@ public class KafkaConsumerIntegrationTest {
   @Test
   void should_validateConsumedMessage_when_messageNull () {
     // Given
-    kafkaEventMessage = new KafkaEventMessage<>("2.0.0",  timeEntry, KafkaAction.CREATE);
+    kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_INVALID_VERSION,  timeEntry, KafkaAction.CREATE);
     // When
-    kafkaTemplate.send(topicName, messageKey, kafkaEventMessage);
+    kafkaTemplate.send(topicName, MESSAGE_KEY, kafkaEventMessage);
     // Then
     waitAtMost(3, TimeUnit.SECONDS)
         .untilAsserted(() -> {
