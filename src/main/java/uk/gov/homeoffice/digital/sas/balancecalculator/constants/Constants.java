@@ -2,7 +2,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.constants;
 
 public class Constants {
 
-  private Constants(){}
+  private Constants() {}
 
   public static final String KAFKA_SUCCESSFUL_DESERIALIZATION =
       "Successful deserialization of message entity [ %s ] created";
