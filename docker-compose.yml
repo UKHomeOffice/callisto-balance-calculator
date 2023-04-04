@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  balance-calculator:
+  accruals-balance-calculator:
     image: maven:3.8.3-openjdk-17
     entrypoint:
       [
@@ -15,8 +15,8 @@ services:
     user: "1000"
     working_dir: "/app"
     ports:
-      - "50500:9090"
-      - "5010:5010"
+      - "50210:9090"
+      - "50211:5005"
     volumes:
       - ./:/app
       - $HOME/.m2:/Users/1000/.m2 # Required for artifactory dependencies

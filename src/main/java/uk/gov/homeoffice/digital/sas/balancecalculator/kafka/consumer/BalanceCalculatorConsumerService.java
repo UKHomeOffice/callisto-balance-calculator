@@ -36,8 +36,8 @@ public class BalanceCalculatorConsumerService {
 
   private ObjectMapper mapper = new ObjectMapper();
 
-
   private Counter errorCounter;
+
   private TimeEntry timeEntry;
 
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
