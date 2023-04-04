@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.digital.sas.balancecalculator;
+package uk.gov.homeoffice.digital.sas.balancecalculator.actuator;
 
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;

@@ -21,7 +21,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import uk.gov.homeoffice.digital.sas.balancecalculator.ActuatorCounters;
+import uk.gov.homeoffice.digital.sas.balancecalculator.actuator.ActuatorCounters;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
@@ -31,7 +31,8 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 @Getter
 @ComponentScan({
     "uk.gov.homeoffice.digital.sas.kafka.consumer",
-    "uk.gov.homeoffice.digital.sas.kafka.validators"})
+    "uk.gov.homeoffice.digital.sas.kafka.validators",
+    "uk.gov.homeoffice.digital.sas.balancecalculator.actuator"})
 public class BalanceCalculatorConsumerService {
 
   private ObjectMapper mapper = new ObjectMapper();
