@@ -12,7 +12,7 @@ public class TestConstants {
       ".balancecalculator.models.TimeEntry";
 
   public static final String MESSAGE_INVALID_RESOURCE =
-      "uk.gov.homeoffice.digital.sas.unkownResource.model.TimeEntry";
+      "uk.gov.homeoffice.digital.sas.model.unknownResource";
 
   public static final String MESSAGE_EXPECTED_SCHEMA = MESSAGE_VALID_RESOURCE + ", " + MESSAGE_VALID_VERSION;
 }

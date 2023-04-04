@@ -31,8 +31,7 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 @Getter
 @ComponentScan({
     "uk.gov.homeoffice.digital.sas.kafka.consumer",
-    "uk.gov.homeoffice.digital.sas.kafka.validators",
-    "uk.gov.homeoffice.digital.sas.balancecalculator.actuator"})
+    "uk.gov.homeoffice.digital.sas.kafka.validators"})
 public class BalanceCalculatorConsumerService {
 
   private ObjectMapper mapper = new ObjectMapper();
@@ -40,7 +39,6 @@ public class BalanceCalculatorConsumerService {
 
   private Counter errorCounter;
   private TimeEntry timeEntry;
-  private final String kafkaSupportedResourceName;
 
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
@@ -48,11 +46,8 @@ public class BalanceCalculatorConsumerService {
 
   private KafkaEventMessage<TimeEntry> kafkaEventMessage;
 
-  public BalanceCalculatorConsumerService(@Value("${kafka.supported.resource.name}")
-                                          String kafkaSupportedResourceName,
-                                          KafkaConsumerService<TimeEntry> kafkaConsumerService,
+  public BalanceCalculatorConsumerService(KafkaConsumerService<TimeEntry> kafkaConsumerService,
                                           ActuatorCounters counters) {
-    this.kafkaSupportedResourceName = kafkaSupportedResourceName;
     this.kafkaConsumerService = kafkaConsumerService;
     this.counters = counters;
   }
@@ -96,6 +91,6 @@ public class BalanceCalculatorConsumerService {
     JsonObject jsonMessage = JsonParser.parseString(message).getAsJsonObject();
     String schema = jsonMessage.get(SCHEMA_JSON_ATTRIBUTE).getAsString();
 
-    return schema.contains(kafkaSupportedResourceName);
+    return schema.contains(TimeEntry.class.getSimpleName());
   }
 }
