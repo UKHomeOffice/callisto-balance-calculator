@@ -86,7 +86,7 @@ class BalanceCalculatorConsumerServiceTest {
     assertThat(balanceCalculatorConsumerService.getKafkaEventMessage().getAction()).isEqualTo(expectedKafkaEventMessage.getAction());
 
     assertResourceIsDeserializedAsExpected(
-        balanceCalculatorConsumerService.getTimeEntry(),
+        balanceCalculatorConsumerService.createTimeEntryFromKafkaEventMessage(),
         expectedKafkaEventMessage.getResource());
   }
 

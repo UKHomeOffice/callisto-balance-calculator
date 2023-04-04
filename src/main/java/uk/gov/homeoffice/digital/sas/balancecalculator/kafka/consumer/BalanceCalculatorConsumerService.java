@@ -15,7 +15,6 @@ import com.google.gson.reflect.TypeToken;
 import io.micrometer.core.instrument.Counter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -38,8 +37,6 @@ public class BalanceCalculatorConsumerService {
 
   private Counter errorCounter;
 
-  private TimeEntry timeEntry;
-
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
   private final ActuatorCounters counters;
@@ -50,6 +47,8 @@ public class BalanceCalculatorConsumerService {
                                           ActuatorCounters counters) {
     this.kafkaConsumerService = kafkaConsumerService;
     this.counters = counters;
+    errorCounter = counters.setUpCounters(ACTUATOR_KAFKA_FAILURE_URL, ACTUATOR_ERROR_TYPE,
+        ACTUATOR_KAFKA_FAILURE_DESCRIPTION);
   }
 
   @KafkaListener(
@@ -57,20 +56,17 @@ public class BalanceCalculatorConsumerService {
       groupId = "${spring.kafka.consumer.group-id}"
   )
   public void onMessage(@Payload String message) {
-    errorCounter = counters.setUpCounters(ACTUATOR_KAFKA_FAILURE_URL, ACTUATOR_ERROR_TYPE,
-        ACTUATOR_KAFKA_FAILURE_DESCRIPTION);
-
+    TimeEntry timeEntry = null;
     if (isResourceTimeEntry(message)) {
       kafkaEventMessage = kafkaConsumerService.consume(message);
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
-        createTimeEntryFromKafkaEventMessage();
+        timeEntry = createTimeEntryFromKafkaEventMessage();
       }
     }
-
-    isTimeEntryDeserialized(message);
+    isTimeEntryDeserialized(message, timeEntry);
   }
 
-  private void isTimeEntryDeserialized(String message) {
+  private void isTimeEntryDeserialized(String message, TimeEntry timeEntry) {
     if (ObjectUtils.isEmpty(timeEntry)) {
       errorCounter.increment();
       log.error(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION,
@@ -78,13 +74,14 @@ public class BalanceCalculatorConsumerService {
     }
   }
 
-  private void createTimeEntryFromKafkaEventMessage() {
-    timeEntry = new Gson().fromJson(String.valueOf(kafkaEventMessage.getResource()),
+  protected TimeEntry createTimeEntryFromKafkaEventMessage() {
+    TimeEntry timeEntry = new Gson().fromJson(String.valueOf(kafkaEventMessage.getResource()),
         new TypeToken<TimeEntry>() {
         }.getType());
-
     log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
         timeEntry.getId()));
+
+    return timeEntry;
   }
 
   private boolean isResourceTimeEntry(String message) {
