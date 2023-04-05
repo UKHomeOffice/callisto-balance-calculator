@@ -55,7 +55,7 @@ public class BalanceCalculatorConsumerService {
       topics = {"${spring.kafka.template.default-topic}"},
       groupId = "${spring.kafka.consumer.group-id}"
   )
-  public void onMessage(@Payload String message) {
+  public void onMessage(@Payload String message) throws ClassNotFoundException {
 
     if (isResourceTimeEntry(message)) {
       KafkaEventMessage<TimeEntry> kafkaEventMessage =
@@ -64,26 +64,28 @@ public class BalanceCalculatorConsumerService {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage);
         isTimeEntryDeserialized(message, timeEntry);
       }
+    } else {
+      throw new ClassNotFoundException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
     }
   }
 
-  private void isTimeEntryDeserialized(String message, TimeEntry timeEntry) {
+  private boolean isTimeEntryDeserialized(String message, TimeEntry timeEntry) {
     if (ObjectUtils.isEmpty(timeEntry)) {
       errorCounter.increment();
-      log.error(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION,
-          message));
+      log.error(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+      return false;
+    } else {
+      log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, timeEntry.getId()));
+      return true;
     }
   }
 
-  protected TimeEntry createTimeEntryFromKafkaEventMessage(KafkaEventMessage<TimeEntry> kafkaEventMessage) {
+  protected TimeEntry createTimeEntryFromKafkaEventMessage(
+      KafkaEventMessage<TimeEntry> kafkaEventMessage) {
 
     Gson gson = createTimeJsonDeserializer();
-    TimeEntry timeEntry = gson.fromJson(String.valueOf(kafkaEventMessage.getResource()),
-        new TypeToken<TimeEntry>() {}.getType());
-    log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
-        timeEntry.getId()));
-
-    return timeEntry;
+    return gson.fromJson(
+        String.valueOf(kafkaEventMessage.getResource()), new TypeToken<TimeEntry>() {}.getType());
   }
 
   private boolean isResourceTimeEntry(String message) {
