@@ -5,6 +5,7 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constant
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACTUATOR_KAFKA_FAILURE_URL;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.Utils.createTimeJsonDeserializer;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.SCHEMA_JSON_ATTRIBUTE;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import io.micrometer.core.instrument.Counter;
+import java.sql.Time;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.ComponentScan;
@@ -41,8 +43,6 @@ public class BalanceCalculatorConsumerService {
 
   private final ActuatorCounters counters;
 
-  private KafkaEventMessage<TimeEntry> kafkaEventMessage;
-
   public BalanceCalculatorConsumerService(KafkaConsumerService<TimeEntry> kafkaConsumerService,
                                           ActuatorCounters counters) {
     this.kafkaConsumerService = kafkaConsumerService;
@@ -56,14 +56,15 @@ public class BalanceCalculatorConsumerService {
       groupId = "${spring.kafka.consumer.group-id}"
   )
   public void onMessage(@Payload String message) {
-    TimeEntry timeEntry = null;
+
     if (isResourceTimeEntry(message)) {
-      kafkaEventMessage = kafkaConsumerService.consume(message);
+      KafkaEventMessage<TimeEntry> kafkaEventMessage =
+          kafkaConsumerService.convertToKafkaEventMessage(message);
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
-        timeEntry = createTimeEntryFromKafkaEventMessage();
+        TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage);
+        isTimeEntryDeserialized(message, timeEntry);
       }
     }
-    isTimeEntryDeserialized(message, timeEntry);
   }
 
   private void isTimeEntryDeserialized(String message, TimeEntry timeEntry) {
@@ -74,10 +75,11 @@ public class BalanceCalculatorConsumerService {
     }
   }
 
-  protected TimeEntry createTimeEntryFromKafkaEventMessage() {
-    TimeEntry timeEntry = new Gson().fromJson(String.valueOf(kafkaEventMessage.getResource()),
-        new TypeToken<TimeEntry>() {
-        }.getType());
+  protected TimeEntry createTimeEntryFromKafkaEventMessage(KafkaEventMessage<TimeEntry> kafkaEventMessage) {
+
+    Gson gson = createTimeJsonDeserializer();
+    TimeEntry timeEntry = gson.fromJson(String.valueOf(kafkaEventMessage.getResource()),
+        new TypeToken<TimeEntry>() {}.getType());
     log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
         timeEntry.getId()));
 
