@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  accruals-balance-calculator:
+  balance-calculator:
     image: maven:3.8.3-openjdk-17
     entrypoint:
       [
