@@ -1,19 +1,15 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.utils;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
+import java.util.Map;
 
 public class TestUtils {
 
@@ -41,23 +37,40 @@ public class TestUtils {
 
   public static <S extends Serializable> String createKafkaMessage(String schema, String version,
                                                                    String id, String ownerId){
-    String resource = createResourceJson(id, ownerId);
+    String resource = createValidResourceJson(id, ownerId);
+    return createKafkaEventJsonString(schema, version, resource);
+  }
 
+  public static <S extends Serializable> String createKafkaInvalidMessage(String schema, String version,
+                                                                   String id, String ownerId){
+    String resource = createInvalidResourceJson(id, ownerId, "123L");
+    return createKafkaEventJsonString(schema, version, resource);
+  }
+
+  private static String createKafkaEventJsonString(String schema, String version, String resource) {
     return new Gson().toJson(Map.of(
         "schema", String.format("%s, %s",
             schema, version),
-        "resource" , resource,
+        "resource", resource,
         "action", "CREATE"));
   }
 
-  public static <S extends Serializable> String createResourceJson(String id, String ownerId) {
+  public static <S extends Serializable> String createValidResourceJson(String id, String ownerId) {
+    return createResourceJson(id, ownerId, "1679456400000");
+  }
+
+  public static <S extends Serializable> String createInvalidResourceJson(String id, String ownerId, String actualStartTime) {
+    return createResourceJson(id, ownerId, actualStartTime);
+  }
+
+  public static <S extends Serializable> String createResourceJson(String id, String ownerId, String actualStartTime) {
     return new Gson().toJson(Map.of(
         "id", id,
         "tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         "ownerId", ownerId,
         "timePeriodTypeId", "00000000-0000-0000-0000-000000000001",
         "shiftType", " ",
-        "actualStartTime", "1679456400000",
+        "actualStartTime", actualStartTime,
         "actualEndTime", "1679457000000"
     ));
   }

@@ -1,5 +1,8 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.apache.kafka.common.security.oauthbearer.secured.ValidateException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -8,20 +11,19 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.annotation.DirtiesContext;
-
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_RESOURCE;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createResourceJson;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.OWNER_ID;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.TIME_ENTRY_ID;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createValidResourceJson;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.Utils.createTimeJsonDeserializer;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.util.UUID;
 
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
@@ -36,19 +38,15 @@ class BalanceCalculatorConsumerServiceTest {
       (CapturedOutput capturedOutput) throws ClassNotFoundException {
 
     // given
-    String id = UUID.randomUUID().toString();
-    String ownerId = UUID.randomUUID().toString();
-
     Gson gson = createTimeJsonDeserializer();
 
-    String timeEntryJson = createResourceJson(id, ownerId);
+    String timeEntryJson = createValidResourceJson(TIME_ENTRY_ID, OWNER_ID);
 
     TimeEntry expectedTimeEntry = gson.fromJson(String.valueOf(timeEntryJson),
         new TypeToken<TimeEntry>() {}.getType());
 
-
     String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION,
-        id, ownerId);
+        TIME_ENTRY_ID, OWNER_ID);
 
     //when
     balanceCalculatorConsumerService.onMessage(message);
@@ -59,24 +57,39 @@ class BalanceCalculatorConsumerServiceTest {
   }
 
   @Test
-  void onMessage_notDeserializeKafkaMessageAndThrowException_when_inValidResourceIsReceived() {
+  void onMessage_notDeserializeKafkaMessageAndThrowException_when_invalidResourceIsReceived() {
     //given
-    String id = UUID.randomUUID().toString();
-    String ownerId = UUID.randomUUID().toString();
-
     String message = TestUtils.createKafkaMessage(MESSAGE_INVALID_RESOURCE, MESSAGE_VALID_VERSION
-        , id, ownerId);
+        ,TIME_ENTRY_ID, OWNER_ID);
 
     Assertions.assertThrows(ClassNotFoundException.class, () -> {
       balanceCalculatorConsumerService.onMessage(message);;
     });
   }
 
-  //Invalid version throws error
 
-  //Invalid resource throws error
+  @Test
+  void onMessage_notDeserializeKafkaMessageAndThrowException_when_invalidVersionIsReceived() {
+    //given
+    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_INVALID_VERSION
+        , TIME_ENTRY_ID, OWNER_ID);
 
-  //Desearilization error (missing/extra field?) on resource
+    Assertions.assertThrows(ValidateException.class, () -> {
+      balanceCalculatorConsumerService.onMessage(message);;
+    });
+  }
 
   //Invalid date format received
+  @Test
+  void onMessage_notDeserializeKafkaMessageAndThrowException_when_invalidDateString() {
+    //given
+    String message = TestUtils.createKafkaInvalidMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION
+        ,TIME_ENTRY_ID, OWNER_ID);
+
+    Assertions.assertThrows(NumberFormatException.class, () -> {
+      balanceCalculatorConsumerService.onMessage(message);;
+    });
+  }
+
+  // TODO: Deserialization error (missing/extra field?) on resource
 }

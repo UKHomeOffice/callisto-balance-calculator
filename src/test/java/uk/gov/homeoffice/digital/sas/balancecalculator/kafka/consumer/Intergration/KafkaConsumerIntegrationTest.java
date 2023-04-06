@@ -76,31 +76,31 @@ class KafkaConsumerIntegrationTest {
         });
   }
 
-  @Test
-  void should_throwException_when_resourceInvalid(CapturedOutput capturedOutput) {
-    // Given
-    String id = UUID.randomUUID().toString();
-    String ownerId = UUID.randomUUID().toString();
-
-    TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
-        TestUtils.getAsDate(LocalDateTime.now()),
-        TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
-
-    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_INVALID_VERSION
-        , id, ownerId);
-
-    kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_INVALID_VERSION, timeEntry,
-        KafkaAction.CREATE);
-    // When
-    kafkaTemplate.send(topicName, MESSAGE_KEY, kafkaEventMessage);
-    // Then
-    waitAtMost(3, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
-          Assertions.assertThrows(JsonParseException.class, () -> {
-            consumerService.onMessage(message);
-          });
-        });
-  }
+//  @Test
+//  void should_throwException_when_resourceInvalid(CapturedOutput capturedOutput) {
+//    // Given
+//    String id = UUID.randomUUID().toString();
+//    String ownerId = UUID.randomUUID().toString();
+//
+//    TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
+//        TestUtils.getAsDate(LocalDateTime.now()),
+//        TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
+//
+//    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_INVALID_VERSION
+//        , id, ownerId);
+//
+//    kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_INVALID_VERSION, timeEntry,
+//        KafkaAction.CREATE);
+//    // When
+//    kafkaTemplate.send(topicName, MESSAGE_KEY, kafkaEventMessage);
+//    // Then
+//    waitAtMost(3, TimeUnit.SECONDS)
+//        .untilAsserted(() -> {
+//          Assertions.assertThrows(JsonParseException.class, () -> {
+//            consumerService.onMessage(message);
+//          });
+//        });
+//  }
 
   //Invalid version throws error
 
