@@ -71,4 +71,12 @@ class BalanceCalculatorConsumerServiceTest {
       balanceCalculatorConsumerService.onMessage(message);;
     });
   }
+
+  //Invalid version throws error
+
+  //Invalid resource throws error
+
+  //Desearilization error (missing/extra field?) on resource
+
+  //Invalid date format received
 }

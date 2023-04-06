@@ -76,12 +76,6 @@ class KafkaConsumerIntegrationTest {
         });
   }
 
-  /**
-   * Commented out until update kafka-commons is merged
-   *
-   * @param capturedOutput
-   */
-
   @Test
   void should_throwException_when_resourceInvalid(CapturedOutput capturedOutput) {
     // Given
@@ -107,4 +101,9 @@ class KafkaConsumerIntegrationTest {
           });
         });
   }
+
+  //Invalid version throws error
+
+  //Invalid resource throws error
+
 }
