@@ -1,7 +1,9 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -17,13 +19,9 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 public class TestUtils {
 
-  public static KafkaEventMessage generateExpectedKafkaEventMessage(String version, TimeEntry resource,
-                                                                    KafkaAction action) {
-    return new KafkaEventMessage<>(version, resource, action);
-  }
-
   public static TimeEntry createTimeEntry(String id, String ownerId, Date startTime,
                                           Date finishTime) {
+
     var timeEntry = new TimeEntry();
     timeEntry.setId(id);
     timeEntry.setTenantId("3fa85f64-5717-4562-b3fc-2c963f66afa6");
@@ -39,27 +37,66 @@ public class TestUtils {
     return Date.from(dateTime.toInstant(ZoneOffset.UTC));
   }
 
-  public static <S extends Serializable> String createKafkaMessage(String schema, String version,
-                                                                   String id, String ownerId){
-    String resource = createResourceJson(id, ownerId);
+  public static String createKafkaMessage(String schema,
+                                          String version,
+                                          String id,
+                                          String ownerId) throws JsonProcessingException {
 
-    return new Gson().toJson(Map.of(
-        "schema", String.format("%s, %s",
-            schema, version),
-        "resource" , resource,
-        "action", "CREATE"));
+    ObjectMapper mapper = new ObjectMapper();
+
+    ObjectNode resource = createResourceJson(mapper, id, ownerId);
+
+    ObjectNode kafkaMessage = mapper.createObjectNode();
+    kafkaMessage.put("schema", String.format("%s, %s", schema, version));
+    kafkaMessage.set("resource", resource);
+    kafkaMessage.put("action", "CREATE");
+
+
+    return mapper.writeValueAsString(kafkaMessage);
   }
 
-  public static <S extends Serializable> String createResourceJson(String id, String ownerId) {
-    return new Gson().toJson(Map.of(
-        "id", id,
-        "tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-        "ownerId", ownerId,
-        "timePeriodTypeId", "00000000-0000-0000-0000-000000000001",
-        "shiftType", " ",
-        "actualStartTime", "1679456400000",
-        "actualEndTime", "1679457000000"
-    ));
+  public static String createKafkaMessage(String schema,
+                                          String version,
+                                          ObjectNode resource) throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
+
+    ObjectNode kafkaMessage = mapper.createObjectNode();
+    kafkaMessage.put("schema", String.format("%s, %s", schema, version));
+    kafkaMessage.set("resource", resource);
+    kafkaMessage.put("action", "CREATE");
+
+
+    return mapper.writeValueAsString(kafkaMessage);
   }
+
+
+  public static ObjectNode createResourceJson(ObjectMapper mapper, String id,
+                                                                   String ownerId) {
+    ObjectNode resourceNode = mapper.createObjectNode();
+    resourceNode.put("id", id);
+    resourceNode.put("tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    resourceNode.put("ownerId", ownerId);
+    resourceNode.put("timePeriodTypeId", "00000000-0000-0000-0000-000000000001");
+    resourceNode.put("shiftType", " ");
+    resourceNode.put("actualStartTime", "2022-01-01T15:00:00");
+    resourceNode.put("actualEndTime", "2022-01-01T16:00:00");
+
+    return resourceNode;
+  }
+
+  public static ObjectNode createResourceJson(ObjectMapper mapper, String id,
+                                              String ownerId, String startTime, String endTime) {
+    ObjectNode resourceNode = mapper.createObjectNode();
+    resourceNode.put("id", id);
+    resourceNode.put("tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    resourceNode.put("ownerId", ownerId);
+    resourceNode.put("timePeriodTypeId", "00000000-0000-0000-0000-000000000001");
+    resourceNode.put("shiftType", " ");
+    resourceNode.put("actualStartTime", startTime);
+    resourceNode.put("actualEndTime", endTime);
+
+    return resourceNode;
+  }
+
 
 }

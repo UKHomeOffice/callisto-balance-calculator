@@ -5,9 +5,10 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constant
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACTUATOR_KAFKA_FAILURE_URL;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.Utils.createTimeJsonDeserializer;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.SCHEMA_JSON_ATTRIBUTE;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -17,14 +18,18 @@ import io.micrometer.core.instrument.Counter;
 import java.sql.Time;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import uk.gov.homeoffice.digital.sas.balancecalculator.actuator.ActuatorCounters;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
+import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 @Service
@@ -32,7 +37,8 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 @Getter
 @ComponentScan({
     "uk.gov.homeoffice.digital.sas.kafka.consumer",
-    "uk.gov.homeoffice.digital.sas.kafka.validators"})
+    "uk.gov.homeoffice.digital.sas.kafka.validators",
+    "uk.gov.homeoffice.digital.sas.kafka.configuration"})
 public class BalanceCalculatorConsumerService {
 
   private ObjectMapper mapper = new ObjectMapper();
@@ -53,19 +59,22 @@ public class BalanceCalculatorConsumerService {
 
   @KafkaListener(
       topics = {"${spring.kafka.template.default-topic}"},
-      groupId = "${spring.kafka.consumer.group-id}"
+      groupId = "${spring.kafka.consumer.group-id}",
+      errorHandler = "KafkaConsumerErrorHandler"
   )
-  public void onMessage(@Payload String message) throws ClassNotFoundException {
+  public void onMessage(@Payload String message)
+      throws JsonProcessingException {
 
     if (isResourceTimeEntry(message)) {
       KafkaEventMessage<TimeEntry> kafkaEventMessage =
           kafkaConsumerService.convertToKafkaEventMessage(message);
+
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
-        TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage);
+        TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, message);
         isTimeEntryDeserialized(message, timeEntry);
       }
     } else {
-      throw new ClassNotFoundException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+      throw new KafkaConsumerException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
     }
   }
 
@@ -81,11 +90,14 @@ public class BalanceCalculatorConsumerService {
   }
 
   protected TimeEntry createTimeEntryFromKafkaEventMessage(
-      KafkaEventMessage<TimeEntry> kafkaEventMessage) {
-
-    Gson gson = createTimeJsonDeserializer();
-    return gson.fromJson(
-        String.valueOf(kafkaEventMessage.getResource()), new TypeToken<TimeEntry>() {}.getType());
+      KafkaEventMessage<TimeEntry> kafkaEventMessage, String message) {
+    try {
+      return mapper.convertValue(
+          kafkaEventMessage.getResource(), TimeEntry.class);
+    } catch (IllegalArgumentException e) {
+      throw new KafkaConsumerException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION,
+          message), e);
+    }
   }
 
   private boolean isResourceTimeEntry(String message) {

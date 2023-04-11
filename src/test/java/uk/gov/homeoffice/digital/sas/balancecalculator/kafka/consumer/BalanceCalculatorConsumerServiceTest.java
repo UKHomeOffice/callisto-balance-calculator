@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
+import org.apache.kafka.common.security.oauthbearer.secured.ValidateException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,16 +12,22 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
+import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_RESOURCE;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createResourceJson;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.Utils.createTimeJsonDeserializer;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHEMA_INVALID_VERSION;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @SpringBootTest
@@ -33,19 +40,17 @@ class BalanceCalculatorConsumerServiceTest {
 
   @Test
   void onMessage_deserializeKafkaMessageAndLogSuccess_when_validMessageIsReceived
-      (CapturedOutput capturedOutput) throws ClassNotFoundException {
+      (CapturedOutput capturedOutput) throws JsonProcessingException, ClassNotFoundException {
 
     // given
     String id = UUID.randomUUID().toString();
     String ownerId = UUID.randomUUID().toString();
 
-    Gson gson = createTimeJsonDeserializer();
-
-    String timeEntryJson = createResourceJson(id, ownerId);
-
-    TimeEntry expectedTimeEntry = gson.fromJson(String.valueOf(timeEntryJson),
-        new TypeToken<TimeEntry>() {}.getType());
-
+    TimeEntry expectedTimeEntry = TestUtils.createTimeEntry(
+        id,
+        ownerId,
+        TestUtils.getAsDate(LocalDateTime.now()),
+        TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
 
     String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION,
         id, ownerId);
@@ -58,8 +63,9 @@ class BalanceCalculatorConsumerServiceTest {
         expectedTimeEntry.getId()));
   }
 
+  //Invalid resource throws error
   @Test
-  void onMessage_notDeserializeKafkaMessageAndThrowException_when_inValidResourceIsReceived() {
+  void onMessage_notDeserializeKafkaMessageAndThrowException_when_inValidResourceIsReceived() throws JsonProcessingException {
     //given
     String id = UUID.randomUUID().toString();
     String ownerId = UUID.randomUUID().toString();
@@ -67,16 +73,71 @@ class BalanceCalculatorConsumerServiceTest {
     String message = TestUtils.createKafkaMessage(MESSAGE_INVALID_RESOURCE, MESSAGE_VALID_VERSION
         , id, ownerId);
 
-    Assertions.assertThrows(ClassNotFoundException.class, () -> {
-      balanceCalculatorConsumerService.onMessage(message);;
-    });
+
+    assertThatThrownBy(() -> {
+     balanceCalculatorConsumerService.onMessage(message);
+    }).isInstanceOf(ClassNotFoundException.class)
+        .hasMessageContaining(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+
   }
 
   //Invalid version throws error
+  @Test
+  void onMessage_notDeserializeKafkaMessageAndThrowException_inValidVersionIsReceived() throws JsonProcessingException {
+    String id = UUID.randomUUID().toString();
+    String ownerId = UUID.randomUUID().toString();
 
-  //Invalid resource throws error
+    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_INVALID_VERSION
+        , id, ownerId);
+
+    assertThatThrownBy(() -> {
+      balanceCalculatorConsumerService.onMessage(message);
+    }).isInstanceOf(ValidateException.class)
+        .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION, message));
+  }
 
   //Desearilization error (missing/extra field?) on resource
+  @Test
+  void onMessage_notDeserializeKafkaMessage_extraFieldReceived() throws JsonProcessingException {
+    String id = UUID.randomUUID().toString();
+    String ownerId = UUID.randomUUID().toString();
+
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode resource = mapper.createObjectNode();
+    resource.put("id", id);
+    resource.put("tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    resource.put("ownerId", ownerId);
+    resource.put("timePeriodTypeId", "00000000-0000-0000-0000-000000000001");
+    resource.put("shiftType", " ");
+    resource.put("actualStartTime", "2022-01-01T15:00:00");
+    resource.put("actualEndTime", "2022-01-01T16:00:00");
+    resource.put("extraField", "EXTRA_FIELD");
+
+    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION,
+        resource);
+
+    assertThatThrownBy(() -> {
+      balanceCalculatorConsumerService.onMessage(message);
+    }).isInstanceOf(KafkaConsumerException.class)
+        .hasMessageContaining(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+
+  }
 
   //Invalid date format received
+  @Test
+  void onMessage_notDeserializeKafkaMessage_invalidDateFormatReceived() throws JsonProcessingException {
+    String id = UUID.randomUUID().toString();
+    String ownerId = UUID.randomUUID().toString();
+
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode resource = createResourceJson(mapper, id, ownerId, "3GJN-TH-01T15:TGSJU",
+        "3GHH-TH-01T15:GHJU");
+
+    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION
+        , resource);
+
+    assertThatThrownBy(() -> {
+      balanceCalculatorConsumerService.onMessage(message);
+    }).isInstanceOf(IllegalArgumentException.class);
+  }
 }

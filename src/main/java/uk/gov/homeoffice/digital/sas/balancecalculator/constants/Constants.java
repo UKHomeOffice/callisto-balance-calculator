@@ -18,5 +18,4 @@ public class Constants {
   public static final String ACTUATOR_KAFKA_FAILURE_DESCRIPTION = "The total deserialization "
       + "errors for balance calculator";
 
-
 }

@@ -25,12 +25,10 @@ services:
       HOME: /Users/1000
       MAVEN_USER_HOME: /Users/1000/.m2
       SPRING_PROFILES_ACTIVE: localdev
-      BOOTSTRAP_SERVER=kafka: 9093
       KEYSTORE_LOCATION: file://keystore/kafka/kafka.keystore.jks
-      TRUSTSTORE_LOCATION: file://keystore/kafka/kafka.truststore.jks
-      BALANCE_CALCULATOR_KEYSTORE_PASSWORD: changeit
+      KEYSTORE_PASSWORD: changeit
       SPRING_APPLICATION_JSON: '{
-          "spring.kafka.ssl.trust-store-location": "file://keystore/person-restapi/person-restapi.truststore.jks",
+          "spring.kafka.ssl.trust-store-location": "file://keystore/kafka/kafka.truststore.jks",
           "spring.kafka.ssl.trust-store-password": "changeit"
         }'
     networks:
