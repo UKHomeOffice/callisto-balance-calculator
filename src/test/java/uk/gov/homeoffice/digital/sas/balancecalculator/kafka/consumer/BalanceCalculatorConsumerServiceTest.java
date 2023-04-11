@@ -1,6 +1,5 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import org.apache.kafka.common.security.oauthbearer.secured.ValidateException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
