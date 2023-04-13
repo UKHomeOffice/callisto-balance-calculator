@@ -16,6 +16,8 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 public class TestUtils {
 
+  private static ObjectMapper mapper = new ObjectMapper();
+
   public static TimeEntry createTimeEntry(String id, String ownerId, Date startTime,
                                           Date finishTime) {
 
@@ -39,14 +41,12 @@ public class TestUtils {
                                           String id,
                                           String ownerId) throws JsonProcessingException {
 
-    ObjectMapper mapper = new ObjectMapper();
-
-    ObjectNode resource = createResourceJson(mapper, id, ownerId);
+    ObjectNode resource = createResourceJson(id, ownerId);
 
     ObjectNode kafkaMessage = mapper.createObjectNode();
     kafkaMessage.put("schema", String.format("%s, %s", schema, version));
     kafkaMessage.set("resource", resource);
-    kafkaMessage.put("action", KafkaAction.CREATE.toString());
+    kafkaMessage.put("action", "CREATE");
 
 
     return mapper.writeValueAsString(kafkaMessage);
@@ -55,20 +55,18 @@ public class TestUtils {
   public static String createKafkaMessage(String schema,
                                           String version,
                                           ObjectNode resource) throws JsonProcessingException {
-    ObjectMapper mapper = new ObjectMapper();
 
     ObjectNode kafkaMessage = mapper.createObjectNode();
     kafkaMessage.put("schema", String.format("%s, %s", schema, version));
     kafkaMessage.set("resource", resource);
-    kafkaMessage.put("action", KafkaAction.CREATE.toString());
+    kafkaMessage.put("action", "CREATE");
 
 
     return mapper.writeValueAsString(kafkaMessage);
   }
 
 
-  public static ObjectNode createResourceJson(ObjectMapper mapper, String id,
-                                                                   String ownerId) {
+  public static ObjectNode createResourceJson(String id, String ownerId) {
     ObjectNode resourceNode = mapper.createObjectNode();
     resourceNode.put("id", id);
     resourceNode.put("tenantId", VALID_TENANT_ID);
@@ -81,7 +79,7 @@ public class TestUtils {
     return resourceNode;
   }
 
-  public static ObjectNode createResourceJson(ObjectMapper mapper, String id,
+  public static ObjectNode createResourceJson(String id,
                                               String ownerId, String startTime, String endTime) {
     ObjectNode resourceNode = mapper.createObjectNode();
     resourceNode.put("id", id);

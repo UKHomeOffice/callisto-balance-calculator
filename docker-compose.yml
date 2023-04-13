@@ -24,7 +24,6 @@ services:
     environment:
       HOME: /Users/1000
       MAVEN_USER_HOME: /Users/1000/.m2
-      SPRING_PROFILES_ACTIVE: localdev
       KEYSTORE_LOCATION: file://keystore/kafka/kafka.keystore.jks
       KEYSTORE_PASSWORD: changeit
       SPRING_APPLICATION_JSON: '{

@@ -55,26 +55,26 @@ public class BalanceCalculatorConsumerService {
       groupId = "${spring.kafka.consumer.group-id}",
       errorHandler = "kafkaConsumerErrorHandler"
   )
-  public void onMessage(@Payload String message)
+  public void onMessage(@Payload String payload)
       throws JsonProcessingException {
 
-    if (isResourceTimeEntry(message)) {
+    if (isResourceTimeEntry(payload)) {
       KafkaEventMessage<TimeEntry> kafkaEventMessage =
-          kafkaConsumerService.convertToKafkaEventMessage(message);
+          kafkaConsumerService.convertToKafkaEventMessage(payload);
 
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
-        TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, message);
-        isTimeEntryDeserialized(message, timeEntry);
+        TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
+        isTimeEntryDeserialized(payload, timeEntry);
       }
     } else {
-      throw new KafkaConsumerException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+      throw new KafkaConsumerException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, payload));
     }
   }
 
-  private boolean isTimeEntryDeserialized(String message, TimeEntry timeEntry) {
+  private boolean isTimeEntryDeserialized(String payload, TimeEntry timeEntry) {
     if (ObjectUtils.isEmpty(timeEntry)) {
       errorCounter.increment();
-      log.error(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+      log.error(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, payload));
       return false;
     } else {
       log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, timeEntry.getId()));
@@ -82,7 +82,7 @@ public class BalanceCalculatorConsumerService {
     }
   }
 
-  protected TimeEntry createTimeEntryFromKafkaEventMessage(
+  private TimeEntry createTimeEntryFromKafkaEventMessage(
       KafkaEventMessage<TimeEntry> kafkaEventMessage, String message) {
     try {
       return mapper.convertValue(

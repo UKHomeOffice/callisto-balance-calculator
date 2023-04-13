@@ -130,8 +130,7 @@ class BalanceCalculatorConsumerServiceTest {
     String id = UUID.randomUUID().toString();
     String ownerId = UUID.randomUUID().toString();
 
-    ObjectMapper mapper = new ObjectMapper();
-    ObjectNode resource = createResourceJson(mapper, id, ownerId, "3GJN-TH-01T15:TGSJU",
+    ObjectNode resource = createResourceJson(id, ownerId, "3GJN-TH-01T15:TGSJU",
         "3GHH-TH-01T15:GHJU");
 
     String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION
