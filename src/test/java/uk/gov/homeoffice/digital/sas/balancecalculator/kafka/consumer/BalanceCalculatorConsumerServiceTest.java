@@ -136,6 +136,6 @@ class BalanceCalculatorConsumerServiceTest {
 
     assertThatThrownBy(() -> {
       balanceCalculatorConsumerService.onMessage(message);
-    }).isInstanceOf(IllegalArgumentException.class);
+    }).isInstanceOf(KafkaConsumerException.class);
   }
 }
