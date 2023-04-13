@@ -75,7 +75,7 @@ class BalanceCalculatorConsumerServiceTest {
 
     assertThatThrownBy(() -> {
      balanceCalculatorConsumerService.onMessage(message);
-    }).isInstanceOf(ClassNotFoundException.class)
+    }).isInstanceOf(KafkaConsumerException.class)
         .hasMessageContaining(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
 
   }
@@ -91,7 +91,7 @@ class BalanceCalculatorConsumerServiceTest {
 
     assertThatThrownBy(() -> {
       balanceCalculatorConsumerService.onMessage(message);
-    }).isInstanceOf(ValidateException.class)
+    }).isInstanceOf(KafkaConsumerException.class)
         .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION, message));
   }
 
@@ -119,7 +119,6 @@ class BalanceCalculatorConsumerServiceTest {
       balanceCalculatorConsumerService.onMessage(message);
     }).isInstanceOf(KafkaConsumerException.class)
         .hasMessageContaining(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
-
   }
 
   //Invalid date format received
