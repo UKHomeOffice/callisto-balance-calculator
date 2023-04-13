@@ -1,6 +1,5 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,10 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_START_TIME;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createResourceJson;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHEMA_INVALID_VERSION;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -104,12 +107,12 @@ class BalanceCalculatorConsumerServiceTest {
     ObjectMapper mapper = new ObjectMapper();
     ObjectNode resource = mapper.createObjectNode();
     resource.put("id", id);
-    resource.put("tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    resource.put("tenantId", VALID_TENANT_ID);
     resource.put("ownerId", ownerId);
-    resource.put("timePeriodTypeId", "00000000-0000-0000-0000-000000000001");
+    resource.put("timePeriodTypeId", VALID_TIME_PERIOD_TYPE_ID);
     resource.put("shiftType", " ");
-    resource.put("actualStartTime", "2022-01-01T15:00:00");
-    resource.put("actualEndTime", "2022-01-01T16:00:00");
+    resource.put("actualStartTime", VALID_START_TIME);
+    resource.put("actualEndTime", VALID_END_TIME);
     resource.put("extraField", "EXTRA_FIELD");
 
     String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_VALID_VERSION,

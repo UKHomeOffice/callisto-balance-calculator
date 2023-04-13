@@ -1,21 +1,18 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.utils;
 
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.EMPTY_STRING;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_START_TIME;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.Gson;
-import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
-import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 public class TestUtils {
 
@@ -24,10 +21,10 @@ public class TestUtils {
 
     var timeEntry = new TimeEntry();
     timeEntry.setId(id);
-    timeEntry.setTenantId("3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    timeEntry.setTenantId(VALID_TENANT_ID);
     timeEntry.setOwnerId(ownerId);
-    timeEntry.setTimePeriodTypeId("00000000-0000-0000-0000-000000000001");
-    timeEntry.setShiftType(" ");
+    timeEntry.setTimePeriodTypeId(VALID_TIME_PERIOD_TYPE_ID);
+    timeEntry.setShiftType(EMPTY_STRING);
     timeEntry.setActualStartTime(startTime);
     timeEntry.setActualEndTime(finishTime);
     return timeEntry;
@@ -49,7 +46,7 @@ public class TestUtils {
     ObjectNode kafkaMessage = mapper.createObjectNode();
     kafkaMessage.put("schema", String.format("%s, %s", schema, version));
     kafkaMessage.set("resource", resource);
-    kafkaMessage.put("action", "CREATE");
+    kafkaMessage.put("action", KafkaAction.CREATE.toString());
 
 
     return mapper.writeValueAsString(kafkaMessage);
@@ -63,7 +60,7 @@ public class TestUtils {
     ObjectNode kafkaMessage = mapper.createObjectNode();
     kafkaMessage.put("schema", String.format("%s, %s", schema, version));
     kafkaMessage.set("resource", resource);
-    kafkaMessage.put("action", "CREATE");
+    kafkaMessage.put("action", KafkaAction.CREATE.toString());
 
 
     return mapper.writeValueAsString(kafkaMessage);
@@ -74,12 +71,12 @@ public class TestUtils {
                                                                    String ownerId) {
     ObjectNode resourceNode = mapper.createObjectNode();
     resourceNode.put("id", id);
-    resourceNode.put("tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    resourceNode.put("tenantId", VALID_TENANT_ID);
     resourceNode.put("ownerId", ownerId);
-    resourceNode.put("timePeriodTypeId", "00000000-0000-0000-0000-000000000001");
-    resourceNode.put("shiftType", " ");
-    resourceNode.put("actualStartTime", "2022-01-01T15:00:00");
-    resourceNode.put("actualEndTime", "2022-01-01T16:00:00");
+    resourceNode.put("timePeriodTypeId", VALID_TIME_PERIOD_TYPE_ID);
+    resourceNode.put("shiftType", EMPTY_STRING);
+    resourceNode.put("actualStartTime", VALID_START_TIME);
+    resourceNode.put("actualEndTime", VALID_END_TIME);
 
     return resourceNode;
   }
@@ -88,10 +85,10 @@ public class TestUtils {
                                               String ownerId, String startTime, String endTime) {
     ObjectNode resourceNode = mapper.createObjectNode();
     resourceNode.put("id", id);
-    resourceNode.put("tenantId", "3fa85f64-5717-4562-b3fc-2c963f66afa6");
+    resourceNode.put("tenantId", VALID_TENANT_ID);
     resourceNode.put("ownerId", ownerId);
-    resourceNode.put("timePeriodTypeId", "00000000-0000-0000-0000-000000000001");
-    resourceNode.put("shiftType", " ");
+    resourceNode.put("timePeriodTypeId", VALID_TIME_PERIOD_TYPE_ID);
+    resourceNode.put("shiftType", EMPTY_STRING);
     resourceNode.put("actualStartTime", startTime);
     resourceNode.put("actualEndTime", endTime);
 

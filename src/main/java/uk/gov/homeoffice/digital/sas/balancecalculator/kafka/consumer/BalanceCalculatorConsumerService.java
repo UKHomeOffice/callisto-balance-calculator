@@ -8,21 +8,14 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constant
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.SCHEMA_JSON_ATTRIBUTE;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 import io.micrometer.core.instrument.Counter;
-import java.sql.Time;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Profile;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
