@@ -1,21 +1,7 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
-import org.springframework.test.annotation.DirtiesContext;
-
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
-import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
@@ -25,12 +11,28 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createResourceJson;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_COULD_NOT_DESERIALIZE_RESOURCE;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHEMA_INVALID_VERSION;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
+import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getResourceFromMessageAsString;
+import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.test.annotation.DirtiesContext;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
+import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils;
+import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
@@ -39,6 +41,9 @@ class BalanceCalculatorConsumerServiceTest {
 
   @Autowired
   BalanceCalculatorConsumerService balanceCalculatorConsumerService;
+
+  @Autowired
+  KafkaConsumerUtils<TimeEntry> consumerUtils;
 
   @Test
   void onMessage_deserializeKafkaMessageAndLogSuccess_when_validMessageIsReceived
@@ -62,7 +67,7 @@ class BalanceCalculatorConsumerServiceTest {
 
     // then
     assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
-        expectedTimeEntry.getId()));
+        message));
   }
 
   //Invalid resource throws error
@@ -79,7 +84,8 @@ class BalanceCalculatorConsumerServiceTest {
     assertThatThrownBy(() -> {
      balanceCalculatorConsumerService.onMessage(message);
     }).isInstanceOf(KafkaConsumerException.class)
-        .hasMessageContaining(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+        .hasMessageContaining(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD,
+            getSchemaFromMessageAsString(message)));
 
   }
 
@@ -95,7 +101,8 @@ class BalanceCalculatorConsumerServiceTest {
     assertThatThrownBy(() -> {
       balanceCalculatorConsumerService.onMessage(message);
     }).isInstanceOf(KafkaConsumerException.class)
-        .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION, message));
+        .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION,
+            getSchemaFromMessageAsString(message)));
   }
 
   //Desearilization error (missing/extra field?) on resource
@@ -121,7 +128,8 @@ class BalanceCalculatorConsumerServiceTest {
     assertThatThrownBy(() -> {
       balanceCalculatorConsumerService.onMessage(message);
     }).isInstanceOf(KafkaConsumerException.class)
-        .hasMessageContaining(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+        .hasMessageContaining(String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,
+            getResourceFromMessageAsString(message)));
   }
 
   //Invalid date format received

@@ -1,7 +1,5 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import org.apache.kafka.common.security.oauthbearer.secured.ValidateException;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +11,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
-import scala.reflect.internal.Trees;
-import uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer.BalanceCalculatorConsumerService;
 
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
@@ -29,14 +25,15 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.waitAtMost;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_KEY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHEMA_INVALID_VERSION;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
+import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 @SpringBootTest
@@ -106,7 +103,8 @@ class KafkaConsumerIntegrationTest {
           assertThatThrownBy(() -> {
             consumerService.onMessage(message);
           }).isInstanceOf(KafkaConsumerException.class)
-              .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION, message));
+              .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION,
+                  getSchemaFromMessageAsString(message)));
           });
   }
 
@@ -133,7 +131,8 @@ class KafkaConsumerIntegrationTest {
           assertThatThrownBy(() -> {
             consumerService.onMessage(message);
           }).isInstanceOf(KafkaConsumerException.class)
-              .hasMessageContaining(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, message));
+              .hasMessageContaining(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD,
+                  getSchemaFromMessageAsString(message)));
         });
   }
 

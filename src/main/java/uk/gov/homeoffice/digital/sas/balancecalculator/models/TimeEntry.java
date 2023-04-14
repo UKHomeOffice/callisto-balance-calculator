@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
+import uk.gov.homeoffice.digital.sas.kafka.message.Messageable;
 
 @Getter
 @Setter
@@ -22,7 +23,7 @@ import org.springframework.format.annotation.DateTimeFormat;
     "actualStartTime",
     "actualEndTime"
 })
-public class TimeEntry {
+public class TimeEntry implements Messageable {
 
   @JsonProperty("id")
   private String id;
@@ -47,4 +48,8 @@ public class TimeEntry {
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
   private Date actualEndTime;
 
+  @Override
+  public String resolveMessageKey() {
+    return tenantId + ":" + ownerId;
+  }
 }

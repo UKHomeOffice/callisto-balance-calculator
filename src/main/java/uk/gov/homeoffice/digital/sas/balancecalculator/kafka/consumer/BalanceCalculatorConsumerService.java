@@ -1,53 +1,42 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACTUATOR_ERROR_TYPE;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACTUATOR_KAFKA_FAILURE_DESCRIPTION;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACTUATOR_KAFKA_FAILURE_URL;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.KAFKA_UNSUCCESSFUL_DESERIALIZATION;
-import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.SCHEMA_JSON_ATTRIBUTE;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_COULD_NOT_DESERIALIZE_RESOURCE;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
+import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getResourceFromMessageAsString;
+import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import io.micrometer.core.instrument.Counter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import uk.gov.homeoffice.digital.sas.balancecalculator.actuator.ActuatorCounters;
+
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
+import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 @Service
 @Slf4j
 @Getter
-@ComponentScan({
-    "uk.gov.homeoffice.digital.sas.kafka.consumer",
-    "uk.gov.homeoffice.digital.sas.kafka.validators",
-    "uk.gov.homeoffice.digital.sas.kafka.configuration"})
+@Configuration("KafkaConsumerConfig")
 public class BalanceCalculatorConsumerService {
 
   private ObjectMapper mapper = new ObjectMapper();
 
-  private Counter errorCounter;
-
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
-  private final ActuatorCounters counters;
-
+  private final KafkaConsumerUtils<TimeEntry> kafkaConsumerUtils;
   public BalanceCalculatorConsumerService(KafkaConsumerService<TimeEntry> kafkaConsumerService,
-                                          ActuatorCounters counters) {
+                                          KafkaConsumerUtils<TimeEntry> kafkaConsumerUtils) {
     this.kafkaConsumerService = kafkaConsumerService;
-    this.counters = counters;
-    errorCounter = counters.setUpCounters(ACTUATOR_KAFKA_FAILURE_URL, ACTUATOR_ERROR_TYPE,
-        ACTUATOR_KAFKA_FAILURE_DESCRIPTION);
+    this.kafkaConsumerUtils = kafkaConsumerUtils;
   }
 
   @KafkaListener(
@@ -64,21 +53,11 @@ public class BalanceCalculatorConsumerService {
 
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
-        isTimeEntryDeserialized(payload, timeEntry);
+        kafkaConsumerUtils.checkDeserializedResource(payload, timeEntry);
       }
     } else {
-      throw new KafkaConsumerException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, payload));
-    }
-  }
-
-  private boolean isTimeEntryDeserialized(String payload, TimeEntry timeEntry) {
-    if (ObjectUtils.isEmpty(timeEntry)) {
-      errorCounter.increment();
-      log.error(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION, payload));
-      return false;
-    } else {
-      log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, timeEntry.getId()));
-      return true;
+      throw new KafkaConsumerException(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD,
+          getSchemaFromMessageAsString(payload)));
     }
   }
 
@@ -88,14 +67,14 @@ public class BalanceCalculatorConsumerService {
       return mapper.convertValue(
           kafkaEventMessage.getResource(), TimeEntry.class);
     } catch (IllegalArgumentException e) {
-      throw new KafkaConsumerException(String.format(KAFKA_UNSUCCESSFUL_DESERIALIZATION,
-          message), e);
+      throw new KafkaConsumerException(String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,
+          getResourceFromMessageAsString(message)), e);
     }
   }
 
   private boolean isResourceTimeEntry(String message) {
-    JsonObject jsonMessage = JsonParser.parseString(message).getAsJsonObject();
-    String schema = jsonMessage.get(SCHEMA_JSON_ATTRIBUTE).getAsString();
+    JsonParser.parseString(message).getAsJsonObject();
+    String schema = getSchemaFromMessageAsString(message);
 
     return schema.contains(TimeEntry.class.getSimpleName());
   }
