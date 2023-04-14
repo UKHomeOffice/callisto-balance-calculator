@@ -15,7 +15,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils;
@@ -33,6 +32,7 @@ public class BalanceCalculatorConsumerService {
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
   private final KafkaConsumerUtils<TimeEntry> kafkaConsumerUtils;
+
   public BalanceCalculatorConsumerService(KafkaConsumerService<TimeEntry> kafkaConsumerService,
                                           KafkaConsumerUtils<TimeEntry> kafkaConsumerUtils) {
     this.kafkaConsumerService = kafkaConsumerService;
