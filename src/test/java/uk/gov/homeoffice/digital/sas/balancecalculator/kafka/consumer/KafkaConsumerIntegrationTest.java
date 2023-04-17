@@ -25,10 +25,10 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.waitAtMost;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_RESOURCE;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.INVALID_RESOURCE_SCHEMA;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_KEY;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_RESOURCE;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_RESOURCE_SCHEMA;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHEMA_INVALID_VERSION;
@@ -56,7 +56,7 @@ class KafkaConsumerIntegrationTest {
   KafkaEventMessage<TimeEntry> kafkaEventMessage;
 
   @Autowired
-  BalanceCalculatorConsumerService consumerService;
+  TimeEntryConsumer consumerService;
 
   @Test
   void should_logSuccessMessage_when_messageValid(CapturedOutput capturedOutput) {
@@ -90,7 +90,7 @@ class KafkaConsumerIntegrationTest {
         TestUtils.getAsDate(LocalDateTime.now()),
         TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
 
-    String message = TestUtils.createKafkaMessage(MESSAGE_VALID_RESOURCE, MESSAGE_INVALID_VERSION
+    String message = TestUtils.createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_INVALID_VERSION
         , id, ownerId);
 
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_INVALID_VERSION, timeEntry,
@@ -118,7 +118,7 @@ class KafkaConsumerIntegrationTest {
         TestUtils.getAsDate(LocalDateTime.now()),
         TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
 
-    String message = TestUtils.createKafkaMessage(MESSAGE_INVALID_RESOURCE, MESSAGE_VALID_VERSION
+    String message = TestUtils.createKafkaMessage(INVALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION
         , id, ownerId);
 
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_INVALID_VERSION, timeEntry,

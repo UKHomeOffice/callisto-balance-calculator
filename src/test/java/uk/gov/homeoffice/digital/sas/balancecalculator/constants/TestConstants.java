@@ -17,9 +17,9 @@ public class TestConstants {
   public static final String EMPTY_STRING = " ";
 
   public static final String MESSAGE_KEY = "10001:500001";
-  public static final String MESSAGE_VALID_RESOURCE = "uk.gov.homeoffice.digital.sas" +
+  public static final String VALID_RESOURCE_SCHEMA = "uk.gov.homeoffice.digital.sas" +
       ".balancecalculator.models.TimeEntry";
 
-  public static final String MESSAGE_INVALID_RESOURCE =
+  public static final String INVALID_RESOURCE_SCHEMA =
       "uk.gov.homeoffice.digital.sas.model.unknownResource";
 }

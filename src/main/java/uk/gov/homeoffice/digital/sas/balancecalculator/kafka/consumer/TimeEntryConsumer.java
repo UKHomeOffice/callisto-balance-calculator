@@ -7,7 +7,6 @@ import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.ge
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -24,7 +23,7 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 @Service
 @Slf4j
 @Import(KafkaConsumerConfig.class)
-public class BalanceCalculatorConsumerService {
+public class TimeEntryConsumer {
 
   private ObjectMapper mapper = new ObjectMapper();
 
@@ -32,7 +31,7 @@ public class BalanceCalculatorConsumerService {
 
 
   @Autowired
-  public BalanceCalculatorConsumerService(KafkaConsumerService<TimeEntry> kafkaConsumerService) {
+  public TimeEntryConsumer(KafkaConsumerService<TimeEntry> kafkaConsumerService) {
     this.kafkaConsumerService = kafkaConsumerService;
   }
 
@@ -44,7 +43,7 @@ public class BalanceCalculatorConsumerService {
   public void onMessage(@Payload String payload)
       throws JsonProcessingException {
 
-    if (isResourceTimeEntry(payload)) {
+    if (kafkaConsumerService.isResourceOfType(payload, TimeEntry.class)) {
       KafkaEventMessage<TimeEntry> kafkaEventMessage =
           kafkaConsumerService.convertToKafkaEventMessage(payload);
 
@@ -59,20 +58,13 @@ public class BalanceCalculatorConsumerService {
   }
 
   private TimeEntry createTimeEntryFromKafkaEventMessage(
-      KafkaEventMessage<TimeEntry> kafkaEventMessage, String message) {
+      KafkaEventMessage<TimeEntry> kafkaEventMessage, String payload) {
     try {
       return mapper.convertValue(
           kafkaEventMessage.getResource(), TimeEntry.class);
     } catch (IllegalArgumentException e) {
       throw new KafkaConsumerException(String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,
-          getResourceFromMessageAsString(message)), e);
+          getResourceFromMessageAsString(payload)), e);
     }
-  }
-
-  private boolean isResourceTimeEntry(String message) {
-    JsonParser.parseString(message).getAsJsonObject();
-    String schema = getSchemaFromMessageAsString(message);
-
-    return schema.contains(TimeEntry.class.getSimpleName());
   }
 }
