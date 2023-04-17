@@ -60,7 +60,6 @@ class TimeEntryConsumerTest {
         message));
   }
 
-  //Invalid resource throws error
   @Test
   void onMessage_notDeserializeKafkaMessageAndThrowException_when_inValidResourceIsReceived() throws JsonProcessingException {
     //given
@@ -79,7 +78,6 @@ class TimeEntryConsumerTest {
 
   }
 
-  //Invalid version throws error
   @Test
   void onMessage_notDeserializeKafkaMessageAndThrowException_inValidVersionIsReceived() throws JsonProcessingException {
     String id = UUID.randomUUID().toString();
@@ -120,7 +118,6 @@ class TimeEntryConsumerTest {
             getResourceFromMessageAsString(message)));
   }
 
-  //Invalid date format received
   @Test
   void onMessage_notDeserializeKafkaMessage_invalidDateFormatReceived() throws JsonProcessingException {
     String id = UUID.randomUUID().toString();

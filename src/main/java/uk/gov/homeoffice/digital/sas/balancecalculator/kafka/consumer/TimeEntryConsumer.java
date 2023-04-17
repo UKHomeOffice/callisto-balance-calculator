@@ -35,36 +35,26 @@ public class TimeEntryConsumer {
     this.kafkaConsumerService = kafkaConsumerService;
   }
 
-  @KafkaListener(
-      topics = {"${spring.kafka.template.default-topic}"},
-      groupId = "${spring.kafka.consumer.group-id}",
-      errorHandler = "kafkaConsumerErrorHandler"
-  )
-  public void onMessage(@Payload String payload)
-      throws JsonProcessingException {
+  @KafkaListener(topics = {"${spring.kafka.template.default-topic}"}, groupId = "${spring.kafka.consumer.group-id}", errorHandler = "kafkaConsumerErrorHandler")
+  public void onMessage(@Payload String payload) throws JsonProcessingException {
 
     if (kafkaConsumerService.isResourceOfType(payload, TimeEntry.class)) {
-      KafkaEventMessage<TimeEntry> kafkaEventMessage =
-          kafkaConsumerService.convertToKafkaEventMessage(payload);
+      KafkaEventMessage<TimeEntry> kafkaEventMessage = kafkaConsumerService.convertToKafkaEventMessage(payload);
 
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
         kafkaConsumerService.checkDeserializedResource(payload, timeEntry);
       }
     } else {
-      throw new KafkaConsumerException(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD,
-          getSchemaFromMessageAsString(payload)));
+      throw new KafkaConsumerException(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD, getSchemaFromMessageAsString(payload)));
     }
   }
 
-  private TimeEntry createTimeEntryFromKafkaEventMessage(
-      KafkaEventMessage<TimeEntry> kafkaEventMessage, String payload) {
+  private TimeEntry createTimeEntryFromKafkaEventMessage(KafkaEventMessage<TimeEntry> kafkaEventMessage, String payload) {
     try {
-      return mapper.convertValue(
-          kafkaEventMessage.getResource(), TimeEntry.class);
+      return mapper.convertValue(kafkaEventMessage.getResource(), TimeEntry.class);
     } catch (IllegalArgumentException e) {
-      throw new KafkaConsumerException(String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,
-          getResourceFromMessageAsString(payload)), e);
+      throw new KafkaConsumerException(String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE, getResourceFromMessageAsString(payload)), e);
     }
   }
 }
