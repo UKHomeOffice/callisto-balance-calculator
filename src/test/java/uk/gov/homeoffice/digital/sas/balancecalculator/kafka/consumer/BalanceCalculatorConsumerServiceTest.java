@@ -31,7 +31,6 @@ import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.annotation.DirtiesContext;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
-import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 
 @SpringBootTest
@@ -42,12 +41,9 @@ class BalanceCalculatorConsumerServiceTest {
   @Autowired
   BalanceCalculatorConsumerService balanceCalculatorConsumerService;
 
-  @Autowired
-  KafkaConsumerUtils<TimeEntry> consumerUtils;
-
   @Test
   void onMessage_deserializeKafkaMessageAndLogSuccess_when_validMessageIsReceived
-      (CapturedOutput capturedOutput) throws JsonProcessingException, ClassNotFoundException {
+      (CapturedOutput capturedOutput) throws JsonProcessingException {
 
     // given
     String id = UUID.randomUUID().toString();

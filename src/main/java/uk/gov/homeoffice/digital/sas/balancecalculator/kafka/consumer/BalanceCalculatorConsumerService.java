@@ -8,35 +8,32 @@ import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.ge
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParser;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
-import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils;
+import uk.gov.homeoffice.digital.sas.kafka.consumer.configuration.KafkaConsumerConfig;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 @Service
 @Slf4j
-@Getter
-@Configuration("KafkaConsumerConfig")
+@Import(KafkaConsumerConfig.class)
 public class BalanceCalculatorConsumerService {
 
   private ObjectMapper mapper = new ObjectMapper();
 
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
-  private final KafkaConsumerUtils<TimeEntry> kafkaConsumerUtils;
 
-  public BalanceCalculatorConsumerService(KafkaConsumerService<TimeEntry> kafkaConsumerService,
-                                          KafkaConsumerUtils<TimeEntry> kafkaConsumerUtils) {
+  @Autowired
+  public BalanceCalculatorConsumerService(KafkaConsumerService<TimeEntry> kafkaConsumerService) {
     this.kafkaConsumerService = kafkaConsumerService;
-    this.kafkaConsumerUtils = kafkaConsumerUtils;
   }
 
   @KafkaListener(
@@ -53,7 +50,7 @@ public class BalanceCalculatorConsumerService {
 
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
-        kafkaConsumerUtils.checkDeserializedResource(payload, timeEntry);
+        kafkaConsumerService.checkDeserializedResource(payload, timeEntry);
       }
     } else {
       throw new KafkaConsumerException(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD,
