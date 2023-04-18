@@ -1,7 +1,7 @@
 version: "3.3"
 
 services:
-  callisto-balance-calculator:
+  balance-calculator:
     image: maven:3.8.3-openjdk-17
     entrypoint:
       [
@@ -15,15 +15,21 @@ services:
     user: "1000"
     working_dir: "/app"
     ports:
-      - "50500:9090"
-      - "5005:5005"
+      - "50210:9090"
+      - "50211:5005"
     volumes:
       - ./:/app
       - $HOME/.m2:/Users/1000/.m2 # Required for artifactory dependencies
+      - keystore:/keystore
     environment:
-      - HOME=/Users/1000
-      - MAVEN_USER_HOME=/Users/1000/.m2
-      - SPRING_PROFILES_ACTIVE=localdev
+      HOME: /Users/1000
+      MAVEN_USER_HOME: /Users/1000/.m2
+      KEYSTORE_LOCATION: file://keystore/kafka/kafka.keystore.jks
+      KEYSTORE_PASSWORD: changeit
+      SPRING_APPLICATION_JSON: '{
+          "spring.kafka.ssl.trust-store-location": "file://keystore/kafka/kafka.truststore.jks",
+          "spring.kafka.ssl.trust-store-password": "changeit"
+        }'
     networks:
       - callisto
 
@@ -31,4 +37,9 @@ networks:
   callisto:
     name: callisto-localdev_callisto
     driver: bridge
+    external: true
+
+volumes:
+  keystore:
+    name: callisto-localdev_keystore
     external: true
