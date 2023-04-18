@@ -2,6 +2,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_COULD_NOT_DESERIALIZE_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getResourceFromMessageAsString;
 import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
 
@@ -46,7 +47,11 @@ public class TimeEntryConsumer {
 
       if (!ObjectUtils.isEmpty(kafkaEventMessage)) {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
-        kafkaConsumerService.checkDeserializedResource(payload, timeEntry);
+        log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, payload));
+
+        //this log message can be deleted when calculate logic is implemented. This is to stop
+        // introduction of a code smell by having an Object(timeEntry) not used within the code
+        log.info(String.format("TimeEntry Created [ %s ]", timeEntry.toString()));
       }
     } else {
       throw new KafkaConsumerException(
