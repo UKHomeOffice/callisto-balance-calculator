@@ -15,6 +15,7 @@ import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.ge
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -63,8 +64,8 @@ class KafkaConsumerIntegrationTest {
     String ownerId = UUID.randomUUID().toString();
 
     TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
-        TestUtils.getAsDate(LocalDateTime.now()),
-        TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
+        LocalDateTime.now().atZone(ZoneOffset.UTC),
+        LocalDateTime.now().plusHours(1).atZone(ZoneOffset.UTC));
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_VALID_VERSION, timeEntry,
         KafkaAction.CREATE);
 
@@ -85,8 +86,8 @@ class KafkaConsumerIntegrationTest {
     String ownerId = UUID.randomUUID().toString();
 
     TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
-        TestUtils.getAsDate(LocalDateTime.now()),
-        TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
+        LocalDateTime.now().atZone(ZoneOffset.UTC),
+        LocalDateTime.now().plusHours(1).atZone(ZoneOffset.UTC));
 
     String message = TestUtils.createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_INVALID_VERSION
         , id, ownerId);
@@ -113,8 +114,8 @@ class KafkaConsumerIntegrationTest {
     String ownerId = UUID.randomUUID().toString();
 
     TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
-        TestUtils.getAsDate(LocalDateTime.now()),
-        TestUtils.getAsDate(LocalDateTime.now().plusHours(1)));
+        LocalDateTime.now().atZone(ZoneOffset.UTC),
+        LocalDateTime.now().plusHours(1).atZone(ZoneOffset.UTC));
 
     String message = TestUtils.createKafkaMessage(INVALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION
         , id, ownerId);

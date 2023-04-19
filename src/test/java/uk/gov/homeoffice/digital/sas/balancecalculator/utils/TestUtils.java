@@ -10,16 +10,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
-import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 public class TestUtils {
 
-  private static ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-  public static TimeEntry createTimeEntry(String id, String ownerId, Date startTime,
-                                          Date finishTime) {
+  public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,
+                                          ZonedDateTime finishTime) {
 
     var timeEntry = new TimeEntry();
     timeEntry.setId(id);
@@ -30,10 +30,6 @@ public class TestUtils {
     timeEntry.setActualStartTime(startTime);
     timeEntry.setActualEndTime(finishTime);
     return timeEntry;
-  }
-
-  public static Date getAsDate(LocalDateTime dateTime) {
-    return Date.from(dateTime.toInstant(ZoneOffset.UTC));
   }
 
   public static String createKafkaMessage(String schema,
