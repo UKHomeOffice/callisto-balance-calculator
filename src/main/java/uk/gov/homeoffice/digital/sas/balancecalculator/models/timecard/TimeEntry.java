@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.digital.sas.balancecalculator.models;
+package uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

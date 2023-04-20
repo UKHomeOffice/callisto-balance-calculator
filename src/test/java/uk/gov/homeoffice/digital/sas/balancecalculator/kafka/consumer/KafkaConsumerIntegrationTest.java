@@ -8,6 +8,8 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_KEY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_RESOURCE_SCHEMA;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createKafkaMessage;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createResourceJson;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHEMA_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
@@ -16,6 +18,7 @@ import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.ge
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
@@ -29,7 +32,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
@@ -46,6 +49,12 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
     "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}"})
 class KafkaConsumerIntegrationTest {
 
+  private static final String TIME_ENTRY_ID = UUID.randomUUID().toString();
+  private static final String OWNER_ID = UUID.randomUUID().toString();
+  public static final ZonedDateTime SHIFT_START_TIME = LocalDateTime.now().atZone(ZoneOffset.UTC);
+  public static final ZonedDateTime SHIFT_END_TIME = SHIFT_START_TIME.plusHours(1);
+
+
   @Value("${spring.kafka.template.default-topic}")
   private String topicName;
 
@@ -58,39 +67,39 @@ class KafkaConsumerIntegrationTest {
   TimeEntryConsumer consumerService;
 
   @Test
-  void should_logSuccessMessage_when_messageValid(CapturedOutput capturedOutput) {
+  void should_logSuccessMessage_when_messageValid(CapturedOutput capturedOutput)
+      throws JsonProcessingException {
     // Given
-    String id = UUID.randomUUID().toString();
-    String ownerId = UUID.randomUUID().toString();
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
-        LocalDateTime.now().atZone(ZoneOffset.UTC),
-        LocalDateTime.now().plusHours(1).atZone(ZoneOffset.UTC));
+    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
+        SHIFT_START_TIME,
+        SHIFT_END_TIME);
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_VALID_VERSION, timeEntry,
         KafkaAction.CREATE);
 
     // When
     kafkaTemplate.send(topicName, MESSAGE_KEY, kafkaEventMessage);
     // Then
+
+    String expectedPayload = createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION,
+        createResourceJson(timeEntry.getId(), timeEntry.getOwnerId(),
+            timeEntry.getActualStartTime().toString(), timeEntry.getActualEndTime().toString()));
     waitAtMost(3, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
-          assertThat(capturedOutput.getOut().contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
-              timeEntry.getId())));
-        });
+        .untilAsserted(() ->
+          assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
+              expectedPayload))
+        );
   }
 
   @Test
   void should_throwException_when_versionInvalid() throws JsonProcessingException {
     // Given
-    String id = UUID.randomUUID().toString();
-    String ownerId = UUID.randomUUID().toString();
+    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
+        SHIFT_START_TIME,
+        SHIFT_END_TIME);
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
-        LocalDateTime.now().atZone(ZoneOffset.UTC),
-        LocalDateTime.now().plusHours(1).atZone(ZoneOffset.UTC));
-
-    String message = TestUtils.createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_INVALID_VERSION
-        , id, ownerId);
+    String message = createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_INVALID_VERSION
+        , TIME_ENTRY_ID, OWNER_ID);
 
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_INVALID_VERSION, timeEntry,
         KafkaAction.CREATE);
@@ -110,15 +119,12 @@ class KafkaConsumerIntegrationTest {
   @Test
   void should_throwException_when_resourceInvalid() throws JsonProcessingException {
     // Given
-    String id = UUID.randomUUID().toString();
-    String ownerId = UUID.randomUUID().toString();
+    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
+        SHIFT_START_TIME,
+        SHIFT_END_TIME);
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(id, ownerId,
-        LocalDateTime.now().atZone(ZoneOffset.UTC),
-        LocalDateTime.now().plusHours(1).atZone(ZoneOffset.UTC));
-
-    String message = TestUtils.createKafkaMessage(INVALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION
-        , id, ownerId);
+    String message = createKafkaMessage(INVALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION
+        , TIME_ENTRY_ID, OWNER_ID);
 
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_INVALID_VERSION, timeEntry,
         KafkaAction.CREATE);

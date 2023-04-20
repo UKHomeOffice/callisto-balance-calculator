@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.digital.sas.balancecalculator.accrual;
+package uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -10,14 +10,20 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import uk.gov.homeoffice.digital.sas.jparest.models.BaseEntity;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
 @Setter
-public class Accrual extends BaseEntity {
+public class Accrual {
+
+  private UUID id;
+
+  private UUID tenantId;
+
+  // TODO: add personId to Accruals entity in Accruals service
+  private UUID personId;
 
   @NotNull(message = "Agreement ID should not be null")
   private UUID agreementId;

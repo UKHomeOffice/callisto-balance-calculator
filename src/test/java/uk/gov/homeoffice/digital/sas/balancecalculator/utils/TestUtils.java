@@ -8,11 +8,8 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Date;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class TestUtils {
 
