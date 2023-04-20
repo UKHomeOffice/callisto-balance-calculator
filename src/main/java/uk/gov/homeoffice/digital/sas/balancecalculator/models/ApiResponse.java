@@ -8,7 +8,7 @@ import lombok.Setter;
 
 // TODO: re-use JPA REST's  ApiResponse after adding NoArg constructor
 // TODO: should the ApiResponse class be in an independent library?
-//  (for client code only needing to consume JPA REST response, and necessarily the
+//  (for client code only needing to consume JPA REST response, and not necessarily the
 //  full features of the jparest library)
 @NoArgsConstructor(force = true)
 public class ApiResponse<T> {
