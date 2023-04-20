@@ -107,13 +107,13 @@ class KafkaConsumerIntegrationTest {
     kafkaTemplate.send(topicName, MESSAGE_KEY, kafkaEventMessage);
     // Then
     waitAtMost(3, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
+        .untilAsserted(() ->
           assertThatThrownBy(() ->
             consumerService.onMessage(message))
               .isInstanceOf(KafkaConsumerException.class)
               .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION,
-                  getSchemaFromMessageAsString(message)));
-        });
+                  getSchemaFromMessageAsString(message)))
+        );
   }
 
   @Test
@@ -132,12 +132,12 @@ class KafkaConsumerIntegrationTest {
     kafkaTemplate.send(topicName, MESSAGE_KEY, kafkaEventMessage);
     // Then
     waitAtMost(3, TimeUnit.SECONDS)
-        .untilAsserted(() -> {
+        .untilAsserted(() ->
           assertThatThrownBy(() -> consumerService.onMessage(message))
               .isInstanceOf(KafkaConsumerException.class)
               .hasMessageContaining(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD,
-                  getSchemaFromMessageAsString(message)));
-        });
+                  getSchemaFromMessageAsString(message)))
+        );
   }
 
 }
