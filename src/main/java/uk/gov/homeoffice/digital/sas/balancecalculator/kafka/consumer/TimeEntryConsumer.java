@@ -65,7 +65,8 @@ public class TimeEntryConsumer {
   private TimeEntry createTimeEntryFromKafkaEventMessage(
       KafkaEventMessage<TimeEntry> kafkaEventMessage, String payload) {
     try {
-      return balanceCalculatorObjectMapper.convertValue(kafkaEventMessage.getResource(), TimeEntry.class);
+      return balanceCalculatorObjectMapper
+          .convertValue(kafkaEventMessage.getResource(), TimeEntry.class);
     } catch (IllegalArgumentException e) {
       throw new KafkaConsumerException(
           String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,

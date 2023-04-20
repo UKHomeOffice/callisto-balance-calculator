@@ -40,8 +40,8 @@ public class BalanceCalculator {
 
   }
 
-  private Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId, String personId,
-      LocalDate accrualDate, Range<ZonedDateTime> dateTimeRange) {
+  private Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId,
+      String personId, LocalDate accrualDate, Range<ZonedDateTime> dateTimeRange) {
 
     Accrual accrual = restClient.getAccrualByDate(tenantId, personId, accrualDate);
 
@@ -63,14 +63,16 @@ public class BalanceCalculator {
     return new BigDecimal(minutes / 60);
   }
 
-  Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime, ZonedDateTime endDateTime) {
+  Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
+      ZonedDateTime endDateTime) {
     Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
     if (startDateTime.toLocalDate().isEqual(endDateTime.toLocalDate())) {
       Range<ZonedDateTime> range = Range.closed(startDateTime, endDateTime);
       intervals.put(startDateTime.toLocalDate(), range);
     } else {
       // TODO: cover case when time entry span over multiple days
-      throw new UnsupportedOperationException("Case when time entry spans over multiple days isn't implemented yet");
+      throw new UnsupportedOperationException(
+          "Case when time entry spans over multiple days isn't implemented yet");
     }
 
     return intervals;
