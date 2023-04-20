@@ -18,9 +18,15 @@ public class TestUtils {
   public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,
                                           ZonedDateTime finishTime) {
 
+    return createTimeEntry(id,VALID_TENANT_ID, ownerId, startTime, finishTime);
+  }
+
+  public static TimeEntry createTimeEntry(String id, String tenantId, String ownerId,
+      ZonedDateTime startTime, ZonedDateTime finishTime) {
+
     var timeEntry = new TimeEntry();
     timeEntry.setId(id);
-    timeEntry.setTenantId(VALID_TENANT_ID);
+    timeEntry.setTenantId(tenantId);
     timeEntry.setOwnerId(ownerId);
     timeEntry.setTimePeriodTypeId(VALID_TIME_PERIOD_TYPE_ID);
     timeEntry.setShiftType(EMPTY_STRING);

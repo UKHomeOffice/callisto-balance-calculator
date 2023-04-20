@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -43,14 +44,18 @@ public class BalanceCalculator {
   private Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId,
       String personId, LocalDate accrualDate, Range<ZonedDateTime> dateTimeRange) {
 
-    Accrual accrual = restClient.getAccrualByDate(tenantId, personId, accrualDate);
+    List<Accrual> accruals = restClient.getAccrualByDate(tenantId, personId, accrualDate);
+
+    // TODO what to do if there are no accrual records ?
 
     BigDecimal hours = calculateDurationInHours(dateTimeRange);
 
-    Contributions contributions = new Contributions();
-    contributions.setTimeEntries(Map.of(UUID.fromString(timeEntryId), hours));
-    contributions.setTotal(hours);
-    accrual.setContributions(contributions);
+    Accrual accrual = accruals.get(0);
+
+    Contributions contributions = accrual.getContributions();
+    contributions.getTimeEntries().put(UUID.fromString(timeEntryId), hours);
+    BigDecimal total = contributions.getTotal().add(hours);
+    contributions.setTotal(total);
     return accrual;
   }
 
@@ -70,9 +75,9 @@ public class BalanceCalculator {
       Range<ZonedDateTime> range = Range.closed(startDateTime, endDateTime);
       intervals.put(startDateTime.toLocalDate(), range);
     } else {
-      // TODO: cover case when time entry span over multiple days
+      // TODO: cover case when time entry span multiple days
       throw new UnsupportedOperationException(
-          "Case when time entry spans over multiple days isn't implemented yet");
+          "Case when time entry spans multiple days isn't implemented yet");
     }
 
     return intervals;
