@@ -37,7 +37,7 @@ public class RestClient {
 
   // TODO make some of this reusable
 
-  public List<Accrual> getAccrualByDate(String tenantId, String personId, LocalDate accrualDate) {
+  public List<Accrual> getAccrualsByDate(String tenantId, String personId, LocalDate accrualDate) {
     String url = accrualsUrl + "/resources/accruals?tenantId={tenantId}&filter={filter}";
     Map<String, String> parameters = Map.of(
         TENANT_ID_STRING_IDENTIFIER, tenantId,

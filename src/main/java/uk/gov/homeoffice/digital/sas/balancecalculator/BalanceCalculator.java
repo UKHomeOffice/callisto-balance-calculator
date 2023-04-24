@@ -37,38 +37,39 @@ public class BalanceCalculator {
     Set<Accrual> accrualSet = dateRangeMap.entrySet().stream()
         .map(entry
             -> calculateContributionsAndUpdateAccrual(timeEntry.getId(), timeEntry.getTenantId(),
-            timeEntry.getOwnerId(), entry.getKey(), entry.getValue())
-    ).collect(Collectors.toSet());
+            timeEntry.getOwnerId(), entry.getKey(), entry.getValue()))
+        .collect(Collectors.toSet());
 
 
-     //increment cumlativeTotal
+    //increment cumlativeTotal
     accrualSet.forEach(a -> {
-          //update new accrual cumulative total
+      //update new accrual cumulative total
 
-          // check previous record first? then update cumulative total.
-          a.setCumulativeTotal(a.getCumulativeTotal().add(a.getContributions().getTotal()));
+      // check previous record first? then update cumulative total.
+      a.setCumulativeTotal(a.getCumulativeTotal().add(a.getContributions().getTotal()));
 
       //update all other records after this new accrual
-        List<Accrual> accrualsToUpdate = getAccrualRecordToEndOfAgreement(timeEntry,
+      List<Accrual> accrualsToUpdate = getAccrualRecordToEndOfAgreement(timeEntry,
           a.getAgreementId());
-        });
+    });
 
     return accrualSet;
   }
 
-  private Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId,
-      String personId, LocalDate accrualDate, Range<ZonedDateTime> dateTimeRange) {
+  Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId,
+                                                 String personId, LocalDate accrualDate,
+                                                 Range<ZonedDateTime> dateTimeRange) {
 
-    List<Accrual> accruals = restClient.getAccrualByDate(tenantId, personId, accrualDate);
-
+    List<Accrual> accruals = restClient.getAccrualsByDate(tenantId, personId, accrualDate);
     // TODO what to do if there are no accrual records ?
+    Accrual accrual = accruals.get(0); // only one accrual type right now - turn into loop later
 
     BigDecimal hours = calculateDurationInHours(dateTimeRange);
-    Accrual accrual = accruals.get(0);
 
     Contributions contributions = accrual.getContributions();
     contributions.getTimeEntries().put(UUID.fromString(timeEntryId), hours);
-    BigDecimal total = contributions.getTotal().add(hours);
+    BigDecimal total =
+        contributions.getTimeEntries().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     contributions.setTotal(total);
     return accrual;
   }
@@ -85,10 +86,10 @@ public class BalanceCalculator {
   }
 
   Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
-      ZonedDateTime endDateTime) {
+                                                     ZonedDateTime endDateTime) {
     Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
-    // if start and end on same day
-    if (startDateTime.toLocalDate().isEqual(endDateTime.toLocalDate())) {
+
+    if (isOnSameDay(startDateTime, endDateTime)) {
       Range<ZonedDateTime> range = Range.closed(startDateTime, endDateTime);
       intervals.put(startDateTime.toLocalDate(), range);
     } else {
@@ -100,10 +101,14 @@ public class BalanceCalculator {
     return intervals;
   }
 
+  private boolean isOnSameDay(ZonedDateTime dateTimeOne, ZonedDateTime dateTimeTwo) {
+    return dateTimeOne.toLocalDate().isEqual(dateTimeTwo.toLocalDate());
+  }
+
   //get accrual records from date to end of agreement
   private List<Accrual> getAccrualRecordToEndOfAgreement(TimeEntry timeEntry, UUID agreementId) {
-     Agreement agreement = restClient.getAgreementById(timeEntry.getTenantId(),
-         agreementId.toString());
+    Agreement agreement = restClient.getAgreementById(timeEntry.getTenantId(),
+        agreementId.toString());
 
     return restClient.getAllAccrualsAfterDate(agreement.getEndDate(),
         timeEntry.getActualStartTime().toLocalDate(), timeEntry.getTenantId(),

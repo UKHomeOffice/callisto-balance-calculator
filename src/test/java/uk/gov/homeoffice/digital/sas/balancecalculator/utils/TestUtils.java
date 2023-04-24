@@ -5,6 +5,7 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_START_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -18,11 +19,11 @@ public class TestUtils {
   public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,
                                           ZonedDateTime finishTime) {
 
-    return createTimeEntry(id,VALID_TENANT_ID, ownerId, startTime, finishTime);
+    return createTimeEntry(id, VALID_TENANT_ID, ownerId, startTime, finishTime);
   }
 
   public static TimeEntry createTimeEntry(String id, String tenantId, String ownerId,
-      ZonedDateTime startTime, ZonedDateTime finishTime) {
+                                          ZonedDateTime startTime, ZonedDateTime finishTime) {
 
     var timeEntry = new TimeEntry();
     timeEntry.setId(id);
@@ -91,6 +92,5 @@ public class TestUtils {
 
     return resourceNode;
   }
-
 
 }
