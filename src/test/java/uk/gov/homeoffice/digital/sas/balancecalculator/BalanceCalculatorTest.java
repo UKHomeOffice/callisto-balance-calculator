@@ -2,6 +2,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createTimeEntry;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 @ExtendWith(MockitoExtension.class)
 class BalanceCalculatorTest {
@@ -87,6 +90,28 @@ class BalanceCalculatorTest {
   }
 
   @Test
+  void updateSubsequentAccruals_timeEntryWithinCalendarDay_updateCumulativeTotal()
+      throws IOException {
+    TimeEntry timeEntry =
+        createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME, SHIFT_END_TIME);
+    List<Accrual> accruals = loadAccrualsFromFile("data/mockSubsequentAccruals.json");
+
+    List<Accrual> result = balanceCalculator.updateSubsequentAccruals(timeEntry, accruals);
+
+    assertThat(result.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(8));
+
+    assertThat(result.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(18));
+
+    assertThat(result.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(22));
+
+    assertThat(result.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(34));
+  }
+
+  @Test
   void calculateDurationInHours_TODO() {
 
     BigDecimal hours = balanceCalculator.calculateDurationInHours(DATE_TIME_RANGE);
@@ -111,7 +136,7 @@ class BalanceCalculatorTest {
     mapper.registerModule(new JavaTimeModule());
 
     File file = new File(
-        this.getClass().getClassLoader().getResource(filePath).getFile()
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource(filePath)).getFile()
     );
     return mapper.readValue(file, new TypeReference<>() {
     });

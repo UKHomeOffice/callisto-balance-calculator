@@ -5,7 +5,7 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.cr
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;
-import java.util.Set;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    Set<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
     assertThat(accruals).hasSize(1);
 
     Accrual actual = accruals.iterator().next();

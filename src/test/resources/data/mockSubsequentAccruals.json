@@ -1,0 +1,69 @@
+[
+  {
+    "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+    "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+    "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+    "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+    "accrualDate": "2023-04-17",
+    "accrualTypeId": "00000000-0000-0000-0000-000000000004",
+    "cumulativeTotal": 8,
+    "cumulativeTarget": 8,
+    "contributions": {
+      "timeEntries": {
+        "3323bc4b-6b1e-4204-9df0-76e3339a3b88": 8.00
+      },
+      "total": 8.00
+    }
+  },
+  {
+    "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+    "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+    "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+    "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+    "accrualDate": "2023-04-18",
+    "accrualTypeId": "00000000-0000-0000-0000-000000000004",
+    "cumulativeTotal": 16,
+    "cumulativeTarget": 16,
+    "contributions": {
+      "timeEntries": {
+        "7f000001-879e-1b02-8187-9ef1640f0003": 2.00,
+        "85cd140e-9eeb-4771-ab6c-6dea17fcfcba": 2.00,
+        "e7d85e42-f0fb-4e2a-8211-874e27d1e888": 6.00
+      },
+      "total": 10.00
+    }
+  },
+  {
+    "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+    "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+    "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+    "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+    "accrualDate": "2023-04-19",
+    "accrualTypeId": "00000000-0000-0000-0000-000000000004",
+    "cumulativeTotal": 20,
+    "cumulativeTarget": 24,
+    "contributions": {
+      "timeEntries": {
+        "9caab6a7-31a5-4679-bd14-fbf09b1cec92": 4.00
+      },
+      "total": 4.00
+    }
+  },
+  {
+    "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+    "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+    "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+    "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+    "accrualDate": "2023-04-20",
+    "accrualTypeId": "00000000-0000-0000-0000-000000000004",
+    "cumulativeTotal": 32,
+    "cumulativeTarget": 32,
+    "contributions": {
+      "timeEntries": {
+        "5afbfbeb-0d65-4e7e-bced-fb7e3a214c76": 8.00,
+        "fee2523d-380e-4116-b2f3-d526d1b6ab55": 4.00
+      },
+      "total": 12.00
+    }
+  }
+]

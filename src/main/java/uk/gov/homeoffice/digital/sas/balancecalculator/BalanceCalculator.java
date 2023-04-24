@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,31 +28,32 @@ public class BalanceCalculator {
     this.restClient = restClient;
   }
 
-  public Set<Accrual> calculate(TimeEntry timeEntry) {
+  public List<Accrual> calculate(TimeEntry timeEntry) {
 
     Map<LocalDate, Range<ZonedDateTime>> dateRangeMap =
         splitOverDays(timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
 
-    Set<Accrual> accrualSet = dateRangeMap.entrySet().stream()
+    List<Accrual> accruals = dateRangeMap.entrySet().stream()
         .map(entry
             -> calculateContributionsAndUpdateAccrual(timeEntry.getId(), timeEntry.getTenantId(),
             timeEntry.getOwnerId(), entry.getKey(), entry.getValue()))
-        .collect(Collectors.toSet());
+        .collect(Collectors.toList());
 
+//          List<Accrual> accrualsToUpdate = getAccrualRecordToEndOfAgreement(timeEntry,
+//          a.getAgreementId());
+    return updateSubsequentAccruals(timeEntry, accruals);
+  }
 
+  List<Accrual> updateSubsequentAccruals(TimeEntry timeEntry, List<Accrual> accruals) {
     //increment cumlativeTotal
-    accrualSet.forEach(a -> {
+    return accruals.stream().peek(a -> {
       //update new accrual cumulative total
 
       // check previous record first? then update cumulative total.
       a.setCumulativeTotal(a.getCumulativeTotal().add(a.getContributions().getTotal()));
-
       //update all other records after this new accrual
-      List<Accrual> accrualsToUpdate = getAccrualRecordToEndOfAgreement(timeEntry,
-          a.getAgreementId());
-    });
 
-    return accrualSet;
+    }).collect(Collectors.toList());
   }
 
   Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId,
