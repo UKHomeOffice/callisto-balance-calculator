@@ -35,8 +35,10 @@ public class RestClient {
     this.accrualsUrl = accrualsUrl;
   }
 
+  // TODO make some of this reusable
+
   public List<Accrual> getAccrualByDate(String tenantId, String personId, LocalDate accrualDate) {
-    String url = accrualsUrl + "/resources/accruals?tenantId={tenantId}={tenantId}&filter={filter}";
+    String url = accrualsUrl + "/resources/accruals?tenantId={tenantId}&filter={filter}";
     Map<String, String> parameters = Map.of(
         TENANT_ID_STRING_IDENTIFIER, tenantId,
         FILTER_STRING_IDENTIFIER, "accrualDate=='" + accrualDate + "'&&personId=='" + personId + "'"
@@ -48,22 +50,24 @@ public class RestClient {
 
     return Objects.requireNonNull(entity.getBody()).getItems();
   }
-  /**
-   * Jonathan wrote this bit
-   */
-  public List<Agreement> getAgreementByPersonId(String tenantId, String personId) {
+
+  public Agreement getAgreementById(String tenantId, String agreementId) {
     String url = accrualsUrl + "/resources/agreements?tenantId={tenantId}&filter={filter}";
     Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId,
-        FILTER_STRING_IDENTIFIER, "personId=='" + personId + "'");
+        FILTER_STRING_IDENTIFIER, "id=='" + agreementId + "'");
 
     ResponseEntity<ApiResponse<Agreement>> entity
         = restTemplate.exchange(url, HttpMethod.GET, null,
         new ParameterizedTypeReference<>() {}, parameters);
 
-    return Objects.requireNonNull(entity.getBody()).getItems();
+    if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
+      return Objects.requireNonNull(entity.getBody()).getItems().get(0);
+    }
+    // else throw exception
+
+    return null;
   }
 
-  // TODO make some of this reusable
   public List<Accrual> getAllAccrualsAfterDate(LocalDate agreementEndDate,
                                                LocalDate timeEntryDate, String tenantId,
                                                String personId) {

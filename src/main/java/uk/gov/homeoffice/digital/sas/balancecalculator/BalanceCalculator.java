@@ -40,19 +40,18 @@ public class BalanceCalculator {
             timeEntry.getOwnerId(), entry.getKey(), entry.getValue())
     ).collect(Collectors.toSet());
 
-    /**
-     * @Jonathan wrote this bit
-     */
-    // increment cumlativeTotal
-    accrualSet.forEach(a -> a.setCumulativeTotal(
-        a.getCumulativeTotal().add(a.getContributions().getTotal())));
 
-    //RIPPLE THROUGH
-    //get accrual records up to end of agreement
-    List<Accrual> accrualsToUpdate = getAccrualRecordToEndOfAgreement(timeEntry);
+     //increment cumlativeTotal
+    accrualSet.forEach(a -> {
+          //update new accrual cumulative total
 
-    accrualsToUpdate.forEach(a -> a.setCumulativeTotal(
-        a.getCumulativeTotal().add(a.getContributions().getTotal())));
+          // check previous record first? then update cumulative total.
+          a.setCumulativeTotal(a.getCumulativeTotal().add(a.getContributions().getTotal()));
+
+      //update all other records after this new accrual
+        List<Accrual> accrualsToUpdate = getAccrualRecordToEndOfAgreement(timeEntry,
+          a.getAgreementId());
+        });
 
     return accrualSet;
   }
@@ -79,14 +78,9 @@ public class BalanceCalculator {
         Duration.between(dateTimeRange.lowerEndpoint(), dateTimeRange.upperEndpoint());
 
     // TODO: rounding?
-    /**
-     * SMALL REFACTOR maybe I forgot something but why didn't we just do this?
-     * Instead of this
-     * long minutes = shiftDuration.toMinutes();
-     * return new BigDecimal(minutes / 60);
-     */
-    return new BigDecimal(shiftDuration.toHours());
 
+    long minutes = shiftDuration.toMinutes();
+    return new BigDecimal(minutes / 60);
 
   }
 
@@ -106,28 +100,14 @@ public class BalanceCalculator {
     return intervals;
   }
 
-  //get agreement for time entry
-  /**
-   * Jonathan wrote this bit
-   */
-
-
   //get accrual records from date to end of agreement
-  private List<Accrual> getAccrualRecordToEndOfAgreement(TimeEntry timeEntry) {
-    LocalDate agreementEndDate = getAgreementEndDate(timeEntry.getTenantId(), timeEntry.getOwnerId());
+  private List<Accrual> getAccrualRecordToEndOfAgreement(TimeEntry timeEntry, UUID agreementId) {
+     Agreement agreement = restClient.getAgreementById(timeEntry.getTenantId(),
+         agreementId.toString());
 
-    //TODO we should try to limit calls to db
-    return restClient.getAllAccrualsAfterDate(agreementEndDate,
+    return restClient.getAllAccrualsAfterDate(agreement.getEndDate(),
         timeEntry.getActualStartTime().toLocalDate(), timeEntry.getTenantId(),
         timeEntry.getOwnerId());
 
   }
-
-  private LocalDate getAgreementEndDate(String tenantId, String personId) {
-    List<Agreement> agreements = restClient.getAgreementByPersonId(tenantId, personId);
-
-    //TODO what if we get no agreements
-    return agreements.get(0).getEndDate();
-  }
-
 }
