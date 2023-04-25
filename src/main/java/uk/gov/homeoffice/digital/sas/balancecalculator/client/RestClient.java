@@ -45,7 +45,7 @@ public class RestClient {
         TENANT_ID_STRING_IDENTIFIER, tenantId,
         FILTER_STRING_IDENTIFIER,
         "accrualDate=='" + accrualDate
-            + "'&&personId=='" + personId + "'"
+            + "'&&personId=='" + personId
             + "'&&accrualTypeId=='" + accrualTypeId + "'"
     );
 

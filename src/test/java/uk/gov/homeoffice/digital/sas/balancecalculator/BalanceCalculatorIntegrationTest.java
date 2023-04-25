@@ -1,16 +1,21 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createTimeEntry;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 @SpringBootTest
+@AutoConfigureWireMock(port = 9999)
 class BalanceCalculatorIntegrationTest {
 
   @Autowired
@@ -20,7 +25,6 @@ class BalanceCalculatorIntegrationTest {
   void setup() {
   }
 
-  @Disabled("This is only run locally against a local Accruals instance")
   @Test
   void calculate_TODO() {
 
@@ -36,7 +40,10 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals =
+        balanceCalculator.calculateAccruals(timeEntry, AccrualType.ANNUAL_TARGET_HOURS);
+
+    assertThat(accruals).hasSize(4);
   }
 
 }
