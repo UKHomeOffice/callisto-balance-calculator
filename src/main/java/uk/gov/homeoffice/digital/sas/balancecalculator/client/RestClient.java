@@ -33,7 +33,8 @@ public class RestClient {
     this.restTemplate = builder.build();
     this.accrualsFilterUrl =
         accrualsUrl + "/resources/accruals?tenantId={tenantId}&filter={filter}";
-    this.agreementsByIdUrl = accrualsUrl + "/resources/agreements/{agreementId}?tenantId={tenantId}";
+    this.agreementsByIdUrl =
+        accrualsUrl + "/resources/agreements/{agreementId}?tenantId={tenantId}";
   }
 
   // TODO make some of this reusable
@@ -50,7 +51,7 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-        new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {}, parameters);
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
@@ -66,7 +67,7 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Agreement>> entity
         = restTemplate.exchange(agreementsByIdUrl, HttpMethod.GET, null,
-        new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {}, parameters);
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
@@ -80,13 +81,13 @@ public class RestClient {
                                                LocalDate startDate, LocalDate endDate) {
     Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId,
         FILTER_STRING_IDENTIFIER,
-        "personId=='" + personId + "'" +
-            "&&accrualDate<='" + endDate + "'" +
-            "&&accrualDate>='" + startDate + "'");
+        "personId=='" + personId + "'"
+            + "&&accrualDate<='" + endDate + "'"
+            + "&&accrualDate>='" + startDate + "'");
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-        new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {}, parameters);
 
     return Objects.requireNonNull(entity.getBody()).getItems();
   }
@@ -104,7 +105,7 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-        new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {}, parameters);
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
