@@ -73,9 +73,11 @@ public class BalanceCalculator {
   List<Accrual> updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
 
     List<Accrual> updatedAccruals = List.copyOf(accruals);
+    //update the cumulative total for referenceDate
     updatedAccruals.get(0).setCumulativeTotal(
         priorCumulativeTotal.add(updatedAccruals.get(0).getContributions().getTotal()));
 
+    //cascade through until end of agreement
     for (int i = 1; i < updatedAccruals.size(); i++) {
       BigDecimal priorTotal =
           updatedAccruals.get(i - 1).getCumulativeTotal();

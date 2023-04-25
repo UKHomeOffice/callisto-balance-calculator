@@ -1,0 +1,13 @@
+{
+  "id": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+  "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+  "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+  "contractualTerms": {
+    "agreementType": "AHA",
+    "fteValue": 1.0000,
+    "termsAndConditions": "MODERNISED",
+    "salaryBasis": "NATIONAL"
+  },
+  "startDate": "2023-04-01",
+  "endDate": "2024-03-31"
+}

@@ -23,7 +23,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class BalanceCalculatorTest {
@@ -41,6 +44,10 @@ class BalanceCalculatorTest {
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String TENANT_ID = "52a8188b-d41e-6768-19e9-09938016342f";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+
+  private static final String AGREEMENT_ID = "c0a80193-87a3-1ff0-8187-a3bfe2b80004";
+
+  private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024,3,31);
   public static final AccrualType ANNUAL_TARGET_HOURS_TYPE =
       AccrualType.ANNUAL_TARGET_HOURS;
   public static final String ANNUAL_TARGET_HOURS_TYPE_ID =
@@ -57,11 +64,59 @@ class BalanceCalculatorTest {
   }
 
   @Test
-  void calculateContributionsAndUpdateAccrual_createTimeEntryWithinCalendarDay_returnUpdatedAccrual()
+  void calculateAccruals_withinCalendarDayAndAnnualTargetHours_returnUpdateAccrual() throws IOException {
+    ZonedDateTime shiftStartTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
+    ZonedDateTime shiftEndTime = ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
+    //total of 2 hours worked
+
+    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, shiftStartTime,
+        shiftEndTime);
+
+    LocalDate referenceDate = LocalDate.of(2023,4,18);
+
+    String tenantId = timeEntry.getTenantId();
+
+    when(restClient.getAccrualByTypeAndDate(tenantId, PERSON_ID,
+        ANNUAL_TARGET_HOURS_TYPE_ID, referenceDate))
+        .thenReturn(loadObjectFromFile("data/mockAccrual.json", Accrual.class));
+    // initial cumulative total is 16.
+
+    when(restClient.getAgreementById(tenantId, AGREEMENT_ID))
+        .thenReturn(loadObjectFromFile("data/mockAgreement.json", Agreement.class));
+
+    //ACCRUAL_DATE is plus 1 because call to this method is made using reference date plus 1.
+    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID, ACCRUAL_DATE.plusDays(1),
+        AGREEMENT_END_DATE ))
+        .thenReturn(loadAccrualsFromFile("data/mockSubsequentAccruals.json"));
+
+    when(restClient.getPriorAccrual(tenantId, PERSON_ID, ANNUAL_TARGET_HOURS_TYPE_ID, referenceDate))
+        .thenReturn(loadObjectFromFile("data/mockPriorAccrual.json", Accrual.class));
+    //cumulative prior is a 8
+
+    List<Accrual> accruals = balanceCalculator.calculateAccruals(timeEntry, AccrualType.ANNUAL_TARGET_HOURS);
+
+    //assert Cumulative total of 17th should be 18
+    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(110));
+
+    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(120));
+
+    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(124));
+
+    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(136));
+
+
+  }
+
+  @Test
+  void recalculateContributions_createTimeEntryWithinCalendarDay_returnUpdatedAccrual()
       throws IOException {
     when(restClient.getAccrualByTypeAndDate(TENANT_ID, PERSON_ID,
         ANNUAL_TARGET_HOURS_TYPE_ID, ACCRUAL_DATE))
-        .thenReturn(loadAccrualFromFile("data/mockAccruals.json"));
+        .thenReturn(loadObjectFromFile("data/mockAccrual.json", Accrual.class));
     Accrual result =
         balanceCalculator.recalculateContributions(TIME_ENTRY_ID, TENANT_ID,
             PERSON_ID, ANNUAL_TARGET_HOURS_TYPE,
@@ -75,12 +130,12 @@ class BalanceCalculatorTest {
   }
 
   @Test
-  void calculateContributionsAndUpdateAccrual_updateTimeEntryWithinCalendarDay_returnUpdatedAccrual()
+  void recalculateContributions_updateTimeEntryWithinCalendarDay_returnUpdatedAccrual()
       throws IOException {
     String existingTimeEntryId = "e7d85e42-f0fb-4e2a-8211-874e27d1e888";
 
     when(restClient.getAccrualByTypeAndDate(TENANT_ID, PERSON_ID, ANNUAL_TARGET_HOURS_TYPE_ID , ACCRUAL_DATE)).thenReturn(
-        loadAccrualFromFile("data/mockAccruals.json"));
+        loadObjectFromFile("data/mockAccrual.json", Accrual.class));
     Accrual result =
         balanceCalculator.recalculateContributions(existingTimeEntryId, TENANT_ID,
             PERSON_ID, ANNUAL_TARGET_HOURS_TYPE,
@@ -131,16 +186,6 @@ class BalanceCalculatorTest {
     assertThat(range.upperEndpoint()).isEqualTo(SHIFT_END_TIME);
   }
 
-  private Accrual loadAccrualFromFile(String filePath) throws IOException {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.registerModule(new JavaTimeModule());
-
-    File file = new File(
-        Objects.requireNonNull(this.getClass().getClassLoader().getResource(filePath)).getFile()
-    );
-    return mapper.readValue(file, Accrual.class);
-  }
-
   private List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
@@ -150,5 +195,15 @@ class BalanceCalculatorTest {
     );
     return mapper.readValue(file, new TypeReference<>() {
     });
+  }
+
+  private <T> T loadObjectFromFile(String filePath, Class<T> type) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+
+    File file = new File(
+        Objects.requireNonNull(this.getClass().getClassLoader().getResource(filePath)).getFile()
+    );
+    return mapper.readValue(file, type);
   }
 }
