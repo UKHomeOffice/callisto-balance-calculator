@@ -38,17 +38,26 @@ public class RestClient {
 
   // TODO make some of this reusable
 
-  public List<Accrual> getAccrualsByDate(String tenantId, String personId, LocalDate accrualDate) {
+  public Accrual getAccrualByTypeAndDate(String tenantId, String personId, String accrualTypeId,
+      LocalDate accrualDate) {
     Map<String, String> parameters = Map.of(
         TENANT_ID_STRING_IDENTIFIER, tenantId,
-        FILTER_STRING_IDENTIFIER, "accrualDate=='" + accrualDate + "'&&personId=='" + personId + "'"
+        FILTER_STRING_IDENTIFIER,
+        "accrualDate=='" + accrualDate
+            + "'&&personId=='" + personId + "'"
+            + "'&&accrualTypeId=='" + accrualTypeId + "'"
     );
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
         new ParameterizedTypeReference<>() {}, parameters);
 
-    return Objects.requireNonNull(entity.getBody()).getItems();
+    if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
+      return Objects.requireNonNull(entity.getBody()).getItems().get(0);
+    }
+    // else throw exception
+
+    return null;
   }
 
   public Agreement getAgreementById(String tenantId, String agreementId) {

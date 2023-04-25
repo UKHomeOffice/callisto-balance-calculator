@@ -5,12 +5,13 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 @Component
@@ -32,38 +34,40 @@ public class BalanceCalculator {
 
   public void calculate(TimeEntry timeEntry) {
 
+    List<Accrual> accrualsToBatchUpdate = Arrays.stream(AccrualType.values())
+        .map(accrualType -> calculateAccruals(timeEntry, accrualType))
+        .flatMap(Collection::stream)
+        .toList();
+
+    // TODO : send Batch Update request to Accruals API
+    // restClient.batchUpdate(accrualsToBatchUpdate)
+  }
+
+  List<Accrual> calculateAccruals(TimeEntry timeEntry, AccrualType accrualType) {
+
     Map<LocalDate, Range<ZonedDateTime>> dateRangeMap =
         splitOverDays(timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
 
-    List<Accrual> accruals = dateRangeMap.entrySet().stream()
-        .map(entry
-            -> calculateContributionsAndUpdateAccrual(timeEntry.getId(), timeEntry.getTenantId(),
-            timeEntry.getOwnerId(), entry.getKey(), entry.getValue()))
+    return dateRangeMap.entrySet().stream()
+        .map(entry -> recalculateContributions(timeEntry.getId(), timeEntry.getTenantId(),
+            timeEntry.getOwnerId(), accrualType, entry.getKey(), entry.getValue()))
+        .map(accrual -> cascadeCumulativeTotal(timeEntry, accrual)).flatMap(Collection::stream)
         .toList();
+  }
 
-    Optional<Accrual> accrualOptional =
-        accruals.stream().min(Comparator.comparing(Accrual::getAccrualDate));
+  private List<Accrual> cascadeCumulativeTotal(TimeEntry timeEntry, Accrual accrual) {
+    LocalDate referenceDate = accrual.getAccrualDate();
 
-    if (accrualOptional.isPresent()) {
+    List<Accrual> accrualsToUpdate =
+        getAccrualsFromReferenceDateUntilEndOfAgreement(timeEntry.getTenantId(),
+            timeEntry.getOwnerId(), accrual.getAgreementId().toString(), referenceDate.plusDays(1));
+    accrualsToUpdate.add(0, accrual);
 
-      LocalDate referenceDate = accrualOptional.get().getAccrualDate();
+    BigDecimal priorCumulativeTotal =
+        restClient.getPriorAccrual(timeEntry.getTenantId(), timeEntry.getOwnerId(),
+            accrual.getAccrualTypeId().toString(), referenceDate).getCumulativeTotal();
 
-      // TODO: confirm assumption that cumulative total starts at zero on 1st day of agreement period
-      accruals.forEach(accrual -> {
-        BigDecimal priorCumulativeTotal =
-            restClient.getPriorAccrual(timeEntry.getTenantId(), timeEntry.getOwnerId(),
-                accrual.getAccrualTypeId().toString(), referenceDate).getCumulativeTotal();
-
-        List<Accrual> accrualsToUpdate =
-            getAccrualsFromReferenceDateUntilEndOfAgreement(timeEntry.getTenantId(),
-                timeEntry.getOwnerId(), accrual.getAgreementId().toString(), referenceDate);
-
-        updateSubsequentAccruals(accrualsToUpdate, priorCumulativeTotal);
-      });
-    }
-    else {
-      // throw an exception. we should always have a reference date from a time entry
-    }
+    return updateSubsequentAccruals(accrualsToUpdate, priorCumulativeTotal);
   }
 
   List<Accrual> updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
@@ -83,15 +87,19 @@ public class BalanceCalculator {
     return updatedAccruals;
   }
 
-  Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId,
-                                                 String personId, LocalDate accrualDate,
-                                                 Range<ZonedDateTime> dateTimeRange) {
+  Accrual recalculateContributions(String timeEntryId, String tenantId,
+      String personId, AccrualType accrualType,
+      LocalDate accrualDate,
+      Range<ZonedDateTime> dateTimeRange) {
 
-    List<Accrual> accruals = restClient.getAccrualsByDate(tenantId, personId, accrualDate);
+    Accrual accrual =
+        restClient.getAccrualByTypeAndDate(tenantId, personId,
+            accrualType.getId().toString(), accrualDate);
     // TODO what to do if there are no accrual records ?
-    Accrual accrual = accruals.get(0); // only one accrual type right now - turn into loop later
+    // In other terms, is it possible that a time entry could ever be submitted while there is no
+    // corresponding agreement in Accruals database?
 
-    BigDecimal hours = calculateDurationInHours(dateTimeRange);
+    BigDecimal hours = calculateDurationInHours(dateTimeRange, accrualType);
 
     Contributions contributions = accrual.getContributions();
     contributions.getTimeEntries().put(UUID.fromString(timeEntryId), hours);
@@ -101,19 +109,26 @@ public class BalanceCalculator {
     return accrual;
   }
 
-  BigDecimal calculateDurationInHours(Range<ZonedDateTime> dateTimeRange) {
-    Duration shiftDuration =
-        Duration.between(dateTimeRange.lowerEndpoint(), dateTimeRange.upperEndpoint());
+  BigDecimal calculateDurationInHours(Range<ZonedDateTime> dateTimeRange, AccrualType accrualType) {
 
-    // TODO: rounding?
+    BigDecimal hours;
+    switch (accrualType) {
+      case ANNUAL_TARGET_HOURS -> {
+        Duration shiftDuration =
+            Duration.between(dateTimeRange.lowerEndpoint(), dateTimeRange.upperEndpoint());
+        // TODO: rounding?
 
-    long minutes = shiftDuration.toMinutes();
-    return new BigDecimal(minutes / 60);
+        long minutes = shiftDuration.toMinutes();
+        hours = new BigDecimal(minutes / 60);
+      }
+      default -> hours = BigDecimal.ZERO;
+    }
 
+    return hours;
   }
 
   Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
-                                                     ZonedDateTime endDateTime) {
+      ZonedDateTime endDateTime) {
     Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
 
     if (isOnSameDay(startDateTime, endDateTime)) {

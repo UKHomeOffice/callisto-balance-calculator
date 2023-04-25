@@ -56,6 +56,8 @@ public class TimeEntryConsumer {
         // introduction of a code smell by having an Object(timeEntry) not used within the code
         log.info(String.format("TimeEntry Created [ %s ]", timeEntry.toString()));
       }
+
+      // TODO What should we do with Kafka offset when errors are thrown during balance calculation?
     } else {
       throw new KafkaConsumerException(
           String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD, getSchemaFromMessageAsString(payload)));
