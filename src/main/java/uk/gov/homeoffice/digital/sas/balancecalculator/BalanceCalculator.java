@@ -5,11 +5,13 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
@@ -28,7 +30,7 @@ public class BalanceCalculator {
     this.restClient = restClient;
   }
 
-  public List<Accrual> calculate(TimeEntry timeEntry) {
+  public void calculate(TimeEntry timeEntry) {
 
     Map<LocalDate, Range<ZonedDateTime>> dateRangeMap =
         splitOverDays(timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
@@ -37,23 +39,48 @@ public class BalanceCalculator {
         .map(entry
             -> calculateContributionsAndUpdateAccrual(timeEntry.getId(), timeEntry.getTenantId(),
             timeEntry.getOwnerId(), entry.getKey(), entry.getValue()))
-        .collect(Collectors.toList());
+        .toList();
 
-//          List<Accrual> accrualsToUpdate = getAccrualRecordToEndOfAgreement(timeEntry,
-//          a.getAgreementId());
-    return updateSubsequentAccruals(timeEntry, accruals);
+    Optional<Accrual> accrualOptional =
+        accruals.stream().min(Comparator.comparing(Accrual::getAccrualDate));
+
+    if (accrualOptional.isPresent()) {
+
+      LocalDate referenceDate = accrualOptional.get().getAccrualDate();
+
+      // TODO: confirm assumption that cumulative total starts at zero on 1st day of agreement period
+      accruals.forEach(accrual -> {
+        BigDecimal priorCumulativeTotal =
+            restClient.getPriorAccrual(timeEntry.getTenantId(), timeEntry.getOwnerId(),
+                accrual.getAccrualTypeId().toString(), referenceDate).getCumulativeTotal();
+
+        List<Accrual> accrualsToUpdate =
+            getAccrualsFromReferenceDateUntilEndOfAgreement(timeEntry.getTenantId(),
+                timeEntry.getOwnerId(), accrual.getAgreementId().toString(), referenceDate);
+
+        updateSubsequentAccruals(accrualsToUpdate, priorCumulativeTotal);
+      });
+    }
+    else {
+      // throw an exception. we should always have a reference date from a time entry
+    }
   }
 
-  List<Accrual> updateSubsequentAccruals(TimeEntry timeEntry, List<Accrual> accruals) {
-    //increment cumlativeTotal
-    return accruals.stream().peek(a -> {
-      //update new accrual cumulative total
+  List<Accrual> updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
 
-      // check previous record first? then update cumulative total.
-      a.setCumulativeTotal(a.getCumulativeTotal().add(a.getContributions().getTotal()));
-      //update all other records after this new accrual
+    List<Accrual> updatedAccruals = List.copyOf(accruals);
+    updatedAccruals.get(0).setCumulativeTotal(
+        priorCumulativeTotal.add(updatedAccruals.get(0).getContributions().getTotal()));
 
-    }).collect(Collectors.toList());
+    for (int i = 1; i < updatedAccruals.size(); i++) {
+      BigDecimal priorTotal =
+          updatedAccruals.get(i - 1).getCumulativeTotal();
+      Accrual currentAccrual = updatedAccruals.get(i);
+      currentAccrual.setCumulativeTotal(
+          priorTotal.add(currentAccrual.getContributions().getTotal()));
+    }
+
+    return updatedAccruals;
   }
 
   Accrual calculateContributionsAndUpdateAccrual(String timeEntryId, String tenantId,
@@ -105,14 +132,18 @@ public class BalanceCalculator {
     return dateTimeOne.toLocalDate().isEqual(dateTimeTwo.toLocalDate());
   }
 
-  //get accrual records from date to end of agreement
-  private List<Accrual> getAccrualRecordToEndOfAgreement(TimeEntry timeEntry, UUID agreementId) {
-    Agreement agreement = restClient.getAgreementById(timeEntry.getTenantId(),
-        agreementId.toString());
+  //get accrual records from date to end of agreement, sorted by accrualDate
+  private List<Accrual> getAccrualsFromReferenceDateUntilEndOfAgreement(String tenantId,
+      String personId, String agreementId, LocalDate referenceDate) {
+    Agreement agreement = restClient.getAgreementById(tenantId, agreementId);
 
-    return restClient.getAllAccrualsAfterDate(agreement.getEndDate(),
-        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getTenantId(),
-        timeEntry.getOwnerId());
+    List<Accrual> accruals =
+        restClient.getAccrualsBetweenDates(tenantId, personId, referenceDate, agreement.getEndDate()
+        );
 
+    Comparator<Accrual> accrualComparator = Comparator.comparing(Accrual::getAccrualDate);
+    Collections.sort(accruals, accrualComparator);
+
+    return accruals;
   }
 }

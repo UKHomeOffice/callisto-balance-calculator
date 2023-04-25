@@ -4,22 +4,6 @@
     "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
     "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
     "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
-    "accrualDate": "2023-04-17",
-    "accrualTypeId": "00000000-0000-0000-0000-000000000004",
-    "cumulativeTotal": 8,
-    "cumulativeTarget": 8,
-    "contributions": {
-      "timeEntries": {
-        "3323bc4b-6b1e-4204-9df0-76e3339a3b88": 8.00
-      },
-      "total": 8.00
-    }
-  },
-  {
-    "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
-    "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-    "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
-    "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
     "accrualDate": "2023-04-18",
     "accrualTypeId": "00000000-0000-0000-0000-000000000004",
     "cumulativeTotal": 16,
