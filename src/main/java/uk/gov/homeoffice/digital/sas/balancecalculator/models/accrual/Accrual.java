@@ -22,7 +22,6 @@ public class Accrual {
 
   private UUID tenantId;
 
-  // TODO: add personId to Accruals entity in Accruals service
   private UUID personId;
 
   @NotNull(message = "Agreement ID should not be null")

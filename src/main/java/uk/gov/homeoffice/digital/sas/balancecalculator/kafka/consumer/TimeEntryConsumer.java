@@ -15,7 +15,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.BalanceCalculatorObjectMapperConfig;
+import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.ObjectMapperConfig;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.configuration.KafkaConsumerConfig;
@@ -24,19 +24,19 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 @Service
 @Slf4j
-@Import({KafkaConsumerConfig.class, BalanceCalculatorObjectMapperConfig.class})
+@Import({KafkaConsumerConfig.class, ObjectMapperConfig.class})
 public class TimeEntryConsumer {
 
-  private final ObjectMapper balanceCalculatorObjectMapper;
+  private final ObjectMapper objectMapper;
 
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
 
   @Autowired
   public TimeEntryConsumer(KafkaConsumerService<TimeEntry> kafkaConsumerService,
-      ObjectMapper balanceCalculatorObjectMapper) {
+      ObjectMapper objectMapper) {
     this.kafkaConsumerService = kafkaConsumerService;
-    this.balanceCalculatorObjectMapper = balanceCalculatorObjectMapper;
+    this.objectMapper = objectMapper;
   }
 
   @KafkaListener(topics = {"${spring.kafka.template.default-topic}"},
@@ -67,8 +67,7 @@ public class TimeEntryConsumer {
   private TimeEntry createTimeEntryFromKafkaEventMessage(
       KafkaEventMessage<TimeEntry> kafkaEventMessage, String payload) {
     try {
-      return balanceCalculatorObjectMapper
-          .convertValue(kafkaEventMessage.getResource(), TimeEntry.class);
+      return objectMapper.convertValue(kafkaEventMessage.getResource(), TimeEntry.class);
     } catch (IllegalArgumentException e) {
       throw new KafkaConsumerException(
           String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,

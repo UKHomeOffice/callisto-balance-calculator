@@ -6,11 +6,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-// TODO this can be renamed ObjectMapperConfig
-public class BalanceCalculatorObjectMapperConfig {
+public class ObjectMapperConfig {
 
   @Bean
-  public ObjectMapper balanceCalculatorObjectMapper() {
+  public ObjectMapper objectMapper() {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JavaTimeModule());
     return objectMapper;
