@@ -247,6 +247,34 @@ class BalanceCalculatorTest {
     assertThat(range3.upperEndpoint()).isEqualTo(endTimeNextDay);
   }
 
+  @Test
+  void splitOverDays_timeEntryWithinFourCalendarDays_returnFourDateTimeRanges() {
+
+    var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");
+    var endTime = ZonedDateTime.parse("2023-04-21T06:00:00+00:00");
+
+    Map<LocalDate, Range<ZonedDateTime>> ranges =
+        balanceCalculator.splitOverDays(startTime, endTime);
+    assertThat(ranges).hasSize(4);
+
+    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
+    Range<ZonedDateTime> range2 = ranges.get(startTime.plusDays(1).toLocalDate());
+    Range<ZonedDateTime> range3 = ranges.get(startTime.plusDays(2).toLocalDate());
+    Range<ZonedDateTime> range4 = ranges.get(endTime.toLocalDate());
+
+    assertThat(range1.lowerEndpoint()).isEqualTo(startTime);
+    assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
+
+    assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
+    assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00");
+
+    assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00");
+    assertThat(range3.upperEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00");
+
+    assertThat(range4.lowerEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00");
+    assertThat(range4.upperEndpoint()).isEqualTo(endTime);
+  }
+
   private List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
