@@ -9,7 +9,7 @@
             "equalTo": "52a8188b-d41e-6768-19e9-09938016342f"
           },
           "filter": {
-            "equalTo": "accrualDate=='2023-04-18'&&personId=='0936e7a6-2b2e-1696-2546-5dd25dcae6a0'&&accrualTypeId=='e502eebb-4663-4e5b-9445-9a20441c18d9'"
+            "equalTo": "personId=='0936e7a6-2b2e-1696-2546-5dd25dcae6a0'&&accrualTypeId=='e502eebb-4663-4e5b-9445-9a20441c18d9'&&accrualDate=='2023-04-18'"
           }
         }
       },
