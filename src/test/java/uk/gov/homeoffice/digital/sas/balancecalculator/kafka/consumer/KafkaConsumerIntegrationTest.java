@@ -139,5 +139,4 @@ class KafkaConsumerIntegrationTest {
                   getSchemaFromMessageAsString(message)))
         );
   }
-
 }

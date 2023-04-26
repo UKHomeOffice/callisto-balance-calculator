@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.ApiResponse;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.PatchBody;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 
@@ -26,11 +28,14 @@ public class RestClient {
   private final String accrualsFilterUrl;
   private final String agreementsByIdUrl;
 
+  private final String accrualsNoFilterUrl;
+
 
   @Autowired
   public RestClient(RestTemplateBuilder builder,
       @Value("${balance.calculator.accruals.url}") String accrualsUrl) {
     this.restTemplate = builder.build();
+    this.accrualsNoFilterUrl = accrualsUrl + "/resources/accruals?tenantId={tenantId}";
     this.accrualsFilterUrl =
         accrualsUrl + "/resources/accruals?tenantId={tenantId}&filter={filter}";
     this.agreementsByIdUrl =
@@ -113,5 +118,16 @@ public class RestClient {
     // else throw exception
 
     return null;
+  }
+
+  public ApiResponse<Accrual> patchAccruals(String tenantId, List<PatchBody> payloadBody) {
+    Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId);
+
+    HttpEntity<List<PatchBody>> request = new HttpEntity<>(payloadBody);
+
+    HttpEntity<ApiResponse<Accrual>> entity = restTemplate.exchange(accrualsNoFilterUrl,
+          HttpMethod.PATCH, request, new ParameterizedTypeReference<>() {}, parameters);
+
+    return entity.getBody();
   }
 }

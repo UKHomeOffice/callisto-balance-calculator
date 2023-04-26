@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.PatchUtils.createPatchBody;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_COULD_NOT_DESERIALIZE_RESOURCE;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
@@ -8,6 +9,7 @@ import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.ge
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -16,7 +18,11 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.ObjectMapperConfig;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.ApiResponse;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.PatchBody;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.configuration.KafkaConsumerConfig;
@@ -34,13 +40,17 @@ public class TimeEntryConsumer {
 
   private final BalanceCalculator balanceCalculator;
 
+  private final RestClient restClient;
+
 
   @Autowired
   public TimeEntryConsumer(KafkaConsumerService<TimeEntry> kafkaConsumerService,
-      ObjectMapper objectMapper, BalanceCalculator balanceCalculator) {
+                           ObjectMapper objectMapper, BalanceCalculator balanceCalculator,
+                           RestClient restClient) {
     this.kafkaConsumerService = kafkaConsumerService;
     this.objectMapper = objectMapper;
     this.balanceCalculator = balanceCalculator;
+    this.restClient = restClient;
   }
 
   @KafkaListener(topics = {"${spring.kafka.template.default-topic}"},
@@ -56,7 +66,10 @@ public class TimeEntryConsumer {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
         log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, payload));
 
-        balanceCalculator.calculate(timeEntry);
+        List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+
+        //TODO if 200 is received back commit offset
+        sendToAccruals(timeEntry, accruals);
       }
 
       // TODO What should we do with Kafka offset when errors are thrown during balance calculation?
@@ -75,5 +88,10 @@ public class TimeEntryConsumer {
           String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,
               getResourceFromMessageAsString(payload)), e);
     }
+  }
+
+  private ApiResponse<Accrual> sendToAccruals(TimeEntry timeEntry, List<Accrual> accruals) {
+    List<PatchBody> payloadBody = createPatchBody(accruals);
+    return restClient.patchAccruals(timeEntry.getTenantId(), payloadBody);
   }
 }

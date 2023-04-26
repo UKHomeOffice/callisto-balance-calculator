@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer.TimeEntryConsumer;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
@@ -19,6 +21,12 @@ class BalanceCalculatorIntegrationTest {
 
   @Autowired
   private BalanceCalculator balanceCalculator;
+
+  @Autowired
+  TimeEntryConsumer timeEntryConsumer;
+
+  @Autowired
+  RestClient restClient;
 
   @BeforeEach
   void setup() {
@@ -43,5 +51,23 @@ class BalanceCalculatorIntegrationTest {
 
     assertThat(accruals).hasSize(4);
   }
+
+  //@Disabled("Might not be needed as kafkaConsumerIntegrationTest now used wiremock")
+  //@Test
+  //void should_return200_fromAccruals_whenValidResourceReceived() throws JsonProcessingException {
+  //  String timeEntryId = "7f000001-879e-1b02-8187-9ef1640f0003";
+  //  String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
+  //  String personId = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+  //
+  //
+  //  String message = createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION,
+  //      timeEntryId,
+  //      personId);
+  //
+  //  timeEntryConsumer.onMessage(message);
+  //
+  //  //assertThat() 200 is received
+  //
+  //}
 
 }

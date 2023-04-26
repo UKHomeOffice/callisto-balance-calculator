@@ -32,6 +32,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.annotation.DirtiesContext;
 import uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
@@ -40,6 +41,7 @@ import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
+@AutoConfigureWireMock(port = 9999)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TimeEntryConsumerTest {
 
