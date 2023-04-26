@@ -1,15 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import com.google.common.collect.Range;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -23,6 +14,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 @Component
 public class BalanceCalculator {
@@ -147,15 +146,18 @@ public class BalanceCalculator {
       // Build 1st day range
       Range<ZonedDateTime> startDayRange = Range.closed(
           startDateTime,
-          ZonedDateTime.of(startDateTime.plusDays(1).toLocalDate().atTime(0,0), startDateTime.getZone()));
+          ZonedDateTime.of(startDateTime.plusDays(1).toLocalDate().atTime(0, 0),
+              startDateTime.getZone()));
       intervals.put(startDateTime.toLocalDate(), startDayRange);
 
       // If spans over 2 days
-      if( numDaysCovered > 2) {
-        for(int i=1; i<numDaysCovered-1; i++) {
+      if (numDaysCovered > 2) {
+        for (int i = 1; i < numDaysCovered - 1; i++) {
           Range<ZonedDateTime> midRange = Range.closed(
-              ZonedDateTime.of(startDateTime.plusDays(i).toLocalDate().atTime(0,0), startDateTime.getZone()),
-              ZonedDateTime.of(startDateTime.plusDays(i+1).toLocalDate().atTime(0,0), startDateTime.getZone())
+              ZonedDateTime.of(startDateTime.plusDays(i).toLocalDate().atTime(0, 0),
+                  startDateTime.getZone()),
+              ZonedDateTime.of(startDateTime.plusDays(i + 1).toLocalDate().atTime(0, 0),
+                  startDateTime.getZone())
           );
           intervals.put(startDateTime.plusDays(i).toLocalDate(), midRange);
         }
@@ -163,13 +165,12 @@ public class BalanceCalculator {
 
       // Build last day range
       Range<ZonedDateTime> endDayRange = Range.closed(
-          ZonedDateTime.of(endDateTime.toLocalDate().atTime(0,0), endDateTime.getZone()),
+          ZonedDateTime.of(endDateTime.toLocalDate().atTime(0, 0), endDateTime.getZone()),
           endDateTime
           );
       intervals.put(endDateTime.toLocalDate(), endDayRange);
     }
 
-    System.out.println(intervals);
     return intervals;
   }
 
