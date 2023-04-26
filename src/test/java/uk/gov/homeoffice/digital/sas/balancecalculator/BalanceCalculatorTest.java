@@ -35,7 +35,6 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
 @ExtendWith(MockitoExtension.class)
 class BalanceCalculatorTest {
 
-
   public static final AccrualType ANNUAL_TARGET_HOURS_TYPE =
       AccrualType.ANNUAL_TARGET_HOURS;
   public static final String ANNUAL_TARGET_HOURS_TYPE_ID =
@@ -45,7 +44,7 @@ class BalanceCalculatorTest {
   private static final ZonedDateTime SHIFT_END_TIME =
       ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
   private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
-  private static final BigDecimal SHIFT_DURATION = new BigDecimal(2);
+  private static final BigDecimal SHIFT_DURATION = new BigDecimal(120);
   private static final Range<ZonedDateTime> DATE_TIME_RANGE =
       Range.closed(SHIFT_START_TIME, SHIFT_END_TIME);
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
@@ -60,10 +59,10 @@ class BalanceCalculatorTest {
 
   private static Stream<Arguments> testData() {
     return Stream.of(
-        Arguments.of(TIME_ENTRY_ID, BigDecimal.valueOf(110), BigDecimal.valueOf(120),
-            BigDecimal.valueOf(124), BigDecimal.valueOf(136)),
-        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888", BigDecimal.valueOf(104),
-            BigDecimal.valueOf(114), BigDecimal.valueOf(118), BigDecimal.valueOf(130))
+        Arguments.of(TIME_ENTRY_ID, BigDecimal.valueOf(6600), BigDecimal.valueOf(7200),
+            BigDecimal.valueOf(7440), BigDecimal.valueOf(8160)),
+        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888", BigDecimal.valueOf(6240),
+            BigDecimal.valueOf(6840), BigDecimal.valueOf(7080), BigDecimal.valueOf(7800))
     );
   }
 
@@ -136,7 +135,7 @@ class BalanceCalculatorTest {
             ACCRUAL_DATE, DATE_TIME_RANGE);
 
     assertThat(result.getContributions().getTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.TEN);
+        .isEqualTo(BigDecimal.valueOf(600));
     assertThat(result.getContributions().getTimeEntries()).hasSize(3);
     assertThat(result.getContributions().getTimeEntries()).containsEntry(
         UUID.fromString(TIME_ENTRY_ID), SHIFT_DURATION);
@@ -156,7 +155,7 @@ class BalanceCalculatorTest {
             ACCRUAL_DATE, DATE_TIME_RANGE);
 
     assertThat(result.getContributions().getTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(4));
+        .isEqualTo(BigDecimal.valueOf(240));
     assertThat(result.getContributions().getTimeEntries()).hasSize(2);
     assertThat(result.getContributions().getTimeEntries()).containsEntry(
         UUID.fromString(existingTimeEntryId), SHIFT_DURATION);
@@ -168,24 +167,30 @@ class BalanceCalculatorTest {
     List<Accrual> accruals = loadAccrualsFromFile("data/mockSubsequentAccruals.json");
 
     List<Accrual> result =
-        balanceCalculator.updateSubsequentAccruals(accruals, BigDecimal.valueOf(8));
+        balanceCalculator.updateSubsequentAccruals(accruals, BigDecimal.valueOf(480));
 
     assertThat(result.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(18));
+        .isEqualTo(BigDecimal.valueOf(1080));
 
     assertThat(result.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(22));
+        .isEqualTo(BigDecimal.valueOf(1320));
 
     assertThat(result.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(34));
+        .isEqualTo(BigDecimal.valueOf(2040));
   }
 
   @Test
-  void calculateDurationInHours_TODO() {
+  void calculateDurationInMinutes_annualTargetHours() {
+    BigDecimal minutes = balanceCalculator
+        .calculateDurationInMinutes(DATE_TIME_RANGE, AccrualType.ANNUAL_TARGET_HOURS);
+    assertThat(minutes).isEqualTo(SHIFT_DURATION);
+  }
 
-    BigDecimal hours = balanceCalculator
-        .calculateDurationInHours(DATE_TIME_RANGE, AccrualType.ANNUAL_TARGET_HOURS);
-    assertThat(hours).isEqualTo(SHIFT_DURATION);
+  @Test
+  void calculateDurationInMinutes_default() {
+    BigDecimal minutes = balanceCalculator
+        .calculateDurationInMinutes(DATE_TIME_RANGE, AccrualType.NIGHT_HOURS);
+    assertThat(minutes).isEqualTo(BigDecimal.ZERO);
   }
 
   @Test
