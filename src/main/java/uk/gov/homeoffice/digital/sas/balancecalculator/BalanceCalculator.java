@@ -179,10 +179,6 @@ public class BalanceCalculator {
     return ChronoUnit.DAYS.between(startDate, endDate) + 1;
   }
 
-  private boolean isOnSameDay(ZonedDateTime dateTimeOne, ZonedDateTime dateTimeTwo) {
-    return dateTimeOne.toLocalDate().isEqual(dateTimeTwo.toLocalDate());
-  }
-
   //get accrual records from date to end of agreement, sorted by accrualDate
   private List<Accrual> getAccrualsFromReferenceDateUntilEndOfAgreement(String tenantId,
       String personId, String agreementId, LocalDate referenceDate) {
