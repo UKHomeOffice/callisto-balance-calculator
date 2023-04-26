@@ -1,22 +1,9 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Range;
-import java.io.File;
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +18,20 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BalanceCalculatorTest {
@@ -200,6 +201,28 @@ class BalanceCalculatorTest {
     assertThat(range.lowerEndpoint()).isEqualTo(SHIFT_START_TIME);
     assertThat(range.upperEndpoint()).isEqualTo(SHIFT_END_TIME);
   }
+
+  @Test
+  void splitOverDays_timeEntryWithinTwoCalendarDays_returnTwoDateTimeRanges() {
+
+    var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");
+    var endTimeNextDay = ZonedDateTime.parse("2023-04-19T01:00:00+00:00");
+
+    Map<LocalDate, Range<ZonedDateTime>> ranges =
+        balanceCalculator.splitOverDays(startTime, endTimeNextDay);
+    assertThat(ranges).hasSize(2);
+
+    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
+    Range<ZonedDateTime> range2 = ranges.get(endTimeNextDay.toLocalDate());
+
+    assertThat(range1.lowerEndpoint()).isEqualTo(startTime);
+    assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
+
+    assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
+    assertThat(range2.upperEndpoint()).isEqualTo(endTimeNextDay);
+  }
+
+
 
   private List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
     ObjectMapper mapper = new ObjectMapper();
