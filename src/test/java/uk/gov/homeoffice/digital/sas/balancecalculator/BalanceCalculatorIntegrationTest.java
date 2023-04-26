@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 @SpringBootTest
@@ -40,8 +39,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    List<Accrual> accruals =
-        balanceCalculator.calculateAccruals(timeEntry, AccrualType.ANNUAL_TARGET_HOURS);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
     assertThat(accruals).hasSize(4);
   }

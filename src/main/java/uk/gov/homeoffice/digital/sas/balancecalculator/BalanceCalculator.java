@@ -32,15 +32,18 @@ public class BalanceCalculator {
     this.restClient = restClient;
   }
 
-  public void calculate(TimeEntry timeEntry) {
+  public List<Accrual> calculate(TimeEntry timeEntry) {
 
     List<Accrual> accrualsToBatchUpdate = Arrays.stream(AccrualType.values())
+        .filter(AccrualType::isEnabled)
         .map(accrualType -> calculateAccruals(timeEntry, accrualType))
         .flatMap(Collection::stream)
         .toList();
 
     // TODO : send Batch Update request to Accruals API
     // restClient.batchUpdate(accrualsToBatchUpdate)
+
+    return accrualsToBatchUpdate;
   }
 
   List<Accrual> calculateAccruals(TimeEntry timeEntry, AccrualType accrualType) {

@@ -2,11 +2,12 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.INVALID_RESOURCE_SCHEMA;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_INVALID_VERSION;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_RESOURCE_SCHEMA;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_RESOURCE_SCHEMA;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_START_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
@@ -17,17 +18,23 @@ import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHE
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
 import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getResourceFromMessageAsString;
 import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.test.annotation.DirtiesContext;
+import uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 
@@ -36,10 +43,16 @@ import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class TimeEntryConsumerTest {
 
+  @Captor
+  private ArgumentCaptor<TimeEntry> timeEntryCaptor;
+
   @Autowired
   TimeEntryConsumer timeEntryConsumer;
 
   ObjectMapper mapper = new ObjectMapper();
+
+  @MockBean
+  private BalanceCalculator balanceCalculator;
 
   @Test
   void onMessage_deserializeKafkaMessageAndLogSuccess_when_validMessageIsReceived
@@ -58,6 +71,8 @@ class TimeEntryConsumerTest {
     // then
     assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
         message));
+    verify(balanceCalculator).calculate(timeEntryCaptor.capture());
+    assertThat(timeEntryCaptor.getValue().getId()).isEqualTo(id);
   }
 
   @Test
@@ -70,9 +85,8 @@ class TimeEntryConsumerTest {
         , id, ownerId);
 
 
-    assertThatThrownBy(() -> {
-     timeEntryConsumer.onMessage(message);
-    }).isInstanceOf(KafkaConsumerException.class)
+    assertThatThrownBy(() -> timeEntryConsumer.onMessage(message))
+        .isInstanceOf(KafkaConsumerException.class)
         .hasMessageContaining(String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD,
             getSchemaFromMessageAsString(message)));
 
@@ -86,9 +100,8 @@ class TimeEntryConsumerTest {
     String message = TestUtils.createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_INVALID_VERSION
         , id, ownerId);
 
-    assertThatThrownBy(() -> {
-      timeEntryConsumer.onMessage(message);
-    }).isInstanceOf(KafkaConsumerException.class)
+    assertThatThrownBy(() -> timeEntryConsumer.onMessage(message))
+        .isInstanceOf(KafkaConsumerException.class)
         .hasMessageContaining(String.format(KAFKA_SCHEMA_INVALID_VERSION,
             getSchemaFromMessageAsString(message)));
   }
@@ -111,9 +124,8 @@ class TimeEntryConsumerTest {
     String message = TestUtils.createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION,
         resource);
 
-    assertThatThrownBy(() -> {
-      timeEntryConsumer.onMessage(message);
-    }).isInstanceOf(KafkaConsumerException.class)
+    assertThatThrownBy(() -> timeEntryConsumer.onMessage(message))
+        .isInstanceOf(KafkaConsumerException.class)
         .hasMessageContaining(String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,
             getResourceFromMessageAsString(message)));
   }
@@ -129,8 +141,7 @@ class TimeEntryConsumerTest {
     String message = TestUtils.createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION
         , resource);
 
-    assertThatThrownBy(() -> {
-      timeEntryConsumer.onMessage(message);
-    }).isInstanceOf(KafkaConsumerException.class);
+    assertThatThrownBy(() -> timeEntryConsumer.onMessage(message))
+        .isInstanceOf(KafkaConsumerException.class);
   }
 }
