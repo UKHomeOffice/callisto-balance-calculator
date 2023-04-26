@@ -23,6 +23,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributi
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
+
 @Component
 public class BalanceCalculator {
 
@@ -146,17 +147,17 @@ public class BalanceCalculator {
       // Build 1st day range
       Range<ZonedDateTime> startDayRange = Range.closed(
           startDateTime,
-          ZonedDateTime.of(startDateTime.plusDays(1).toLocalDate().atTime(0, 0),
+          ZonedDateTime.of(startDateTime.plusDays(1L).toLocalDate().atTime(0, 0),
               startDateTime.getZone()));
       intervals.put(startDateTime.toLocalDate(), startDayRange);
 
       // If spans over 2 days
       if (numDaysCovered > 2) {
-        for (int i = 1; i < numDaysCovered - 1; i++) {
+        for (long i = 1; i < numDaysCovered - 1; i++) {
           Range<ZonedDateTime> midRange = Range.closed(
               ZonedDateTime.of(startDateTime.plusDays(i).toLocalDate().atTime(0, 0),
                   startDateTime.getZone()),
-              ZonedDateTime.of(startDateTime.plusDays(i + 1).toLocalDate().atTime(0, 0),
+              ZonedDateTime.of(startDateTime.plusDays(i + 1L).toLocalDate().atTime(0, 0),
                   startDateTime.getZone())
           );
           intervals.put(startDateTime.plusDays(i).toLocalDate(), midRange);
