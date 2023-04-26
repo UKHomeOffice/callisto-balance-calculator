@@ -138,7 +138,8 @@ public class BalanceCalculator {
       ZonedDateTime endDateTime) {
     Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
 
-    if (isOnSameDay(startDateTime, endDateTime)) {
+    var numDaysCovered = getNumOfDaysCoveredByDateRange(startDateTime, endDateTime);
+    if (numDaysCovered == 1) {
       Range<ZonedDateTime> range = Range.closed(startDateTime, endDateTime);
       intervals.put(startDateTime.toLocalDate(), range);
     } else {
@@ -149,6 +150,16 @@ public class BalanceCalculator {
           ZonedDateTime.of(startDateTime.plusDays(1).toLocalDate().atTime(0,0), startDateTime.getZone()));
       intervals.put(startDateTime.toLocalDate(), startDayRange);
 
+      // If spans over 2 days
+      if( numDaysCovered > 2) {
+        for(int i=1; i<numDaysCovered-1; i++) {
+          Range<ZonedDateTime> midRange = Range.closed(
+              ZonedDateTime.of(startDateTime.plusDays(i).toLocalDate().atTime(0,0), startDateTime.getZone()),
+              ZonedDateTime.of(startDateTime.plusDays(i+1).toLocalDate().atTime(0,0), startDateTime.getZone())
+          );
+          intervals.put(startDateTime.plusDays(i).toLocalDate(), midRange);
+        }
+      }
 
       // Build last day range
       Range<ZonedDateTime> endDayRange = Range.closed(
@@ -158,6 +169,7 @@ public class BalanceCalculator {
       intervals.put(endDateTime.toLocalDate(), endDayRange);
     }
 
+    System.out.println(intervals);
     return intervals;
   }
 
