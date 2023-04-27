@@ -104,32 +104,30 @@ public class BalanceCalculator {
     // In other terms, is it possible that a time entry could ever be submitted while there is no
     // corresponding agreement in Accruals database?
 
-    BigDecimal hours = calculateDurationInHours(dateTimeRange, accrualType);
+    BigDecimal minutes = calculateDurationInMinutes(dateTimeRange, accrualType);
 
     Contributions contributions = accrual.getContributions();
-    contributions.getTimeEntries().put(UUID.fromString(timeEntryId), hours);
+    contributions.getTimeEntries().put(UUID.fromString(timeEntryId), minutes);
     BigDecimal total =
         contributions.getTimeEntries().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     contributions.setTotal(total);
     return accrual;
   }
 
-  BigDecimal calculateDurationInHours(Range<ZonedDateTime> dateTimeRange, AccrualType accrualType) {
+  BigDecimal calculateDurationInMinutes(Range<ZonedDateTime> dateTimeRange,
+      AccrualType accrualType) {
 
-    BigDecimal hours;
+    BigDecimal minutes;
     switch (accrualType) {
       case ANNUAL_TARGET_HOURS -> {
         Duration shiftDuration =
             Duration.between(dateTimeRange.lowerEndpoint(), dateTimeRange.upperEndpoint());
-        // TODO: rounding?
-
-        long minutes = shiftDuration.toMinutes();
-        hours = new BigDecimal(minutes / 60);
+        minutes = new BigDecimal(shiftDuration.toMinutes());
       }
-      default -> hours = BigDecimal.ZERO;
+      default -> minutes = BigDecimal.ZERO;
     }
 
-    return hours;
+    return minutes;
   }
 
   Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
