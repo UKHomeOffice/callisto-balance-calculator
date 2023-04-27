@@ -31,6 +31,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -215,11 +216,14 @@ class BalanceCalculatorTest {
     Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
     Range<ZonedDateTime> range2 = ranges.get(endTimeNextDay.toLocalDate());
 
-    assertThat(range1.lowerEndpoint()).isEqualTo(startTime);
-    assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
-
-    assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
-    assertThat(range2.upperEndpoint()).isEqualTo(endTimeNextDay);
+    assertAll(
+        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
+        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
+        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
+        () -> assertThat(range2.upperEndpoint()).isEqualTo(endTimeNextDay),
+        () -> assertRangeHoursCount(range1, new BigDecimal(2)),
+        () -> assertRangeHoursCount(range2, new BigDecimal(1))
+    );
   }
 
   @Test
@@ -236,16 +240,19 @@ class BalanceCalculatorTest {
     Range<ZonedDateTime> range2 = ranges.get(startTime.plusDays(1).toLocalDate());
     Range<ZonedDateTime> range3 = ranges.get(endTimeNextDay.toLocalDate());
 
-    assertThat(range1.lowerEndpoint()).isEqualTo(startTime);
-    assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
-
-    assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
-    assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00");
-
-
-    assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00");
-    assertThat(range3.upperEndpoint()).isEqualTo(endTimeNextDay);
+    assertAll (
+        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
+        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
+        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
+        () -> assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
+        () -> assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
+        () -> assertThat(range3.upperEndpoint()).isEqualTo(endTimeNextDay),
+        () -> assertRangeHoursCount(range1, new BigDecimal(2)),
+        () -> assertRangeHoursCount(range2, new BigDecimal(24)),
+        () -> assertRangeHoursCount(range3, new BigDecimal(6))
+    );
   }
+
 
   @Test
   void splitOverDays_timeEntryWithinFourCalendarDays_returnFourDateTimeRanges() {
@@ -262,17 +269,20 @@ class BalanceCalculatorTest {
     Range<ZonedDateTime> range3 = ranges.get(startTime.plusDays(2).toLocalDate());
     Range<ZonedDateTime> range4 = ranges.get(endTime.toLocalDate());
 
-    assertThat(range1.lowerEndpoint()).isEqualTo(startTime);
-    assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
-
-    assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00");
-    assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00");
-
-    assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00");
-    assertThat(range3.upperEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00");
-
-    assertThat(range4.lowerEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00");
-    assertThat(range4.upperEndpoint()).isEqualTo(endTime);
+    assertAll(
+        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
+        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
+        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
+        () -> assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
+        () -> assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
+        () -> assertThat(range3.upperEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00"),
+        () -> assertThat(range4.lowerEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00"),
+        () -> assertThat(range4.upperEndpoint()).isEqualTo(endTime),
+        () -> assertRangeHoursCount(range1, new BigDecimal(2)),
+        () -> assertRangeHoursCount(range2, new BigDecimal(24)),
+        () -> assertRangeHoursCount(range3, new BigDecimal(24)),
+        () -> assertRangeHoursCount(range4, new BigDecimal(6))
+    );
   }
 
   private List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
@@ -295,4 +305,11 @@ class BalanceCalculatorTest {
     );
     return mapper.readValue(file, type);
   }
+
+  private void assertRangeHoursCount(Range<ZonedDateTime> range , BigDecimal expectedHours) {
+    BigDecimal rangeHours = balanceCalculator
+        .calculateDurationInHours(range, AccrualType.ANNUAL_TARGET_HOURS);
+    assertThat(rangeHours).isEqualTo(expectedHours);
+  }
+
 }
