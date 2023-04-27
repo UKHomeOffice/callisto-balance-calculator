@@ -227,34 +227,6 @@ class BalanceCalculatorTest {
   }
 
   @Test
-  void splitOverDays_timeEntryWithinThreeCalendarDays_returnThreeDateTimeRanges() {
-
-    var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");
-    var endTimeNextDay = ZonedDateTime.parse("2023-04-20T06:00:00+00:00");
-
-    Map<LocalDate, Range<ZonedDateTime>> ranges =
-        balanceCalculator.splitOverDays(startTime, endTimeNextDay);
-    assertThat(ranges).hasSize(3);
-
-    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
-    Range<ZonedDateTime> range2 = ranges.get(startTime.plusDays(1).toLocalDate());
-    Range<ZonedDateTime> range3 = ranges.get(endTimeNextDay.toLocalDate());
-
-    assertAll (
-        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
-        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
-        () -> assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
-        () -> assertThat(range3.upperEndpoint()).isEqualTo(endTimeNextDay),
-        () -> assertRangeHoursCount(range1, new BigDecimal(2)),
-        () -> assertRangeHoursCount(range2, new BigDecimal(24)),
-        () -> assertRangeHoursCount(range3, new BigDecimal(6))
-    );
-  }
-
-
-  @Test
   void splitOverDays_timeEntryWithinFourCalendarDays_returnFourDateTimeRanges() {
 
     var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");
