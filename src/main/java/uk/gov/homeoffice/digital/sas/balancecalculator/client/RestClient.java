@@ -29,9 +29,9 @@ public class RestClient {
   public static final String TENANT_ID_STRING_IDENTIFIER = "tenantId";
   public static final String FILTER_STRING_IDENTIFIER = "filter";
   public static final String GET_ACCRUAL_BY_TYPE_AND_DATE_EXCEPTION = """
-  Non-unique Accrual result for tenantId: {0},
-   personId: {1}, accrualTypeId: {2} and accrualDate: {3}
-      """;
+      Non-unique Accrual result for tenantId: {0},
+       personId: {1}, accrualTypeId: {2} and accrualDate: {3}
+          """;
   public static final String GET_AGREEMENT_BY_ID_EXCEPTION =
       "Non-unique Accrual result for agreementId: '{0}'";
 
@@ -44,7 +44,7 @@ public class RestClient {
 
   @Autowired
   public RestClient(RestTemplateBuilder builder,
-      @Value("${balance.calculator.accruals.url}") String accrualsUrl) {
+                    @Value("${balance.calculator.accruals.url}") String accrualsUrl) {
     this.restTemplate = builder.build();
     this.accrualsNoFilterUrl = accrualsUrl + "/resources/accruals?tenantId={tenantId}";
     this.accrualsFilterUrl =
@@ -54,7 +54,7 @@ public class RestClient {
   }
 
   public Accrual getAccrualByTypeAndDate(String tenantId, String personId, String accrualTypeId,
-      LocalDate accrualDate) {
+                                         LocalDate accrualDate) {
     Map<String, String> parameters = Map.of(
         TENANT_ID_STRING_IDENTIFIER, tenantId,
         FILTER_STRING_IDENTIFIER,
@@ -65,7 +65,8 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-          new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {
+          }, parameters);
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
@@ -82,7 +83,8 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Agreement>> entity
         = restTemplate.exchange(agreementsByIdUrl, HttpMethod.GET, null,
-          new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {
+          }, parameters);
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
@@ -102,13 +104,14 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-          new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {
+          }, parameters);
 
     return Objects.requireNonNull(entity.getBody()).getItems();
   }
 
   public Accrual getPriorAccrual(String tenantId, String personId, String accrualTypeId,
-      LocalDate referenceDate) {
+                                 LocalDate referenceDate) {
     LocalDate priorAccrualDate = referenceDate.minusDays(1);
 
     return getAccrualByTypeAndDate(tenantId, personId, accrualTypeId, priorAccrualDate);
@@ -121,7 +124,8 @@ public class RestClient {
     HttpEntity<List<PatchBody>> request = new HttpEntity<>(payloadBody);
 
     ResponseEntity<ApiResponse<Accrual>> entity = restTemplate.exchange(accrualsNoFilterUrl,
-        HttpMethod.PATCH, request, new ParameterizedTypeReference<>() {}, parameters);
+        HttpMethod.PATCH, request, new ParameterizedTypeReference<>() {
+        }, parameters);
 
     return Objects.requireNonNull(entity.getBody()).getItems();
   }
@@ -130,13 +134,13 @@ public class RestClient {
     List<PatchBody> body = new ArrayList<>();
 
     accruals.forEach(a -> {
-        PatchBody blob = new PatchBody();
+      PatchBody blob = new PatchBody();
 
-        blob.setOp("replace");
-        blob.setPath("/" + a.getId().toString());
-        blob.setValue(a);
+      blob.setOp("replace");
+      blob.setPath("/" + a.getId().toString());
+      blob.setValue(a);
 
-        body.add(blob);
+      body.add(blob);
     });
 
     return body;
