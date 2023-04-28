@@ -257,6 +257,11 @@ class BalanceCalculatorTest {
     );
   }
 
+  @Test
+  void splitOverDays_timeEntryWithinTwoCalendarDaysWithPartialHours_returnCorrectHoursCount() {
+    // TODO : 
+  }
+
   private List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
@@ -268,6 +273,12 @@ class BalanceCalculatorTest {
     });
   }
 
+  private void assertRangeHoursCount(Range<ZonedDateTime> range , BigDecimal expectedHours) {
+    BigDecimal rangeHours = balanceCalculator
+        .calculateDurationInHours(range, AccrualType.ANNUAL_TARGET_HOURS);
+    assertThat(rangeHours).isEqualTo(expectedHours);
+  }
+
   private <T> T loadObjectFromFile(String filePath, Class<T> type) throws IOException {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());
@@ -276,12 +287,6 @@ class BalanceCalculatorTest {
         Objects.requireNonNull(this.getClass().getClassLoader().getResource(filePath)).getFile()
     );
     return mapper.readValue(file, type);
-  }
-
-  private void assertRangeHoursCount(Range<ZonedDateTime> range , BigDecimal expectedHours) {
-    BigDecimal rangeHours = balanceCalculator
-        .calculateDurationInHours(range, AccrualType.ANNUAL_TARGET_HOURS);
-    assertThat(rangeHours).isEqualTo(expectedHours);
   }
 
 }
