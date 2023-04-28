@@ -26,7 +26,7 @@ services:
       MAVEN_USER_HOME: /Users/1000/.m2
       KEYSTORE_LOCATION: file://keystore/kafka/kafka.keystore.jks
       KEYSTORE_PASSWORD: changeit
-      ACCRUALS_URL: "http://accruals-restapi0:9090"
+      ACCRUALS_URL: "http://accruals-restapi:9090"
       SPRING_APPLICATION_JSON: '{
           "spring.kafka.ssl.trust-store-location": "file://keystore/kafka/kafka.truststore.jks",
           "spring.kafka.ssl.trust-store-password": "changeit"
