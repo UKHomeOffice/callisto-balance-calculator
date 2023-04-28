@@ -8,8 +8,8 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_KEY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.MESSAGE_VALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_RESOURCE_SCHEMA;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createKafkaMessage;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createResourceJson;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createKafkaMessage;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createResourceJson;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SCHEMA_INVALID_VERSION;
 import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
@@ -33,7 +33,7 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
+import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
@@ -71,7 +71,7 @@ class KafkaConsumerIntegrationTest {
       throws JsonProcessingException {
     // Given
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
         SHIFT_START_TIME,
         SHIFT_END_TIME);
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_VALID_VERSION, timeEntry,
@@ -94,7 +94,7 @@ class KafkaConsumerIntegrationTest {
   @Test
   void should_throwException_when_versionInvalid() throws JsonProcessingException {
     // Given
-    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
         SHIFT_START_TIME,
         SHIFT_END_TIME);
 
@@ -119,7 +119,7 @@ class KafkaConsumerIntegrationTest {
   @Test
   void should_throwException_when_resourceInvalid() throws JsonProcessingException {
     // Given
-    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
         SHIFT_START_TIME,
         SHIFT_END_TIME);
 

@@ -3,9 +3,11 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.client;
 import jakarta.persistence.NonUniqueResultException;
 import java.text.MessageFormat;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -20,6 +22,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.PatchBody;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 
+@NoArgsConstructor
 @Component
 public class RestClient {
 
@@ -32,11 +35,11 @@ public class RestClient {
   public static final String GET_AGREEMENT_BY_ID_EXCEPTION =
       "Non-unique Accrual result for agreementId: '{0}'";
 
-  private final RestTemplate restTemplate;
-  private final String accrualsFilterUrl;
-  private final String agreementsByIdUrl;
+  private RestTemplate restTemplate;
+  private String accrualsFilterUrl;
+  private String agreementsByIdUrl;
 
-  private final String accrualsNoFilterUrl;
+  private String accrualsNoFilterUrl;
 
 
   @Autowired
@@ -111,14 +114,31 @@ public class RestClient {
     return getAccrualByTypeAndDate(tenantId, personId, accrualTypeId, priorAccrualDate);
   }
 
-  public ApiResponse<Accrual> patchAccruals(String tenantId, List<PatchBody> payloadBody) {
+  public List<Accrual> patchAccruals(String tenantId, List<Accrual> accruals) {
     Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId);
 
+    List<PatchBody> payloadBody = createPatchBody(accruals);
     HttpEntity<List<PatchBody>> request = new HttpEntity<>(payloadBody);
 
-    HttpEntity<ApiResponse<Accrual>> entity = restTemplate.exchange(accrualsNoFilterUrl,
-          HttpMethod.PATCH, request, new ParameterizedTypeReference<>() {}, parameters);
+    ResponseEntity<ApiResponse<Accrual>> entity = restTemplate.exchange(accrualsNoFilterUrl,
+        HttpMethod.PATCH, request, new ParameterizedTypeReference<>() {}, parameters);
 
-    return entity.getBody();
+    return Objects.requireNonNull(entity.getBody()).getItems();
+  }
+
+  List<PatchBody> createPatchBody(List<Accrual> accruals) {
+    List<PatchBody> body = new ArrayList<>();
+
+    accruals.forEach(a -> {
+        PatchBody blob = new PatchBody();
+
+        blob.setOp("replace");
+        blob.setPath("/" + a.getId().toString());
+        blob.setValue(a);
+
+        body.add(blob);
+    });
+
+    return body;
   }
 }

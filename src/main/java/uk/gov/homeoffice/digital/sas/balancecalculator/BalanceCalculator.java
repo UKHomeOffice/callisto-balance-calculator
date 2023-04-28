@@ -40,10 +40,11 @@ public class BalanceCalculator {
         .flatMap(Collection::stream)
         .toList();
 
-    // TODO : send Batch Update request to Accruals API
-    // restClient.batchUpdate(accrualsToBatchUpdate)
-
     return accrualsToBatchUpdate;
+  }
+
+  public List<Accrual> sendToAccruals(TimeEntry timeEntry, List<Accrual> accruals) {
+    return restClient.patchAccruals(timeEntry.getTenantId(), accruals);
   }
 
   List<Accrual> calculateAccruals(TimeEntry timeEntry, AccrualType accrualType) {

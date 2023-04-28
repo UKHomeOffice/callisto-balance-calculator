@@ -1,7 +1,10 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,7 +33,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
+import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 
 @ExtendWith(MockitoExtension.class)
 class BalanceCalculatorTest {
@@ -52,6 +55,7 @@ class BalanceCalculatorTest {
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
   private static final String AGREEMENT_ID = "c0a80193-87a3-1ff0-8187-a3bfe2b80004";
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
+
   @Mock
   private RestClient restClient;
 
@@ -71,9 +75,33 @@ class BalanceCalculatorTest {
     balanceCalculator = new BalanceCalculator(restClient);
   }
 
+  @Test
+  void sendToAccruals_withValidAccruals_shouldCallPatchAccruals() {
+    String timeEntryId = "7f000001-879e-1b02-8187-9ef1640f0003";
+    String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
+    String personId = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
+    ZonedDateTime finishTime = startTime.plusHours(2);
+
+    TimeEntry timeEntry = createTimeEntry(timeEntryId,
+        tenantId,
+        personId,
+        startTime,
+        finishTime);
+
+    Accrual accrual1 = createAccrual(UUID.fromString("0936e7a6-2b2e-1696-2546-5dd25dcae6a0"));
+    Accrual accrual2 = createAccrual(UUID.fromString("a613dd93-3bdf-d285-c263-84d6866d61c5"));
+    List<Accrual> accrualList = List.of(accrual1, accrual2);
+
+    balanceCalculator.sendToAccruals(timeEntry, accrualList);
+
+    verify(restClient).patchAccruals(tenantId, accrualList);
+  }
+
   @ParameterizedTest
   @MethodSource("testData")
-  void calculateAccruals_withinCalendarDayAndAnnualTargetHours_returnUpdateAccrual(String timeEntryId,
+  void calculateAccruals_withinCalendarDayAndAnnualTargetHours_returnUpdateAccrual(
+      String timeEntryId,
       BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
       BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
       throws IOException {
@@ -81,7 +109,7 @@ class BalanceCalculatorTest {
     ZonedDateTime shiftEndTime = ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
     //total of 2 hours worked
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
         shiftEndTime);
 
     LocalDate referenceDate = LocalDate.of(2023, 4, 18);
