@@ -17,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.ApiResponse;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 
 @Component
 public class RestClient {
@@ -99,10 +100,13 @@ public class RestClient {
     return Objects.requireNonNull(entity.getBody()).getItems();
   }
 
-  public Accrual getPriorAccrual(String tenantId, String personId, String accrualTypeId,
-      LocalDate referenceDate) {
-    LocalDate priorAccrualDate = referenceDate.minusDays(1);
+  public Agreement getApplicableAgreement(String tenantId, String personId, LocalDate accrualDate) {
 
-    return getAccrualByTypeAndDate(tenantId, personId, accrualTypeId, priorAccrualDate);
+    // Using Annual Target Hours accrual type, but any other accrual type would do
+    String agreementId = getAccrualByTypeAndDate(tenantId, personId,
+        AccrualType.ANNUAL_TARGET_HOURS.getId().toString(), accrualDate)
+        .getAgreementId().toString();
+
+    return getAgreementById(tenantId, agreementId);
   }
 }
