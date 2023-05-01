@@ -43,12 +43,12 @@ public class BalanceCalculator {
     LocalDate timeEntryStartDate = timeEntryStart.toLocalDate();
     LocalDate timeEntryEndDate = timeEntryEnd.toLocalDate();
 
-    // get agreement applicable to the end date of the time entry (in case the time entry spans two
+    // Get agreement applicable to the end date of the time entry (in case the time entry spans two
     // agreements
     Agreement applicableAgreement =
         getAgreementApplicableToTimeEntryEndDate(tenantId, personId, timeEntryEndDate);
 
-    // get accruals of all types between the day just before the time entry and the end date of the
+    // Get accruals of all types between the day just before the time entry and the end date of the
     // latest applicable agreement
     Map<AccrualType, TreeMap<LocalDate, Accrual>> allAccruals =
         getAccrualsBetweenDates(tenantId, personId,

@@ -122,8 +122,26 @@ class BalanceCalculatorTest {
   @Test
   void map_listOfAccruals_mappedByAccrualTypeAndDate() throws IOException {
     List<Accrual> accruals = loadAccrualsFromFile("data/accruals_convertToMap.json");
+
     Map<AccrualType, TreeMap<LocalDate, Accrual>> map =
         balanceCalculator.map(accruals);
+
     assertThat(map).hasSize(2);
+
+    TreeMap<LocalDate, Accrual> annualTargetHoursMap = map.get(AccrualType.ANNUAL_TARGET_HOURS);
+
+    assertThat(annualTargetHoursMap).hasSize(2);
+    assertThat(annualTargetHoursMap.get(LocalDate.of(2023,4,19))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7080));
+    assertThat(annualTargetHoursMap.get(LocalDate.of(2023,4,20))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7320));
+
+    TreeMap<LocalDate, Accrual> nightHoursMap = map.get(AccrualType.NIGHT_HOURS);
+    assertThat(nightHoursMap).hasSize(1);
+    assertThat(nightHoursMap.get(LocalDate.of(2023,4,19))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(8040));
   }
 }
