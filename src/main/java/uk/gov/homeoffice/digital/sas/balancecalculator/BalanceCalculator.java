@@ -57,15 +57,15 @@ public class BalanceCalculator {
     Map<LocalDate, Range<ZonedDateTime>> dateRangeMap = splitOverDays(timeEntryStart, timeEntryEnd);
 
     dateRangeMap.entrySet().forEach(entry ->
-      accrualModules.forEach(module -> {
-        LocalDate referenceDate = entry.getKey();
-        ZonedDateTime startTime = entry.getValue().lowerEndpoint();
-        ZonedDateTime endTime = entry.getValue().upperEndpoint();
+        accrualModules.forEach(module -> {
+          LocalDate referenceDate = entry.getKey();
+          ZonedDateTime startTime = entry.getValue().lowerEndpoint();
+          ZonedDateTime endTime = entry.getValue().upperEndpoint();
 
-        Accrual accrual = module.extractAccrualByReferenceDate(allAccruals, referenceDate);
+          Accrual accrual = module.extractAccrualByReferenceDate(allAccruals, referenceDate);
 
-        module.updateAccrualContribution(timeEntryId, startTime, endTime, accrual);
-      })
+          module.updateAccrualContribution(timeEntryId, startTime, endTime, accrual);
+        })
     );
 
     List<Accrual> accrualsToBatchUpdate = accrualModules.stream()
