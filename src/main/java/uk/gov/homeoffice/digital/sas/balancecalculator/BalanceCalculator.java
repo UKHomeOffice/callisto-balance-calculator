@@ -96,6 +96,12 @@ public class BalanceCalculator {
     return map(accruals);
   }
 
+  /**
+   * Groups input list of accruals by Accrual Type then by Accrual Date.
+   * Note the use of TreeMap in the nested map to ensure accrual records are sorted by date
+   * @param accruals list of accruals
+   * @return Accruals mapped by Accrual Type and Accrual Date
+   */
   Map<AccrualType, TreeMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
     return accruals.stream()
         .collect(Collectors.groupingBy(

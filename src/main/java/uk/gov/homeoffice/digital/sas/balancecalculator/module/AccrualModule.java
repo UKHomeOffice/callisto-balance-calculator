@@ -31,8 +31,7 @@ public abstract class AccrualModule {
   }
 
   public void updateAccrualContribution(String timeEntryId, ZonedDateTime startTime,
-      ZonedDateTime endTime,
-      Accrual accrual) {
+      ZonedDateTime endTime, Accrual accrual) {
 
     BigDecimal minutes = calculateShiftContribution(startTime, endTime);
 
@@ -60,7 +59,7 @@ public abstract class AccrualModule {
         baseCumulativeTotal = priorAccrual.getCumulativeTotal();
       }
 
-      // the first element is only used to calculate base cumulative total
+      // the first element is only used to calculate base cumulative total so shouldn't be modified
       accruals.remove(priorAccrualDate);
 
       return updateSubsequentAccruals(accruals.values().stream().toList(),
