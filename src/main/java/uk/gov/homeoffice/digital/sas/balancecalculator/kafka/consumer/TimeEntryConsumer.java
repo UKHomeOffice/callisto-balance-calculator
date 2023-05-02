@@ -57,10 +57,10 @@ public class TimeEntryConsumer {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
         log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, payload));
 
-        List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+        List<Accrual> accrualsToBatchUpdate = balanceCalculator.calculate(timeEntry);
 
         //TODO if 200 is received back commit offset
-        balanceCalculator.sendToAccruals(timeEntry, accruals);
+        balanceCalculator.sendToAccruals(timeEntry, accrualsToBatchUpdate);
       }
 
       // TODO What should we do with Kafka offset when errors are thrown during balance calculation?
