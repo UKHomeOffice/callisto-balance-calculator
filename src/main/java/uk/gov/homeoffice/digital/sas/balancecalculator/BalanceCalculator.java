@@ -1,6 +1,15 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import com.google.common.collect.Range;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -14,14 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 
 @Component
@@ -161,12 +162,20 @@ public class BalanceCalculator {
           intervals.put(startDateTime.plusDays(i).toLocalDate(), midRange);
         }
       }
-      
+
+
       Range<ZonedDateTime> endDayRange = Range.closed(
           ZonedDateTime.of(endDateTime.toLocalDate().atTime(0, 0), endDateTime.getZone()),
           endDateTime
           );
-      intervals.put(endDateTime.toLocalDate(), endDayRange);
+
+      // Check if range is >= 1 min
+      // ?? Shall we take to account range 00:00:00 - 00:00:00 if person
+      // finishing work exactly at full hour ?
+      if( Duration.between(endDayRange.lowerEndpoint(), endDayRange.upperEndpoint()).toMinutes() >= 1 ){
+        intervals.put(endDateTime.toLocalDate(), endDayRange);
+      }
+
     }
 
     return intervals;

@@ -8,6 +8,7 @@ import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
+import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -63,6 +64,10 @@ class BalanceCalculatorIntegrationTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
     assertThat(accruals).hasSize(2);
+
+    assertThat(accruals.get(0).getContributions().getTotal()).isEqualTo(new BigDecimal(6));
+    assertThat(accruals.get(1).getContributions().getTotal()).isEqualTo(new BigDecimal(2));
+
   }
 
 }
