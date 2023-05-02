@@ -1,43 +1,77 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import com.google.common.collect.Range;
-import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 
 @Component
+@Import(AccrualModuleConfig.class)
 public class BalanceCalculator {
 
   private final RestClient restClient;
+  private final List<AccrualModule> accrualModules;
 
   @Autowired
-  public BalanceCalculator(RestClient restClient) {
+  public BalanceCalculator(RestClient restClient, List<AccrualModule> accrualModules) {
     this.restClient = restClient;
+    this.accrualModules = accrualModules;
   }
 
   public List<Accrual> calculate(TimeEntry timeEntry) {
 
-    List<Accrual> accrualsToBatchUpdate = Arrays.stream(AccrualType.values())
-        .filter(AccrualType::isEnabled)
-        .map(accrualType -> calculateAccruals(timeEntry, accrualType))
-        .flatMap(Collection::stream)
+    String timeEntryId = timeEntry.getId();
+    String tenantId = timeEntry.getTenantId();
+    String personId = timeEntry.getOwnerId();
+    ZonedDateTime timeEntryStart = timeEntry.getActualStartTime();
+    ZonedDateTime timeEntryEnd = timeEntry.getActualEndTime();
+    LocalDate timeEntryStartDate = timeEntryStart.toLocalDate();
+    LocalDate timeEntryEndDate = timeEntryEnd.toLocalDate();
+
+    // Get agreement applicable to the end date of the time entry (in case the time entry spans two
+    // agreements
+    Agreement applicableAgreement =
+        getAgreementApplicableToTimeEntryEndDate(tenantId, personId, timeEntryEndDate);
+
+    // Get accruals of all types between the day just before the time entry and the end date of the
+    // latest applicable agreement
+    Map<AccrualType, TreeMap<LocalDate, Accrual>> allAccruals =
+        getAccrualsBetweenDates(tenantId, personId,
+            timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate());
+
+    Map<LocalDate, Range<ZonedDateTime>> dateRangeMap = splitOverDays(timeEntryStart, timeEntryEnd);
+
+    dateRangeMap.entrySet().forEach(entry ->
+        accrualModules.forEach(module -> {
+          LocalDate referenceDate = entry.getKey();
+          ZonedDateTime startTime = entry.getValue().lowerEndpoint();
+          ZonedDateTime endTime = entry.getValue().upperEndpoint();
+
+          Accrual accrual = module.extractAccrualByReferenceDate(allAccruals, referenceDate);
+
+          module.updateAccrualContribution(timeEntryId, startTime, endTime, accrual);
+        })
+    );
+
+    List<Accrual> accrualsToBatchUpdate = accrualModules.stream()
+        .map(module -> module.cascadeCumulativeTotal(
+            allAccruals, applicableAgreement.getStartDate()))
+        .flatMap(List::stream)
         .toList();
 
     return accrualsToBatchUpdate;
@@ -47,88 +81,38 @@ public class BalanceCalculator {
     return restClient.patchAccruals(timeEntry.getTenantId(), accruals);
   }
 
-  List<Accrual> calculateAccruals(TimeEntry timeEntry, AccrualType accrualType) {
-
-    Map<LocalDate, Range<ZonedDateTime>> dateRangeMap =
-        splitOverDays(timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
-
-    return dateRangeMap.entrySet().stream()
-        .map(entry -> recalculateContributions(timeEntry.getId(), timeEntry.getTenantId(),
-            timeEntry.getOwnerId(), accrualType, entry.getKey(), entry.getValue()))
-        .map(accrual -> cascadeCumulativeTotal(timeEntry, accrual)).flatMap(Collection::stream)
-        .toList();
+  Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId, String personId,
+      LocalDate timeEntryEndDate) {
+    return restClient.getApplicableAgreement(tenantId,
+        personId, timeEntryEndDate);
   }
 
-  private List<Accrual> cascadeCumulativeTotal(TimeEntry timeEntry, Accrual accrual) {
-    LocalDate referenceDate = accrual.getAccrualDate();
+  Map<AccrualType, TreeMap<LocalDate, Accrual>> getAccrualsBetweenDates(
+      String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
 
-    List<Accrual> accrualsToUpdate =
-        getAccrualsFromReferenceDateUntilEndOfAgreement(timeEntry.getTenantId(),
-            timeEntry.getOwnerId(), accrual.getAgreementId().toString(), referenceDate.plusDays(1));
-    accrualsToUpdate.add(0, accrual);
+    List<Accrual> accruals = restClient.getAccrualsBetweenDates(tenantId, personId,
+        startDate, endDate);
 
-    BigDecimal priorCumulativeTotal =
-        restClient.getPriorAccrual(timeEntry.getTenantId(), timeEntry.getOwnerId(),
-            accrual.getAccrualTypeId().toString(), referenceDate).getCumulativeTotal();
-
-    return updateSubsequentAccruals(accrualsToUpdate, priorCumulativeTotal);
+    return map(accruals);
   }
 
-  List<Accrual> updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
-
-    List<Accrual> updatedAccruals = List.copyOf(accruals);
-    //update the cumulative total for referenceDate
-    updatedAccruals.get(0).setCumulativeTotal(
-        priorCumulativeTotal.add(updatedAccruals.get(0).getContributions().getTotal()));
-
-    //cascade through until end of agreement
-    for (int i = 1; i < updatedAccruals.size(); i++) {
-      BigDecimal priorTotal =
-          updatedAccruals.get(i - 1).getCumulativeTotal();
-      Accrual currentAccrual = updatedAccruals.get(i);
-      currentAccrual.setCumulativeTotal(
-          priorTotal.add(currentAccrual.getContributions().getTotal()));
-    }
-
-    return updatedAccruals;
-  }
-
-  Accrual recalculateContributions(String timeEntryId, String tenantId,
-      String personId, AccrualType accrualType,
-      LocalDate accrualDate,
-      Range<ZonedDateTime> dateTimeRange) {
-
-    Accrual accrual =
-        restClient.getAccrualByTypeAndDate(tenantId, personId,
-            accrualType.getId().toString(), accrualDate);
-    // TODO what to do if there are no accrual records ?
-    // In other terms, is it possible that a time entry could ever be submitted while there is no
-    // corresponding agreement in Accruals database?
-
-    BigDecimal minutes = calculateDurationInMinutes(dateTimeRange, accrualType);
-
-    Contributions contributions = accrual.getContributions();
-    contributions.getTimeEntries().put(UUID.fromString(timeEntryId), minutes);
-    BigDecimal total =
-        contributions.getTimeEntries().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    contributions.setTotal(total);
-    return accrual;
-  }
-
-  BigDecimal calculateDurationInMinutes(Range<ZonedDateTime> dateTimeRange,
-      AccrualType accrualType) {
-
-    BigDecimal minutes;
-    switch (accrualType) {
-      case ANNUAL_TARGET_HOURS -> {
-        Duration shiftDuration =
-            Duration.between(dateTimeRange.lowerEndpoint(), dateTimeRange.upperEndpoint());
-        minutes = new BigDecimal(shiftDuration.toMinutes());
-      }
-      default -> minutes = BigDecimal.ZERO;
-    }
-
-    return minutes;
+  /**
+   * Groups input list of accruals by Accrual Type then by Accrual Date.
+   * Note the use of TreeMap in the nested map to ensure accrual records are sorted by date
+   *
+   * @param accruals list of accruals
+   * @return Accruals mapped by Accrual Type and Accrual Date
+   */
+  Map<AccrualType, TreeMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
+    return accruals.stream()
+        .collect(Collectors.groupingBy(
+                Accrual::getAccrualType,
+                Collectors.toMap(
+                    Accrual::getAccrualDate,
+                    Function.identity(),
+                    (c1, c2) -> c1, TreeMap::new)
+            )
+        );
   }
 
   Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
@@ -149,20 +133,5 @@ public class BalanceCalculator {
 
   private boolean isOnSameDay(ZonedDateTime dateTimeOne, ZonedDateTime dateTimeTwo) {
     return dateTimeOne.toLocalDate().isEqual(dateTimeTwo.toLocalDate());
-  }
-
-  //get accrual records from date to end of agreement, sorted by accrualDate
-  private List<Accrual> getAccrualsFromReferenceDateUntilEndOfAgreement(String tenantId,
-      String personId, String agreementId, LocalDate referenceDate) {
-    Agreement agreement = restClient.getAgreementById(tenantId, agreementId);
-
-    List<Accrual> accruals =
-        restClient.getAccrualsBetweenDates(tenantId, personId, referenceDate, agreement.getEndDate()
-        );
-
-    Comparator<Accrual> accrualComparator = Comparator.comparing(Accrual::getAccrualDate);
-    Collections.sort(accruals, accrualComparator);
-
-    return accruals;
   }
 }

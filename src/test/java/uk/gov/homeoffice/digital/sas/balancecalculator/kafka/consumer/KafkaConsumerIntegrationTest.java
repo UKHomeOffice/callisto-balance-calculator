@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
@@ -44,6 +45,7 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 @EmbeddedKafka(
     partitions = 1
 )
+@AutoConfigureWireMock(port = 9999)
 @TestPropertySource(properties = {
     "spring.kafka.producer.bootstrap-servers=${spring.embedded.kafka.brokers}",
     "spring.kafka.consumer.bootstrap-servers=${spring.embedded.kafka.brokers}"})

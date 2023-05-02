@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -43,4 +44,7 @@ public class Accrual {
 
   private Contributions contributions = new Contributions();
 
+  public AccrualType getAccrualType() {
+    return AccrualType.getById(this.accrualTypeId);
+  }
 }
