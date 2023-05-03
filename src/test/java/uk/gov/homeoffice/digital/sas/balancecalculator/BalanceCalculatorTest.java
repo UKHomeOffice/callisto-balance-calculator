@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 
@@ -70,23 +69,13 @@ class BalanceCalculatorTest {
 
   @Test
   void sendToAccruals_withValidAccruals_shouldCallPatchAccruals() {
-    String timeEntryId = "7f000001-879e-1b02-8187-9ef1640f0003";
     String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
-    String personId = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
-    ZonedDateTime finishTime = startTime.plusHours(2);
-
-    TimeEntry timeEntry = createTimeEntry(timeEntryId,
-        tenantId,
-        personId,
-        startTime,
-        finishTime);
 
     Accrual accrual1 = createAccrual(UUID.fromString("0936e7a6-2b2e-1696-2546-5dd25dcae6a0"));
     Accrual accrual2 = createAccrual(UUID.fromString("a613dd93-3bdf-d285-c263-84d6866d61c5"));
     List<Accrual> accrualList = List.of(accrual1, accrual2);
 
-    balanceCalculator.sendToAccruals(timeEntry, accrualList);
+    balanceCalculator.sendToAccruals(tenantId, accrualList);
 
     verify(restClient).patchAccruals(tenantId, accrualList);
   }

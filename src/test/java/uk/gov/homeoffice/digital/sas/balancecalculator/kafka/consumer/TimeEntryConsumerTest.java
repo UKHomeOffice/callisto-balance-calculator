@@ -52,7 +52,7 @@ class TimeEntryConsumerTest {
   private ArgumentCaptor<TimeEntry> timeEntryCaptor1;
 
   @Captor
-  private ArgumentCaptor<TimeEntry> timeEntryCaptor2;
+  private ArgumentCaptor<String> tenantIdCaptor;
 
   @Captor
   private ArgumentCaptor<List<Accrual>> accrualsCaptor;
@@ -92,8 +92,8 @@ class TimeEntryConsumerTest {
     verify(balanceCalculator).calculate(timeEntryCaptor1.capture());
     assertThat(timeEntryCaptor1.getValue().getId()).isEqualTo(id);
 
-    verify(balanceCalculator).sendToAccruals(timeEntryCaptor2.capture(), accrualsCaptor.capture());
-    assertThat(timeEntryCaptor2.getValue().getId()).isEqualTo(id);
+    verify(balanceCalculator).sendToAccruals(tenantIdCaptor.capture(), accrualsCaptor.capture());
+    assertThat(tenantIdCaptor.getValue()).isEqualTo(VALID_TENANT_ID);
     assertThat(accrualsCaptor.getValue().get(0)).isEqualTo(accrual1);
     assertThat(accrualsCaptor.getValue().get(1)).isEqualTo(accrual2);
   }

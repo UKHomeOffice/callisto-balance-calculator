@@ -48,7 +48,7 @@ public class RestClientTest {
   }
 
   @Test
-  void patchAccruals_withValidAccruals_shouldRMakePatchRequestWithCorrectBody()
+  void patchAccruals_withValidAccruals_shouldMakePatchRequestWithCorrectBody()
       throws JsonProcessingException {
     String tenantId = "3fa85f64-5717-4562-b3fc-2c963f66afa6";
 
@@ -63,21 +63,21 @@ public class RestClientTest {
     PatchBody body2 = createPatchBody(accrual2);
 
     List<PatchBody> payloadBody = List.of(body1, body2);
-    HttpEntity<List<PatchBody>> request = new HttpEntity<>(payloadBody);
+    HttpEntity<List<PatchBody>> expectedPayload = new HttpEntity<>(payloadBody);
 
     String responseString = "{ \"meta\": { \"next\": null }, \"items\": [] }";
     ApiResponse<Accrual> apiResponse =
         objectMapper.readValue(responseString, new TypeReference<>() {
         });
 
-    when(restTemplate.exchange(any(String.class), eq(HttpMethod.PATCH), eq(request),
+    when(restTemplate.exchange(any(String.class), eq(HttpMethod.PATCH), eq(expectedPayload),
         Mockito.<ParameterizedTypeReference<ApiResponse<Accrual>>>any(),
         Mockito.<Map<String, ?>>any()))
         .thenReturn(new ResponseEntity<>(apiResponse, HttpStatus.OK));
 
     restClient.patchAccruals(tenantId, accrualList);
 
-    verify(restTemplate).exchange(any(String.class), eq(HttpMethod.PATCH), eq(request),
+    verify(restTemplate).exchange(any(String.class), eq(HttpMethod.PATCH), eq(expectedPayload),
         Mockito.<ParameterizedTypeReference<ApiResponse<Accrual>>>any(),
         Mockito.<Map<String, ?>>any());
   }

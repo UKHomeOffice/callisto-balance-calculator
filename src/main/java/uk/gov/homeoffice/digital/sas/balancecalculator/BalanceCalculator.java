@@ -77,8 +77,8 @@ public class BalanceCalculator {
     return accrualsToBatchUpdate;
   }
 
-  public List<Accrual> sendToAccruals(TimeEntry timeEntry, List<Accrual> accruals) {
-    return restClient.patchAccruals(timeEntry.getTenantId(), accruals);
+  public void sendToAccruals(String tenantId, List<Accrual> accruals) {
+    restClient.patchAccruals(tenantId, accruals);
   }
 
   Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId, String personId,

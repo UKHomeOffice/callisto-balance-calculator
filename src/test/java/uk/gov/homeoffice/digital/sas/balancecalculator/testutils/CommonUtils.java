@@ -18,7 +18,6 @@ import java.util.UUID;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import java.util.List;
 import org.springframework.util.ResourceUtils;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class CommonUtils {
