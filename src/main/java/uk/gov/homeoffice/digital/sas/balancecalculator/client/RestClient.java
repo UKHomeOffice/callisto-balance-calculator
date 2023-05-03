@@ -1,7 +1,5 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.client;
 
-import jakarta.persistence.NonUniqueResultException;
-import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -24,12 +22,6 @@ public class RestClient {
 
   public static final String TENANT_ID_STRING_IDENTIFIER = "tenantId";
   public static final String FILTER_STRING_IDENTIFIER = "filter";
-  public static final String GET_ACCRUAL_BY_TYPE_AND_DATE_EXCEPTION = """
-  Non-unique Accrual result for tenantId: {0},
-   personId: {1}, accrualTypeId: {2} and accrualDate: {3}
-      """;
-  public static final String GET_AGREEMENT_BY_ID_EXCEPTION =
-      "Non-unique Accrual result for agreementId: '{0}'";
 
   private final RestTemplate restTemplate;
   private final String accrualsFilterUrl;
@@ -62,11 +54,8 @@ public class RestClient {
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
-    } else {
-      throw new NonUniqueResultException(
-          MessageFormat.format(GET_ACCRUAL_BY_TYPE_AND_DATE_EXCEPTION,
-              tenantId, personId, accrualTypeId, accrualDate));
     }
+    return null;
   }
 
   public Agreement getAgreementById(String tenantId, String agreementId) {
@@ -79,10 +68,8 @@ public class RestClient {
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
-    } else {
-      throw new NonUniqueResultException(
-          MessageFormat.format(GET_AGREEMENT_BY_ID_EXCEPTION, agreementId));
     }
+    return  null;
   }
 
   public List<Accrual> getAccrualsBetweenDates(String tenantId, String personId,

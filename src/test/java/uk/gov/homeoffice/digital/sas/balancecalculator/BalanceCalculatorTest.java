@@ -10,9 +10,13 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
@@ -38,6 +43,8 @@ class BalanceCalculatorTest {
       ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
   private static final ZonedDateTime SHIFT_END_TIME =
       ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
+  private static final BigDecimal SHIFT_DURATION = new BigDecimal(120);
+
   private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
@@ -52,10 +59,18 @@ class BalanceCalculatorTest {
 
   private static Stream<Arguments> testData() {
     return Stream.of(
-        Arguments.of(TIME_ENTRY_ID, BigDecimal.valueOf(6600), BigDecimal.valueOf(7200),
+        Arguments.of(TIME_ENTRY_ID,
+            LocalDate.of(2023, 4, 18),
+            ZonedDateTime.parse("2023-04-18T08:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-18T10:00:00+00:00"),
+            BigDecimal.valueOf(6600), BigDecimal.valueOf(7200),
             BigDecimal.valueOf(7440), BigDecimal.valueOf(8160)),
-        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888", BigDecimal.valueOf(6240),
-            BigDecimal.valueOf(6840), BigDecimal.valueOf(7080), BigDecimal.valueOf(7800))
+        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
+            LocalDate.of(2023, 4, 18),
+            ZonedDateTime.parse("2023-04-18T14:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-18T14:30:00+00:00"),
+            BigDecimal.valueOf(6150), BigDecimal.valueOf(6750),
+            BigDecimal.valueOf(6990), BigDecimal.valueOf(7710))
     );
   }
 
@@ -67,17 +82,13 @@ class BalanceCalculatorTest {
   @ParameterizedTest
   @MethodSource("testData")
   void calculate_withinCalendarDayAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
+      LocalDate referenceDate, ZonedDateTime shiftStartTime, ZonedDateTime shiftEndTime,
       BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
       BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
       throws IOException {
-    ZonedDateTime shiftStartTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
-    ZonedDateTime shiftEndTime = ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
-    //total of 2 hours worked
 
     TimeEntry timeEntry = TestUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
         shiftEndTime);
-
-    LocalDate referenceDate = LocalDate.of(2023, 4, 18);
 
     String tenantId = timeEntry.getTenantId();
 
@@ -144,4 +155,83 @@ class BalanceCalculatorTest {
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(8040));
   }
+
+  @Test
+  void cascadeCumulativeTotal_priorDateWithinSameAgreement_usePriorCumulativeTotalAsBasis()
+      throws IOException {
+    List<Accrual> accruals = loadAccrualsFromFile("data/accruals_annualTargetHours.json");
+
+    TreeMap<LocalDate, Accrual> map = accruals.stream()
+        .collect(Collectors.toMap(
+                Accrual::getAccrualDate,
+                Function.identity(),
+                (k1, k2) -> k2,
+                TreeMap::new)
+            );
+
+    LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
+
+    List<Accrual> result = balanceCalculator.cascadeCumulativeTotal(map, agreementStartDate);
+
+    assertThat(result).hasSize(4);
+    assertThat(result.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(6480));
+
+    assertThat(result.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7080));
+
+    assertThat(result.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7320));
+
+    assertThat(result.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(8040));
+  }
+
+  @Test
+  void updateAccrualContribution_hasNoContributions_returnUpdatedAccrual() {
+
+    Contributions contributions = Contributions.builder()
+        .timeEntries(new HashMap<>())
+        .total(BigDecimal.ZERO)
+        .build();
+    Accrual accrual = Accrual.builder()
+        .accrualDate(ACCRUAL_DATE)
+        .contributions(contributions)
+        .build();
+
+    balanceCalculator.updateAccrualContribution(TIME_ENTRY_ID,SHIFT_DURATION, accrual);
+
+    assertThat(accrual.getContributions().getTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(120));
+    assertThat(accrual.getContributions().getTimeEntries()).hasSize(1);
+    assertThat(accrual.getContributions().getTimeEntries()).containsEntry(
+        UUID.fromString(TIME_ENTRY_ID), SHIFT_DURATION);
+  }
+
+  @Test
+  void updateAccrualContribution_hasExistingContribution_returnUpdatedAccrual() {
+    UUID existingTimeEntryId = UUID.fromString("e7d85e42-f0fb-4e2a-8211-874e27d1e888");
+
+    Contributions contributions = Contributions.builder()
+        .timeEntries(new HashMap<>(Map.of(existingTimeEntryId, BigDecimal.TEN)))
+        .total(BigDecimal.TEN)
+        .build();
+    Accrual accrual = Accrual.builder()
+        .accrualDate(ACCRUAL_DATE)
+        .contributions(contributions)
+        .build();
+
+    balanceCalculator.updateAccrualContribution(TIME_ENTRY_ID, SHIFT_DURATION, accrual);
+
+    assertThat(accrual.getContributions().getTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(130));
+
+    assertThat(accrual.getContributions().getTimeEntries()).hasSize(2);
+
+    assertThat(accrual.getContributions().getTimeEntries()).containsEntry(
+        existingTimeEntryId, BigDecimal.TEN);
+    assertThat(accrual.getContributions().getTimeEntries()).containsEntry(
+        UUID.fromString(TIME_ENTRY_ID), SHIFT_DURATION);
+  }
+
 }
