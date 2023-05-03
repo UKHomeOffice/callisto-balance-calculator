@@ -1,7 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.client;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -121,18 +120,16 @@ public class RestClient {
   }
 
   List<PatchBody> createPatchBody(List<Accrual> accruals) {
-    List<PatchBody> body = new ArrayList<>();
+    return accruals.stream()
+        .map(a -> {
+          PatchBody blob = new PatchBody();
 
-    accruals.forEach(a -> {
-      PatchBody blob = new PatchBody();
+          blob.setOp("replace");
+          blob.setPath("/" + a.getId().toString());
+          blob.setValue(a);
 
-      blob.setOp("replace");
-      blob.setPath("/" + a.getId().toString());
-      blob.setValue(a);
-
-      body.add(blob);
-    });
-
-    return body;
+          return blob;
+        })
+        .toList();
   }
 }

@@ -49,7 +49,7 @@ import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 class TimeEntryConsumerTest {
 
   @Captor
-  private ArgumentCaptor<TimeEntry> timeEntryCaptor1;
+  private ArgumentCaptor<TimeEntry> timeEntryCaptor;
 
   @Captor
   private ArgumentCaptor<String> tenantIdCaptor;
@@ -83,14 +83,14 @@ class TimeEntryConsumerTest {
     accrualList.add(accrual2);
 
     //when
-    when(balanceCalculator.calculate(timeEntryCaptor1.capture())).thenReturn(accrualList);
+    when(balanceCalculator.calculate(timeEntryCaptor.capture())).thenReturn(accrualList);
     timeEntryConsumer.onMessage(message);
 
     // then
     assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
         message));
-    verify(balanceCalculator).calculate(timeEntryCaptor1.capture());
-    assertThat(timeEntryCaptor1.getValue().getId()).isEqualTo(id);
+    verify(balanceCalculator).calculate(timeEntryCaptor.capture());
+    assertThat(timeEntryCaptor.getValue().getId()).isEqualTo(id);
 
     verify(balanceCalculator).sendToAccruals(tenantIdCaptor.capture(), accrualsCaptor.capture());
     assertThat(tenantIdCaptor.getValue()).isEqualTo(VALID_TENANT_ID);
