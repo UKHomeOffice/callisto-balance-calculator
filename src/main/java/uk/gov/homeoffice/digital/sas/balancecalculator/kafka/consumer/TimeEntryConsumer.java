@@ -58,8 +58,6 @@ public class TimeEntryConsumer {
         log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, payload));
 
         List<Accrual> accrualsToBatchUpdate = balanceCalculator.calculate(timeEntry);
-
-        //TODO if 200 is received back commit offset
         balanceCalculator.sendToAccruals(timeEntry.getTenantId(), accrualsToBatchUpdate);
       }
 
