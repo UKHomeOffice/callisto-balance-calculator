@@ -149,7 +149,7 @@ public class BalanceCalculator {
       intervals.put(startDateTime.toLocalDate(), RangeUtils.startDayRange(startDateTime));
 
       if (numDaysCovered > 2) {
-        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime, numDaysCovered));
+        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1), numDaysCovered - 1));
       }
 
       if(RangeUtils.endDayRange(endDateTime) != null){

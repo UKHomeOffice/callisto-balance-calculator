@@ -37,18 +37,22 @@ public class RangeUtils {
         ? endDayRange : null;
   }
 
+  public static Range<ZonedDateTime> fullDayRange(ZonedDateTime dateTime) {
+
+    return Range.closed(
+        ZonedDateTime.of(dateTime.toLocalDate().atTime(0, 0),
+            dateTime.getZone()),
+        ZonedDateTime.of(dateTime.plusDays(1).toLocalDate().atTime(0, 0),
+            dateTime.getZone())
+    );
+  }
+
   public static Map<LocalDate, Range<ZonedDateTime>> midDayRangesMap(ZonedDateTime startDateTime,
                                                                      long numDaysCovered){
-    Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
 
-    LongStream.range(1L, numDaysCovered - 1).forEach(i -> {
-      Range<ZonedDateTime> midRange = Range.closed(
-          ZonedDateTime.of(startDateTime.plusDays(i).toLocalDate().atTime(0, 0),
-              startDateTime.getZone()),
-          ZonedDateTime.of(startDateTime.plusDays(i + 1L).toLocalDate().atTime(0, 0),
-              startDateTime.getZone())
-      );
-      intervals.put(startDateTime.plusDays(i).toLocalDate(), midRange);
+    Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
+    LongStream.range(0, numDaysCovered - 1).forEach(i -> {
+      intervals.put(startDateTime.plusDays(i).toLocalDate(), fullDayRange(startDateTime.plusDays(i)));
     });
 
     return intervals;
