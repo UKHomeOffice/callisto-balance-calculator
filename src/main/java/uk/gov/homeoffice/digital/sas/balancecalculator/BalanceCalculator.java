@@ -1,14 +1,22 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
+import static org.springframework.util.CollectionUtils.isEmpty;
+
 import com.google.common.collect.Range;
+import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
@@ -16,13 +24,22 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 
 @Component
+@Slf4j
 @Import(AccrualModuleConfig.class)
 public class BalanceCalculator {
+
+  private static final String AGREEMENT_NOT_FOUND =
+      "Agreement record not found for tenantId {0}, personId {1} and date {2}";
+  private static final String ACCRUALS_NOT_FOUND =
+      "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
+  private static final String MISSING_ACCRUAL =
+      "Accrual missing for tenantId {0}, personId {1}, accrual type {2} and date {3}";
 
   private final RestClient restClient;
   private final List<AccrualModule> accrualModules;
@@ -47,6 +64,10 @@ public class BalanceCalculator {
     // agreements
     Agreement applicableAgreement =
         getAgreementApplicableToTimeEntryEndDate(tenantId, personId, timeEntryEndDate);
+    if (applicableAgreement == null) {
+      log.warn(MessageFormat.format(AGREEMENT_NOT_FOUND, tenantId, personId, timeEntryEndDate));
+      return List.of();
+    }
 
     // Get accruals of all types between the day just before the time entry and the end date of the
     // latest applicable agreement
@@ -54,24 +75,41 @@ public class BalanceCalculator {
         getAccrualsBetweenDates(tenantId, personId,
             timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate());
 
+    if (isEmpty(allAccruals)) {
+      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId,
+          timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate()));
+      return List.of();
+    }
+
     Map<LocalDate, Range<ZonedDateTime>> dateRangeMap = splitOverDays(timeEntryStart, timeEntryEnd);
 
-    dateRangeMap.entrySet().forEach(entry ->
-        accrualModules.forEach(module -> {
-          LocalDate referenceDate = entry.getKey();
-          ZonedDateTime startTime = entry.getValue().lowerEndpoint();
-          ZonedDateTime endTime = entry.getValue().upperEndpoint();
+    for (var entry : dateRangeMap.entrySet()) {
+      for (var module : accrualModules) {
+        LocalDate referenceDate = entry.getKey();
+        ZonedDateTime startTime = entry.getValue().lowerEndpoint();
+        ZonedDateTime endTime = entry.getValue().upperEndpoint();
+        AccrualType accrualType = module.getAccrualType();
+        TreeMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
-          Accrual accrual = module.extractAccrualByReferenceDate(allAccruals, referenceDate);
+        Accrual accrual = accruals.get(referenceDate);
 
-          module.updateAccrualContribution(timeEntryId, startTime, endTime, accrual);
-        })
-    );
+        if (accrual == null) {
+          log.error(MessageFormat.format(
+              MISSING_ACCRUAL, tenantId, personId, accrualType, referenceDate));
+          return List.of();
+        }
 
-    List<Accrual> accrualsToBatchUpdate = accrualModules.stream()
-        .map(module -> module.cascadeCumulativeTotal(
-            allAccruals, applicableAgreement.getStartDate()))
-        .flatMap(List::stream)
+        BigDecimal shiftContribution = module.calculateShiftContribution(startTime, endTime);
+
+        updateAccrualContribution(timeEntryId, shiftContribution, accrual);
+
+        cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
+      }
+    }
+
+    List<Accrual> accrualsToBatchUpdate = allAccruals.values().stream()
+        .map(Map::values)
+        .flatMap(Collection::stream)
         .toList();
 
     return accrualsToBatchUpdate;
@@ -79,6 +117,66 @@ public class BalanceCalculator {
 
   public void sendToAccruals(String tenantId, List<Accrual> accruals) {
     restClient.patchAccruals(tenantId, accruals);
+  }
+
+  void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
+      Accrual accrual) {
+
+    Contributions contributions = accrual.getContributions();
+    contributions.getTimeEntries().put(UUID.fromString(timeEntryId), shiftContribution);
+    BigDecimal total =
+        contributions.getTimeEntries().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+    contributions.setTotal(total);
+  }
+
+  List<Accrual> cascadeCumulativeTotal(
+      TreeMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
+
+    Optional<LocalDate> optional = accruals.keySet().stream().findFirst();
+    if (optional.isPresent()) {
+      LocalDate priorAccrualDate = optional.get();
+      Accrual priorAccrual = accruals.get(priorAccrualDate);
+
+      BigDecimal baseCumulativeTotal = BigDecimal.ZERO;
+      // if prior accrual is related to the same agreement then use its cumulative total
+      // as starting point; otherwise, start at 0
+      if (isPriorAccrualRelatedToTheSameAgreement(priorAccrualDate, agreementStartDate)) {
+        baseCumulativeTotal = priorAccrual.getCumulativeTotal();
+      }
+
+      // the first element is only used to calculate base cumulative total so shouldn't be included
+      // in update
+      accruals.remove(priorAccrualDate);
+
+      return updateSubsequentAccruals(accruals.values().stream().toList(), baseCumulativeTotal);
+    } else {
+      throw new IllegalArgumentException("Accruals Map must contain at least one entry!");
+    }
+  }
+
+  private boolean isPriorAccrualRelatedToTheSameAgreement(
+      LocalDate priorAccrualDate, LocalDate agreementStatDate) {
+    return !priorAccrualDate.isBefore(agreementStatDate);
+  }
+
+
+  List<Accrual> updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
+
+    List<Accrual> updatedAccruals = List.copyOf(accruals);
+    //update the cumulative total for referenceDate
+    updatedAccruals.get(0).setCumulativeTotal(
+        priorCumulativeTotal.add(updatedAccruals.get(0).getContributions().getTotal()));
+
+    //cascade through until end of agreement
+    for (int i = 1; i < updatedAccruals.size(); i++) {
+      BigDecimal priorTotal =
+          updatedAccruals.get(i - 1).getCumulativeTotal();
+      Accrual currentAccrual = updatedAccruals.get(i);
+      currentAccrual.setCumulativeTotal(
+          priorTotal.add(currentAccrual.getContributions().getTotal()));
+    }
+
+    return updatedAccruals;
   }
 
   Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId, String personId,
@@ -97,8 +195,8 @@ public class BalanceCalculator {
   }
 
   /**
-   * Groups input list of accruals by Accrual Type then by Accrual Date.
-   * Note the use of TreeMap in the nested map to ensure accrual records are sorted by date
+   * Groups input list of accruals by Accrual Type then by Accrual Date. Note the use of TreeMap in
+   * the nested map to ensure accrual records are sorted by date
    *
    * @param accruals list of accruals
    * @return Accruals mapped by Accrual Type and Accrual Date
