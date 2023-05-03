@@ -122,6 +122,9 @@ steps:
       SONAR_TOKEN:
         from_secret: sonar_cloud_token
     commands:
+      - echo env.HOME
+      - echo ${env.HOME}
+      - ls -l /root/.m2/repository/org/projectlombok/lombok
       - mvn -s ./balance_calculator_settings.xml sonar:sonar
         -Dsonar.host.url=$${SONAR_HOST}
         -Dsonar.login=$${SONAR_TOKEN}
