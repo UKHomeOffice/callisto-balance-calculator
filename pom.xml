@@ -18,7 +18,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <sonar.language>java</sonar.language>
-        <sonar.java.libraries>target/classes</sonar.java.libraries>
+        <sonar.java.libraries>/root/.m2/**/*.jar</sonar.java.libraries>
         <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
         <checkstyle-maven-plugin.version>3.2.0</checkstyle-maven-plugin.version>
         <spring.kafka.version>3.0.4</spring.kafka.version>
