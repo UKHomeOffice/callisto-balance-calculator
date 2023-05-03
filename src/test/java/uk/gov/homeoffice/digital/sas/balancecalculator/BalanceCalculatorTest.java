@@ -282,11 +282,6 @@ class BalanceCalculatorTest {
     );
   }
 
-  @Test
-  void splitOverDays_timeEntryWithinTwoCalendarDaysWithPartialHours_returnCorrectHoursCount() {
-    // TODO : 
-  }
-
   private List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
     ObjectMapper mapper = new ObjectMapper();
     mapper.registerModule(new JavaTimeModule());

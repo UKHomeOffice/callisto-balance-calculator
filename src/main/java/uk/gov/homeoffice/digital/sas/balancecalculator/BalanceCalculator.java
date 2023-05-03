@@ -9,6 +9,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -137,45 +138,23 @@ public class BalanceCalculator {
 
   Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
       ZonedDateTime endDateTime) {
+
     Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
 
     var numDaysCovered = getNumOfDaysCoveredByDateRange(startDateTime, endDateTime);
     if (numDaysCovered == 1) {
-      Range<ZonedDateTime> range = Range.closed(startDateTime, endDateTime);
-      intervals.put(startDateTime.toLocalDate(), range);
+      intervals.put(startDateTime.toLocalDate(), RangeUtils.oneDayRange(startDateTime, endDateTime));
     } else {
 
-      Range<ZonedDateTime> startDayRange = Range.closed(
-          startDateTime,
-          ZonedDateTime.of(startDateTime.plusDays(1L).toLocalDate().atTime(0, 0),
-              startDateTime.getZone()));
-      intervals.put(startDateTime.toLocalDate(), startDayRange);
+      intervals.put(startDateTime.toLocalDate(), RangeUtils.startDayRange(startDateTime));
 
       if (numDaysCovered > 2) {
-        for (long i = 1; i < numDaysCovered - 1; i++) {
-          Range<ZonedDateTime> midRange = Range.closed(
-              ZonedDateTime.of(startDateTime.plusDays(i).toLocalDate().atTime(0, 0),
-                  startDateTime.getZone()),
-              ZonedDateTime.of(startDateTime.plusDays(i + 1L).toLocalDate().atTime(0, 0),
-                  startDateTime.getZone())
-          );
-          intervals.put(startDateTime.plusDays(i).toLocalDate(), midRange);
-        }
+        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime, numDaysCovered));
       }
 
-
-      Range<ZonedDateTime> endDayRange = Range.closed(
-          ZonedDateTime.of(endDateTime.toLocalDate().atTime(0, 0), endDateTime.getZone()),
-          endDateTime
-          );
-
-      // Check if range is >= 1 min
-      // ?? Shall we take to account range 00:00:00 - 00:00:00 if person
-      // finishing work exactly at full hour ?
-      if( Duration.between(endDayRange.lowerEndpoint(), endDayRange.upperEndpoint()).toMinutes() >= 1 ){
-        intervals.put(endDateTime.toLocalDate(), endDayRange);
+      if(RangeUtils.endDayRange(endDateTime) != null){
+        intervals.put(endDateTime.toLocalDate(), RangeUtils.endDayRange(endDateTime));
       }
-
     }
 
     return intervals;
