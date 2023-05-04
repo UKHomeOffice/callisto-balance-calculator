@@ -34,12 +34,13 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 @Import(AccrualModuleConfig.class)
 public class BalanceCalculator {
 
-  private static final String AGREEMENT_NOT_FOUND =
+  static final String AGREEMENT_NOT_FOUND =
       "Agreement record not found for tenantId {0}, personId {1} and date {2}";
-  private static final String ACCRUALS_NOT_FOUND =
+  static final String ACCRUALS_NOT_FOUND =
       "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
-  private static final String MISSING_ACCRUAL =
+  static final String MISSING_ACCRUAL =
       "Accrual missing for tenantId {0}, personId {1}, accrual type {2} and date {3}";
+  static final String ACCRUALS_MAP_EMPTY = "Accruals Map must contain at least one entry!";
 
   private final RestClient restClient;
   private final List<AccrualModule> accrualModules;
@@ -149,7 +150,7 @@ public class BalanceCalculator {
 
       updateSubsequentAccruals(accruals.values().stream().toList(), baseCumulativeTotal);
     } else {
-      throw new IllegalArgumentException("Accruals Map must contain at least one entry!");
+      throw new IllegalArgumentException(ACCRUALS_MAP_EMPTY);
     }
   }
 
