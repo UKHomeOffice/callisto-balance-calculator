@@ -122,7 +122,8 @@ steps:
       SONAR_TOKEN:
         from_secret: sonar_cloud_token
     commands:
-      - mvn mvn help:evaluate -Dexpression=project.properties
+      - mvn help:evaluate -Dexpression=project.properties
+      - mvn help:evaluate -Dexpression=settings.localRepository
       - mvn -s ./balance_calculator_settings.xml sonar:sonar
         -Dsonar.host.url=$${SONAR_HOST}
         -Dsonar.login=$${SONAR_TOKEN}
