@@ -60,15 +60,6 @@ class BalanceCalculatorTest {
 
   private BalanceCalculator balanceCalculator;
 
-  private static Stream<Arguments> testData() {
-    return Stream.of(
-        Arguments.of(TIME_ENTRY_ID, BigDecimal.valueOf(110), BigDecimal.valueOf(120),
-            BigDecimal.valueOf(124), BigDecimal.valueOf(136)),
-        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888", BigDecimal.valueOf(104),
-            BigDecimal.valueOf(114), BigDecimal.valueOf(118), BigDecimal.valueOf(130))
-    );
-  }
-
   @BeforeEach
   void setup() {
     balanceCalculator = new BalanceCalculator(restClient);
@@ -120,6 +111,73 @@ class BalanceCalculatorTest {
         .isEqualTo(expectedCumulativeTotal2);
 
     assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal3);
+
+    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal4);
+  }
+
+
+  @ParameterizedTest
+  @MethodSource("testDataTwoDaysSplit")
+  void calculateAccruals_withinCalendarDayAndAnnualTargetHours_returnUpdateAccrual_TWO_DAYS_SPLIT(
+      String timeEntryId,
+      BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
+      BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
+      throws IOException {
+
+    ZonedDateTime shiftStartTime = ZonedDateTime.parse("2023-04-18T21:00:00+00:00");
+    ZonedDateTime shiftEndTime = ZonedDateTime.parse("2023-04-19T02:00:00+00:00");
+
+    TimeEntry timeEntry = TestUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
+        shiftEndTime);
+
+    LocalDate referenceDateDayOne = LocalDate.of(2023, 4, 18);
+    LocalDate referenceDateDayTwo = LocalDate.of(2023, 4, 19);
+
+    String tenantId = timeEntry.getTenantId();
+
+    when(restClient.getAccrualByTypeAndDate(tenantId, PERSON_ID,
+        ANNUAL_TARGET_HOURS_TYPE_ID, referenceDateDayOne))
+        .thenReturn(loadObjectFromFile("data/mockAccrual.json", Accrual.class));
+
+    when(restClient.getAccrualByTypeAndDate(tenantId, PERSON_ID,
+        ANNUAL_TARGET_HOURS_TYPE_ID, referenceDateDayTwo))
+        .thenReturn(loadObjectFromFile("data/mockAccrualDayTwo.json", Accrual.class));
+
+    when(restClient.getAgreementById(tenantId, AGREEMENT_ID))
+        .thenReturn(loadObjectFromFile("data/mockAgreement.json", Agreement.class));
+
+    //ACCRUAL_DATE is plus 1 because call to this method is made using reference date plus 1.
+    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID, ACCRUAL_DATE.plusDays(1),
+        AGREEMENT_END_DATE))
+        .thenReturn(loadAccrualsFromFile("data/mockSubsequentAccruals.json"));
+
+    //ACCRUAL_DATE is plus 1 because call to this method is made using reference date plus 1.
+    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID, shiftEndTime.toLocalDate().plusDays(1),
+        AGREEMENT_END_DATE))
+        .thenReturn(loadAccrualsFromFile("data/mockSubsequentAccrualsDayTwo.json"));
+
+    when(
+        restClient.getPriorAccrual(tenantId, PERSON_ID, ANNUAL_TARGET_HOURS_TYPE_ID, referenceDateDayOne))
+        .thenReturn(loadObjectFromFile("data/mockPriorAccrual.json", Accrual.class));
+
+    when(
+        restClient.getPriorAccrual(tenantId, PERSON_ID, ANNUAL_TARGET_HOURS_TYPE_ID, referenceDateDayTwo))
+        .thenReturn(loadObjectFromFile("data/mockPriorAccrualDayTwo.json", Accrual.class));
+    //cumulative prior is a 8
+
+    List<Accrual> accruals =
+        balanceCalculator.calculateAccruals(timeEntry, AccrualType.ANNUAL_TARGET_HOURS);
+
+    //assert Cumulative total of 17th should be 18
+    assertThat(accruals.get(6).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal1);
+
+    assertThat(accruals.get(5).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal2);
+
+    assertThat(accruals.get(4).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(expectedCumulativeTotal3);
 
     assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
@@ -307,6 +365,25 @@ class BalanceCalculatorTest {
         Objects.requireNonNull(this.getClass().getClassLoader().getResource(filePath)).getFile()
     );
     return mapper.readValue(file, type);
+  }
+
+  private static Stream<Arguments> testData() {
+    return Stream.of(
+        Arguments.of(TIME_ENTRY_ID, BigDecimal.valueOf(110), BigDecimal.valueOf(120),
+            BigDecimal.valueOf(124), BigDecimal.valueOf(136)),
+        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888", BigDecimal.valueOf(104),
+            BigDecimal.valueOf(114), BigDecimal.valueOf(118), BigDecimal.valueOf(130))
+    );
+  }
+
+  private static Stream<Arguments> testDataTwoDaysSplit() {
+    return Stream.of(
+        Arguments.of(TIME_ENTRY_ID, BigDecimal.valueOf(111), BigDecimal.valueOf(123),
+            BigDecimal.valueOf(127), BigDecimal.valueOf(139))
+
+//        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888", BigDecimal.valueOf(104),
+//            BigDecimal.valueOf(114), BigDecimal.valueOf(118), BigDecimal.valueOf(130))
+    );
   }
 
 }

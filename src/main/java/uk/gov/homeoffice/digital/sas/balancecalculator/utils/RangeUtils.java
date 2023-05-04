@@ -28,9 +28,7 @@ public class RangeUtils {
   public static Range<ZonedDateTime> endDayRange(ZonedDateTime endDateTime) {
 
     Range<ZonedDateTime> endDayRange = Range.closed(
-        ZonedDateTime.of(
-            endDateTime.toLocalDate().atTime(0, 0),
-            endDateTime.getZone()),
+        ZonedDateTime.of(endDateTime.toLocalDate().atTime(0, 0), endDateTime.getZone()),
         endDateTime
         );
     return Duration.between(endDayRange.lowerEndpoint(), endDayRange.upperEndpoint()).toMinutes() >= 1

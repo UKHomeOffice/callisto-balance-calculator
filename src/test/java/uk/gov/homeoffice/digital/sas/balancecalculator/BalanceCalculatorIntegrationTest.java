@@ -20,9 +20,13 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.cr
 @AutoConfigureWireMock(port = 9999)
 class BalanceCalculatorIntegrationTest {
 
-  private String timeEntryId = "7f000001-879e-1b02-8187-9ef1640f0003";
-  private String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
-  private String personId = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+  private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
+  private static final String TENANT_ID = "52a8188b-d41e-6768-19e9-09938016342f";
+  private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+  private static final ZonedDateTime SHIFT_START_TIME =
+      ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
+  private static final ZonedDateTime SHIFT_END_TIME =
+      ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
 
   @Autowired
   private BalanceCalculator balanceCalculator;
@@ -33,15 +37,11 @@ class BalanceCalculatorIntegrationTest {
 
   @Test
   void calculate_TODO() {
-
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
-    ZonedDateTime finishTime = startTime.plusHours(2);
-
-    TimeEntry timeEntry = createTimeEntry(timeEntryId,
-        tenantId,
-        personId,
-        startTime,
-        finishTime);
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        SHIFT_START_TIME,
+        SHIFT_END_TIME);
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
@@ -54,15 +54,10 @@ class BalanceCalculatorIntegrationTest {
     ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
     ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");
 
-    TimeEntry timeEntry = createTimeEntry(timeEntryId,
-        tenantId,
-        personId,
-        startTime,
-        finishTime);
-
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID, TENANT_ID, PERSON_ID,
+        startTime, finishTime);
     // When
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
-
     // Then
     assertAll(
         () -> assertThat(accruals).hasSize(2),
