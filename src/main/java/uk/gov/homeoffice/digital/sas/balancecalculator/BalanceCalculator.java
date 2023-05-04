@@ -128,7 +128,7 @@ public class BalanceCalculator {
     contributions.setTotal(total);
   }
 
-  List<Accrual> cascadeCumulativeTotal(
+  void cascadeCumulativeTotal(
       TreeMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
 
     Optional<LocalDate> optional = accruals.keySet().stream().findFirst();
@@ -147,7 +147,7 @@ public class BalanceCalculator {
       // in update
       accruals.remove(priorAccrualDate);
 
-      return updateSubsequentAccruals(accruals.values().stream().toList(), baseCumulativeTotal);
+      updateSubsequentAccruals(accruals.values().stream().toList(), baseCumulativeTotal);
     } else {
       throw new IllegalArgumentException("Accruals Map must contain at least one entry!");
     }
@@ -159,23 +159,20 @@ public class BalanceCalculator {
   }
 
 
-  List<Accrual> updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
+  void updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
 
-    List<Accrual> updatedAccruals = List.copyOf(accruals);
     //update the cumulative total for referenceDate
-    updatedAccruals.get(0).setCumulativeTotal(
-        priorCumulativeTotal.add(updatedAccruals.get(0).getContributions().getTotal()));
+    accruals.get(0).setCumulativeTotal(
+        priorCumulativeTotal.add(accruals.get(0).getContributions().getTotal()));
 
     //cascade through until end of agreement
-    for (int i = 1; i < updatedAccruals.size(); i++) {
+    for (int i = 1; i < accruals.size(); i++) {
       BigDecimal priorTotal =
-          updatedAccruals.get(i - 1).getCumulativeTotal();
-      Accrual currentAccrual = updatedAccruals.get(i);
+          accruals.get(i - 1).getCumulativeTotal();
+      Accrual currentAccrual = accruals.get(i);
       currentAccrual.setCumulativeTotal(
           priorTotal.add(currentAccrual.getContributions().getTotal()));
     }
-
-    return updatedAccruals;
   }
 
   Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId, String personId,

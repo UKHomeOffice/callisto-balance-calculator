@@ -170,20 +170,25 @@ class BalanceCalculatorTest {
             );
 
     LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
+    LocalDate referenceDate = LocalDate.of(2023, 4, 18);
 
-    List<Accrual> result = balanceCalculator.cascadeCumulativeTotal(map, agreementStartDate);
+    balanceCalculator.cascadeCumulativeTotal(map, agreementStartDate);
 
-    assertThat(result).hasSize(4);
-    assertThat(result.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(map).hasSize(4);
+    assertThat(map.get(referenceDate)
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(6480));
 
-    assertThat(result.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(map.get(referenceDate.plusDays(1))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(7080));
 
-    assertThat(result.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(map.get(referenceDate.plusDays(2))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(7320));
 
-    assertThat(result.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(map.get(referenceDate.plusDays(3))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(8040));
   }
 
