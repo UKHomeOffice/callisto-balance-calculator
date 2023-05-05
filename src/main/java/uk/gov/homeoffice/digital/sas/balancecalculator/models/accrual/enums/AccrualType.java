@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums;
 
+import java.util.Arrays;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,11 +22,9 @@ public enum AccrualType {
   private final UUID id;
 
   public static AccrualType getById(UUID id) {
-    for (AccrualType e : values()) {
-      if (e.getId().equals(id)) {
-        return e;
-      }
-    }
-    throw new IllegalArgumentException("Unknown Accrual Type Id: " + id);
+    return Arrays.stream(values())
+        .filter(e -> e.getId().equals(id))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Unknown Accrual Type Id: " + id));
   }
 }

@@ -2,14 +2,21 @@ package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_MAP_EMPTY;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.MISSING_ACCRUAL;
 
 import com.google.common.collect.Range;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -19,7 +26,6 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.UUID;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +35,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
@@ -39,7 +47,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AnnualTargetHoursAccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BalanceCalculatorTest {
 
   private static final ZonedDateTime SHIFT_START_TIME =
@@ -52,11 +60,10 @@ class BalanceCalculatorTest {
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
+  private final List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
 
   @Mock
   private RestClient restClient;
-
-  private final List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
 
   private BalanceCalculator balanceCalculator;
 
@@ -116,7 +123,6 @@ class BalanceCalculatorTest {
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
-
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
     //assert Cumulative total of 17th should be 18
@@ -131,6 +137,84 @@ class BalanceCalculatorTest {
 
     assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(expectedCumulativeTotal4);
+  }
+
+  @Test
+  void calculate_noAgreementFound_logWarningAndReturnEmptyList(CapturedOutput capturedOutput) {
+
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
+        SHIFT_END_TIME);
+
+    when(restClient.getApplicableAgreement(timeEntry.getTenantId(),
+        PERSON_ID, ACCRUAL_DATE)).thenReturn(null);
+
+    List<Accrual> result = balanceCalculator.calculate(timeEntry);
+
+    assertThat(result).isEmpty();
+
+    assertThat(capturedOutput.getOut()).contains("WARN");
+    assertThat(capturedOutput.getOut()).contains(
+        MessageFormat.format(AGREEMENT_NOT_FOUND, timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE)
+    );
+  }
+
+  @Test
+  void calculate_noAccrualsFound_logWarningAndReturnEmptyList(CapturedOutput capturedOutput) {
+
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
+        SHIFT_END_TIME);
+
+    Agreement agreement = mock(Agreement.class);
+    when(agreement.getEndDate()).thenReturn(AGREEMENT_END_DATE);
+    when(restClient.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
+        .thenReturn(agreement);
+
+    List<Accrual> noAccruals = List.of();
+    when(restClient.getAccrualsBetweenDates(timeEntry.getTenantId(), PERSON_ID,
+        ACCRUAL_DATE.minusDays(1), agreement.getEndDate()))
+        .thenReturn(noAccruals);
+
+    List<Accrual> result = balanceCalculator.calculate(timeEntry);
+
+    assertThat(result).isEmpty();
+
+    assertThat(capturedOutput.getOut()).contains("WARN");
+    assertThat(capturedOutput.getOut()).contains(
+        MessageFormat.format(ACCRUALS_NOT_FOUND, timeEntry.getTenantId(), PERSON_ID,
+            ACCRUAL_DATE.minusDays(1), AGREEMENT_END_DATE)
+    );
+  }
+
+  @Test
+  void calculate_noAccrualFoundForReferenceDate_logErrorAndReturnEmptyList(
+      CapturedOutput capturedOutput) {
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
+        SHIFT_END_TIME);
+
+    Agreement agreement = mock(Agreement.class);
+    when(agreement.getEndDate()).thenReturn(AGREEMENT_END_DATE);
+    when(restClient.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
+        .thenReturn(agreement);
+
+    AccrualType accrualType = AccrualType.ANNUAL_TARGET_HOURS;
+    Accrual accrual = Accrual.builder()
+        .accrualDate(ACCRUAL_DATE.minusDays(1))
+        .accrualTypeId(accrualType.getId())
+        .build();
+    List<Accrual> accruals = List.of(accrual);
+    when(restClient.getAccrualsBetweenDates(timeEntry.getTenantId(), PERSON_ID,
+        ACCRUAL_DATE.minusDays(1), agreement.getEndDate()))
+        .thenReturn(accruals);
+
+    List<Accrual> result = balanceCalculator.calculate(timeEntry);
+
+    assertThat(result).isEmpty();
+
+    assertThat(capturedOutput.getOut()).contains("ERROR");
+    assertThat(capturedOutput.getOut()).contains(
+        MessageFormat.format(MISSING_ACCRUAL, timeEntry.getTenantId(), PERSON_ID,
+            accrualType, ACCRUAL_DATE)
+    );
   }
 
   @Test
@@ -158,16 +242,16 @@ class BalanceCalculatorTest {
     TreeMap<LocalDate, Accrual> annualTargetHoursMap = map.get(AccrualType.ANNUAL_TARGET_HOURS);
 
     assertThat(annualTargetHoursMap).hasSize(2);
-    assertThat(annualTargetHoursMap.get(LocalDate.of(2023,4,19))
+    assertThat(annualTargetHoursMap.get(LocalDate.of(2023, 4, 19))
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(7080));
-    assertThat(annualTargetHoursMap.get(LocalDate.of(2023,4,20))
+    assertThat(annualTargetHoursMap.get(LocalDate.of(2023, 4, 20))
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(7320));
 
     TreeMap<LocalDate, Accrual> nightHoursMap = map.get(AccrualType.NIGHT_HOURS);
     assertThat(nightHoursMap).hasSize(1);
-    assertThat(nightHoursMap.get(LocalDate.of(2023,4,19))
+    assertThat(nightHoursMap.get(LocalDate.of(2023, 4, 19))
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(8040));
   }
@@ -179,28 +263,45 @@ class BalanceCalculatorTest {
 
     TreeMap<LocalDate, Accrual> map = accruals.stream()
         .collect(Collectors.toMap(
-                Accrual::getAccrualDate,
-                Function.identity(),
-                (k1, k2) -> k2,
-                TreeMap::new)
-            );
+            Accrual::getAccrualDate,
+            Function.identity(),
+            (k1, k2) -> k2,
+            TreeMap::new)
+        );
+
+    LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
+    LocalDate referenceDate = LocalDate.of(2023, 4, 18);
+
+    balanceCalculator.cascadeCumulativeTotal(map, agreementStartDate);
+
+    assertThat(map).hasSize(4);
+    assertThat(map.get(referenceDate)
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(6480));
+
+    assertThat(map.get(referenceDate.plusDays(1))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7080));
+
+    assertThat(map.get(referenceDate.plusDays(2))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7320));
+
+    assertThat(map.get(referenceDate.plusDays(3))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(8040));
+  }
+
+  @Test
+  void cascadeCumulativeTotal_emptyMapOfAccruals_throwException() {
+    TreeMap<LocalDate, Accrual> map = new TreeMap<>();
 
     LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
 
-    List<Accrual> result = balanceCalculator.cascadeCumulativeTotal(map, agreementStartDate);
-
-    assertThat(result).hasSize(4);
-    assertThat(result.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(6480));
-
-    assertThat(result.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(7080));
-
-    assertThat(result.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(7320));
-
-    assertThat(result.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(8040));
+    assertThatThrownBy(() ->
+        balanceCalculator.cascadeCumulativeTotal(map, agreementStartDate))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(ACCRUALS_MAP_EMPTY);
   }
 
   @Test
@@ -215,7 +316,7 @@ class BalanceCalculatorTest {
         .contributions(contributions)
         .build();
 
-    balanceCalculator.updateAccrualContribution(TIME_ENTRY_ID,SHIFT_DURATION, accrual);
+    balanceCalculator.updateAccrualContribution(TIME_ENTRY_ID, SHIFT_DURATION, accrual);
 
     assertThat(accrual.getContributions().getTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(120));
@@ -249,5 +350,4 @@ class BalanceCalculatorTest {
     assertThat(accrual.getContributions().getTimeEntries()).containsEntry(
         UUID.fromString(TIME_ENTRY_ID), SHIFT_DURATION);
   }
-
 }
