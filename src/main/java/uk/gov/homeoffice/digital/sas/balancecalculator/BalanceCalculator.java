@@ -154,7 +154,8 @@ public class BalanceCalculator {
 
       // the first element is only used to calculate base cumulative total so shouldn't be included
       // in update
-      // Decided to remove it as we are loosing 1 day with multiple day TimeEntry
+      // Decided to remove it as we are loosing 1 day with multiple day TimeEntry. 
+      // Using skip(1) [check below]
       //accruals.remove(priorAccrualDate); 
 
       // Using skip(1) as accruals contain prior day which shouldn't 
