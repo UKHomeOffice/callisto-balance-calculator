@@ -2,14 +2,16 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -43,4 +45,7 @@ public class Accrual {
 
   private Contributions contributions = new Contributions();
 
+  public AccrualType getAccrualType() {
+    return AccrualType.getById(this.accrualTypeId);
+  }
 }

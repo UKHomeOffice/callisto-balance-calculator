@@ -36,34 +36,74 @@ class BalanceCalculatorIntegrationTest {
   }
 
   @Test
-  void calculate_TODO() {
-    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
-        TENANT_ID,
-        PERSON_ID,
-        SHIFT_START_TIME,
-        SHIFT_END_TIME);
+  void calculate_endToEnd_contributionsAndCumulativeTotalsAsExpected() {
+
+    String timeEntryId = "7f000001-879e-1b02-8187-9ef1640f0003";
+    String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
+    String personId = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
+    ZonedDateTime finishTime = startTime.plusHours(2);
+
+    TimeEntry timeEntry = createTimeEntry(timeEntryId,
+        tenantId,
+        personId,
+        startTime,
+        finishTime);
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
     assertThat(accruals).hasSize(4);
+
+    assertThat(accruals.get(0).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
+    assertThat(accruals.get(0).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6600));
+
+    assertThat(accruals.get(1).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
+    assertThat(accruals.get(1).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7200));
+
+    assertThat(accruals.get(2).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(240));
+    assertThat(accruals.get(2).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7440));
+
+    assertThat(accruals.get(3).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
+    assertThat(accruals.get(3).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160));
   }
 
   @Test
   void calculate_accrualsDays_whenTimeEntryHasTwoDaysSpan() {
-    // Given
+
+    String timeEntryId = "7f000001-879e-1b02-8187-9ef1640f0003";
+    String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
+    String personId = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+
     ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
+
     ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");
 
-    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID, TENANT_ID, PERSON_ID,
-        startTime, finishTime);
-    // When
+    TimeEntry timeEntry = createTimeEntry(timeEntryId,
+        tenantId,
+        personId,
+        startTime,
+        finishTime);
+
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
-    // Then
+
     assertAll(
         () -> assertThat(accruals).hasSize(2),
-        () -> assertThat(accruals.get(0).getContributions().getTotal()).isEqualTo(new BigDecimal(6)),
-        () -> assertThat(accruals.get(1).getContributions().getTotal()).isEqualTo(new BigDecimal(2))
+        () -> assertThat(accruals.get(0).getContributions().getTotal())
+                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(360)),
+        () -> assertThat(accruals.get(0).getCumulativeTotal())
+                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8400)),
+        () -> assertThat(accruals.get(1).getContributions().getTotal())
+            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0)),
+        () -> assertThat(accruals.get(1).getCumulativeTotal())
+            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8400))
     );
   }
-
 }

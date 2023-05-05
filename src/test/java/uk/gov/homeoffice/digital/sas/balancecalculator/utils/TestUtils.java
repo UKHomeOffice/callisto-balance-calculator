@@ -1,16 +1,24 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.util.ResourceUtils;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.EMPTY_STRING;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_START_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.time.ZonedDateTime;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class TestUtils {
 
@@ -48,7 +56,6 @@ public class TestUtils {
     kafkaMessage.set("resource", resource);
     kafkaMessage.put("action", "CREATE");
 
-
     return mapper.writeValueAsString(kafkaMessage);
   }
 
@@ -60,7 +67,6 @@ public class TestUtils {
     kafkaMessage.put("schema", String.format("%s, %s", schema, version));
     kafkaMessage.set("resource", resource);
     kafkaMessage.put("action", "CREATE");
-
 
     return mapper.writeValueAsString(kafkaMessage);
   }
@@ -93,4 +99,21 @@ public class TestUtils {
     return resourceNode;
   }
 
+  public static List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+
+    File file = ResourceUtils.getFile("classpath:" + filePath);
+    return mapper.readValue(file, new TypeReference<>() {
+    });
+  }
+
+  public static  <T> T loadObjectFromFile(String filePath, Class<T> type) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+
+    File file = ResourceUtils.getFile("classpath:" + filePath);
+
+    return mapper.readValue(file, type);
+  }
 }

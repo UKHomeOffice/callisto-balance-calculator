@@ -1,9 +1,5 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.client;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -15,6 +11,12 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.ApiResponse;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class RestClient {
@@ -37,16 +39,14 @@ public class RestClient {
         accrualsUrl + "/resources/agreements/{agreementId}?tenantId={tenantId}";
   }
 
-  // TODO make some of this reusable
-
   public Accrual getAccrualByTypeAndDate(String tenantId, String personId, String accrualTypeId,
       LocalDate accrualDate) {
     Map<String, String> parameters = Map.of(
         TENANT_ID_STRING_IDENTIFIER, tenantId,
         FILTER_STRING_IDENTIFIER,
-        "accrualDate=='" + accrualDate
-            + "'&&personId=='" + personId
-            + "'&&accrualTypeId=='" + accrualTypeId + "'"
+        "personId=='" + personId + "'"
+            + "&&accrualTypeId=='" + accrualTypeId + "'"
+            + "&&accrualDate=='" + accrualDate + "'"
     );
 
     ResponseEntity<ApiResponse<Accrual>> entity
@@ -56,8 +56,6 @@ public class RestClient {
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
     }
-    // else throw exception
-
     return null;
   }
 
@@ -72,9 +70,7 @@ public class RestClient {
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
     }
-    // else throw exception
-
-    return null;
+    return  null;
   }
 
   public List<Accrual> getAccrualsBetweenDates(String tenantId, String personId,
@@ -92,26 +88,13 @@ public class RestClient {
     return Objects.requireNonNull(entity.getBody()).getItems();
   }
 
-  public Accrual getPriorAccrual(String tenantId, String personId, String accrualTypeId,
-      LocalDate referenceDate) {
-    LocalDate priorAccrualDate = referenceDate.minusDays(1);
-    Map<String, String> parameters = Map.of(
-        TENANT_ID_STRING_IDENTIFIER, tenantId,
-        FILTER_STRING_IDENTIFIER,
-        "personId=='" + personId + "'"
-            + "&&accrualTypeId=='" + accrualTypeId + "'"
-            + "&&accrualDate=='" + priorAccrualDate + "'"
-    );
+  public Agreement getApplicableAgreement(String tenantId, String personId, LocalDate accrualDate) {
 
-    ResponseEntity<ApiResponse<Accrual>> entity
-        = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-          new ParameterizedTypeReference<>() {}, parameters);
+    // Using Annual Target Hours accrual type, but any other accrual type would do
+    String agreementId = getAccrualByTypeAndDate(tenantId, personId,
+        AccrualType.ANNUAL_TARGET_HOURS.getId().toString(), accrualDate)
+        .getAgreementId().toString();
 
-    if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
-      return Objects.requireNonNull(entity.getBody()).getItems().get(0);
-    }
-    // else throw exception
-
-    return null;
+    return getAgreementById(tenantId, agreementId);
   }
 }
