@@ -1,9 +1,9 @@
-package uk.gov.homeoffice.digital.sas.balancecalculator.models;
+package uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import java.util.Date;
+import java.time.ZonedDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -42,11 +42,11 @@ public class TimeEntry implements Messageable {
 
   @JsonProperty("actualStartTime")
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private Date actualStartTime;
+  private ZonedDateTime actualStartTime;
 
   @JsonProperty("actualEndTime")
   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-  private Date actualEndTime;
+  private ZonedDateTime actualEndTime;
 
   @Override
   public String resolveMessageKey() {

@@ -15,7 +15,9 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator;
+import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.ObjectMapperConfig;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.configuration.KafkaConsumerConfig;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
@@ -23,17 +25,22 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
 
 @Service
 @Slf4j
-@Import(KafkaConsumerConfig.class)
+@Import({KafkaConsumerConfig.class, ObjectMapperConfig.class})
 public class TimeEntryConsumer {
 
-  private ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper objectMapper;
 
   private final KafkaConsumerService<TimeEntry> kafkaConsumerService;
 
+  private final BalanceCalculator balanceCalculator;
+
 
   @Autowired
-  public TimeEntryConsumer(KafkaConsumerService<TimeEntry> kafkaConsumerService) {
+  public TimeEntryConsumer(KafkaConsumerService<TimeEntry> kafkaConsumerService,
+      ObjectMapper objectMapper, BalanceCalculator balanceCalculator) {
     this.kafkaConsumerService = kafkaConsumerService;
+    this.objectMapper = objectMapper;
+    this.balanceCalculator = balanceCalculator;
   }
 
   @KafkaListener(topics = {"${spring.kafka.template.default-topic}"},
@@ -49,10 +56,10 @@ public class TimeEntryConsumer {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
         log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, payload));
 
-        //this log message can be deleted when calculate logic is implemented. This is to stop
-        // introduction of a code smell by having an Object(timeEntry) not used within the code
-        log.info(String.format("TimeEntry Created [ %s ]", timeEntry.toString()));
+        balanceCalculator.calculate(timeEntry);
       }
+
+      // TODO What should we do with Kafka offset when errors are thrown during balance calculation?
     } else {
       throw new KafkaConsumerException(
           String.format(KAFKA_RESOURCE_NOT_UNDERSTOOD, getSchemaFromMessageAsString(payload)));
@@ -62,7 +69,7 @@ public class TimeEntryConsumer {
   private TimeEntry createTimeEntryFromKafkaEventMessage(
       KafkaEventMessage<TimeEntry> kafkaEventMessage, String payload) {
     try {
-      return mapper.convertValue(kafkaEventMessage.getResource(), TimeEntry.class);
+      return objectMapper.convertValue(kafkaEventMessage.getResource(), TimeEntry.class);
     } catch (IllegalArgumentException e) {
       throw new KafkaConsumerException(
           String.format(KAFKA_COULD_NOT_DESERIALIZE_RESOURCE,

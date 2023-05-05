@@ -5,35 +5,42 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_START_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Date;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.TimeEntry;
-import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import java.io.File;
+import java.io.IOException;
+import java.time.ZonedDateTime;
+import java.util.List;
+import org.springframework.util.ResourceUtils;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class TestUtils {
 
-  private static ObjectMapper mapper = new ObjectMapper();
+  private static final ObjectMapper mapper = new ObjectMapper();
 
-  public static TimeEntry createTimeEntry(String id, String ownerId, Date startTime,
-                                          Date finishTime) {
+  public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,
+                                          ZonedDateTime finishTime) {
+
+    return createTimeEntry(id, VALID_TENANT_ID, ownerId, startTime, finishTime);
+  }
+
+  public static TimeEntry createTimeEntry(String id, String tenantId, String ownerId,
+                                          ZonedDateTime startTime, ZonedDateTime finishTime) {
 
     var timeEntry = new TimeEntry();
     timeEntry.setId(id);
-    timeEntry.setTenantId(VALID_TENANT_ID);
+    timeEntry.setTenantId(tenantId);
     timeEntry.setOwnerId(ownerId);
     timeEntry.setTimePeriodTypeId(VALID_TIME_PERIOD_TYPE_ID);
     timeEntry.setShiftType(EMPTY_STRING);
     timeEntry.setActualStartTime(startTime);
     timeEntry.setActualEndTime(finishTime);
     return timeEntry;
-  }
-
-  public static Date getAsDate(LocalDateTime dateTime) {
-    return Date.from(dateTime.toInstant(ZoneOffset.UTC));
   }
 
   public static String createKafkaMessage(String schema,
@@ -48,7 +55,6 @@ public class TestUtils {
     kafkaMessage.set("resource", resource);
     kafkaMessage.put("action", "CREATE");
 
-
     return mapper.writeValueAsString(kafkaMessage);
   }
 
@@ -60,7 +66,6 @@ public class TestUtils {
     kafkaMessage.put("schema", String.format("%s, %s", schema, version));
     kafkaMessage.set("resource", resource);
     kafkaMessage.put("action", "CREATE");
-
 
     return mapper.writeValueAsString(kafkaMessage);
   }
@@ -93,5 +98,21 @@ public class TestUtils {
     return resourceNode;
   }
 
+  public static List<Accrual> loadAccrualsFromFile(String filePath) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
 
+    File file = ResourceUtils.getFile("classpath:" + filePath);
+    return mapper.readValue(file, new TypeReference<>() {
+    });
+  }
+
+  public static  <T> T loadObjectFromFile(String filePath, Class<T> type) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.registerModule(new JavaTimeModule());
+
+    File file = ResourceUtils.getFile("classpath:" + filePath);
+
+    return mapper.readValue(file, type);
+  }
 }
