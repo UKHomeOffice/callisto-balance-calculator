@@ -1,5 +1,9 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.client;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -12,11 +16,6 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.ApiResponse;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
-
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 
 @Component
 public class RestClient {

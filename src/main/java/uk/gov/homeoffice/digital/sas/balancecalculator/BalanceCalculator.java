@@ -1,20 +1,8 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
-import com.google.common.collect.Range;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
-import org.springframework.stereotype.Component;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
-import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
-import uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils;
+import static org.springframework.util.CollectionUtils.isEmpty;
 
+import com.google.common.collect.Range;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -28,9 +16,19 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static org.springframework.util.CollectionUtils.isEmpty;
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Component;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
+import uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils;
 
 @Component
 @Slf4j
@@ -84,7 +82,8 @@ public class BalanceCalculator {
       return List.of();
     }
 
-    TreeMap<LocalDate, Range<ZonedDateTime>> dateRangeMap = splitOverDays(timeEntryStart, timeEntryEnd);
+    TreeMap<LocalDate, Range<ZonedDateTime>> dateRangeMap = 
+        splitOverDays(timeEntryStart, timeEntryEnd);
 
     for (var entry : dateRangeMap.entrySet()) {
       for (var module : accrualModules) {
@@ -112,7 +111,7 @@ public class BalanceCalculator {
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
-    for(Map.Entry<AccrualType, TreeMap<LocalDate, Accrual>> entry : allAccruals.entrySet()) {
+    for (Map.Entry<AccrualType, TreeMap<LocalDate, Accrual>> entry : allAccruals.entrySet()) {
       TreeMap<LocalDate, Accrual> value = entry.getValue();
       value.remove(value.firstKey());
     }
@@ -155,9 +154,11 @@ public class BalanceCalculator {
 
       // the first element is only used to calculate base cumulative total so shouldn't be included
       // in update
-      //accruals.remove(priorAccrualDate); // Decided to remove it as we are loosing 1 day with multiple day TimeEntry
+      // Decided to remove it as we are loosing 1 day with multiple day TimeEntry
+      //accruals.remove(priorAccrualDate); 
 
-      // Using skip(1) as accruals contain prior day which shouldn't be updated by updateSubsequentAccruals method
+      // Using skip(1) as accruals contain prior day which shouldn't 
+      // be updated by updateSubsequentAccruals method
       updateSubsequentAccruals(accruals.values().stream().skip(1).toList(), baseCumulativeTotal);
     } else {
       throw new IllegalArgumentException("Accruals Map must contain at least one entry!");
@@ -228,16 +229,18 @@ public class BalanceCalculator {
 
     var numDaysCovered = getNumOfDaysCoveredByDateRange(startDateTime, endDateTime);
     if (numDaysCovered == 1) {
-      intervals.put(startDateTime.toLocalDate(), RangeUtils.oneDayRange(startDateTime, endDateTime));
+      intervals.put(startDateTime.toLocalDate(), 
+          RangeUtils.oneDayRange(startDateTime, endDateTime));
     } else {
 
       intervals.put(startDateTime.toLocalDate(), RangeUtils.startDayRange(startDateTime));
 
       if (numDaysCovered > 2) {
-        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1), numDaysCovered - 1));
+        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1), 
+            numDaysCovered - 1));
       }
 
-      if(RangeUtils.endDayRange(endDateTime) != null){
+      if (RangeUtils.endDayRange(endDateTime) != null) {
         intervals.put(endDateTime.toLocalDate(), RangeUtils.endDayRange(endDateTime));
       }
     }
