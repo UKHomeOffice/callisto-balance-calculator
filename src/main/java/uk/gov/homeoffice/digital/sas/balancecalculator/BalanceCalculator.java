@@ -107,10 +107,14 @@ public class BalanceCalculator {
         updateAccrualContribution(timeEntryId, shiftContribution, accrual);
 
         cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
-
-        // final list to batch update with 1 extra element
-
       }
+    }
+
+    // Each AccrualType within allAccruals map still containing entry for prior day
+    // which shouldn't be sent to batch update. Lines below removing that entry from the Map
+    for(Map.Entry<AccrualType, TreeMap<LocalDate, Accrual>> entry : allAccruals.entrySet()) {
+      TreeMap<LocalDate, Accrual> value = entry.getValue();
+      value.remove(value.firstKey());
     }
 
     List<Accrual> accrualsToBatchUpdate = allAccruals.values().stream()
@@ -151,9 +155,10 @@ public class BalanceCalculator {
 
       // the first element is only used to calculate base cumulative total so shouldn't be included
       // in update
-      accruals.remove(priorAccrualDate);
+      //accruals.remove(priorAccrualDate); // Decided to remove it as we are loosing 1 day with multiple day TimeEntry
 
-      updateSubsequentAccruals(accruals.values().stream().toList(), baseCumulativeTotal);
+      // Using skip(1) as accruals contain prior day which shouldn't be updated by updateSubsequentAccruals method
+      updateSubsequentAccruals(accruals.values().stream().skip(1).toList(), baseCumulativeTotal);
     } else {
       throw new IllegalArgumentException("Accruals Map must contain at least one entry!");
     }

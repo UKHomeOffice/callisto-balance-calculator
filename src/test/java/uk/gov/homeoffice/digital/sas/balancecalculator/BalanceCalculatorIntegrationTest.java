@@ -95,15 +95,19 @@ class BalanceCalculatorIntegrationTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
     assertAll(
-        () -> assertThat(accruals).hasSize(2),
+        () -> assertThat(accruals).hasSize(3),
         () -> assertThat(accruals.get(0).getContributions().getTotal())
-                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(360)),
+                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120)),
         () -> assertThat(accruals.get(0).getCumulativeTotal())
-                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8400)),
+                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160)),
         () -> assertThat(accruals.get(1).getContributions().getTotal())
-            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0)),
+            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(360)),
         () -> assertThat(accruals.get(1).getCumulativeTotal())
-            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8400))
+            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520)),
+        () -> assertThat(accruals.get(2).getContributions().getTotal())
+            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0)),
+        () -> assertThat(accruals.get(2).getCumulativeTotal())
+            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520))
     );
   }
 }
