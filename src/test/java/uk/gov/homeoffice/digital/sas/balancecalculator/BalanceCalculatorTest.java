@@ -84,8 +84,6 @@ class BalanceCalculatorTest {
     );
   }
 
-
-
   @ParameterizedTest
   @MethodSource("testData")
   void calculate_withinCalendarDayAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
@@ -125,7 +123,7 @@ class BalanceCalculatorTest {
   }
 
 
-  private static Stream<Arguments> testDataTwoDaysSplit() {
+  private static Stream<Arguments> testDataTwoAndThreeDaysSplit() {
     return Stream.of(
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
             LocalDate.of(2023, 4, 19),
@@ -143,7 +141,7 @@ class BalanceCalculatorTest {
   }
 
   @ParameterizedTest
-  @MethodSource("testDataTwoDaysSplit")
+  @MethodSource("testDataTwoAndThreeDaysSplit")
   void calculate_withinTwoAndTheCalendarDaysSplitAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
       LocalDate referenceDate, ZonedDateTime shiftStartTime, ZonedDateTime shiftEndTime,
       BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
@@ -162,21 +160,23 @@ class BalanceCalculatorTest {
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
-
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
     assertAll(
         () -> assertThat(accruals.size()).isEqualTo(4),
+
         () -> assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
             .isEqualTo(expectedCumulativeTotal1),
+
         () -> assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
             .isEqualTo(expectedCumulativeTotal2),
+
         () -> assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
             .isEqualTo(expectedCumulativeTotal3),
+
         () -> assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
             .isEqualTo(expectedCumulativeTotal4)
     );
-
   }
 
 
@@ -273,8 +273,6 @@ class BalanceCalculatorTest {
         () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
         () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
         () -> assertThat(range2.upperEndpoint()).isEqualTo(endTimeNextDay)
-//        () -> assertRangeHoursCount(range1, new BigDecimal(2)),
-//        () -> assertRangeHoursCount(range2, new BigDecimal(1))
     );
   }
 
@@ -302,15 +300,9 @@ class BalanceCalculatorTest {
         () -> assertThat(range3.upperEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00"),
         () -> assertThat(range4.lowerEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00"),
         () -> assertThat(range4.upperEndpoint()).isEqualTo(endTime)
-//        () -> assertRangeHoursCount(range1, new BigDecimal(2)),
-//        () -> assertRangeHoursCount(range2, new BigDecimal(24)),
-//        () -> assertRangeHoursCount(range3, new BigDecimal(24)),
-//        () -> assertRangeHoursCount(range4, new BigDecimal(6))
     );
   }
 
-  // ?? Shall we take to account end of shift at midnight as another range with length of 0 min ? Guess not
-  // For that reason there is only 1 range assertion
   @Test
   void splitOverDays_timeEntryWithinOneCalendarDaysFinishingAtMidnight_returnOneDateTimeRange() {
 
@@ -322,15 +314,10 @@ class BalanceCalculatorTest {
     assertThat(ranges).hasSize(1);
 
     Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
-    //Range<ZonedDateTime> range2 = ranges.get(endTimeNextDay.toLocalDate());
 
     assertAll(
         () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
         () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00")
-//        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-//        () -> assertThat(range2.upperEndpoint()).isEqualTo(endTimeNextDay),
-//        () -> assertRangeHoursCount(range1, new BigDecimal(2)),
-//        () -> assertRangeHoursCount(range2, new BigDecimal(0))
     );
   }
 
