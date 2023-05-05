@@ -124,29 +124,30 @@ class BalanceCalculatorTest {
         .isEqualTo(expectedCumulativeTotal4);
   }
 
+
   private static Stream<Arguments> testDataTwoDaysSplit() {
     return Stream.of(
-        Arguments.of(TIME_ENTRY_ID,
-            LocalDate.of(2023, 4, 23),
-            ZonedDateTime.parse("2023-04-22T22:00:00+00:00"),
-            ZonedDateTime.parse("2023-04-23T06:00:00+00:00"),
-            BigDecimal.valueOf(8160), BigDecimal.valueOf(8520),
-            BigDecimal.valueOf(9240)),
-        Arguments.of(TIME_ENTRY_ID,
-            LocalDate.of(2023, 4, 23),
-            ZonedDateTime.parse("2023-04-22T21:00:00+00:00"),
-            ZonedDateTime.parse("2023-04-23T03:00:00+00:00"),
-            BigDecimal.valueOf(8220), BigDecimal.valueOf(8400),
-            BigDecimal.valueOf(9120))
+        Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
+            LocalDate.of(2023, 4, 19),
+            ZonedDateTime.parse("2023-04-18T22:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
+            BigDecimal.valueOf(6600), BigDecimal.valueOf(7560),
+            BigDecimal.valueOf(7800), BigDecimal.valueOf(8520)),
+        Arguments.of("7f000001-879e-1b02-8187-9ef1640f0013",
+            LocalDate.of(2023, 4, 20),
+            ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-20T06:00:00+00:00"),
+            BigDecimal.valueOf(6660), BigDecimal.valueOf(8700),
+            BigDecimal.valueOf(9300), BigDecimal.valueOf(10020))
     );
   }
 
   @ParameterizedTest
   @MethodSource("testDataTwoDaysSplit")
-  void calculate_withinCalendarDayAndAnnualTargetHours_returnUpdateAccruals_TWO_DAY_SPLIT(String timeEntryId,
-        LocalDate referenceDate, ZonedDateTime shiftStartTime, ZonedDateTime shiftEndTime,
-        BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
-        BigDecimal expectedCumulativeTotal3)
+  void calculate_withinTwoAndTheCalendarDaysSplitAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
+      LocalDate referenceDate, ZonedDateTime shiftStartTime, ZonedDateTime shiftEndTime,
+      BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
+      BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
       throws IOException {
 
     TimeEntry timeEntry = TestUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
@@ -157,24 +158,23 @@ class BalanceCalculatorTest {
     when(restClient.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    //ACCRUAL_DATE minus 1 because call to this method is made using reference date minus 1.
     when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID, shiftStartTime.toLocalDate().minusDays(1),
         AGREEMENT_END_DATE))
-        .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHoursTwoDaysSplit.json"));
+        .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
     assertAll(
-        () -> assertThat(accruals.size()).isEqualTo(3),
+        () -> assertThat(accruals.size()).isEqualTo(4),
         () -> assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
             .isEqualTo(expectedCumulativeTotal1),
-
         () -> assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
             .isEqualTo(expectedCumulativeTotal2),
-
         () -> assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal3)
+            .isEqualTo(expectedCumulativeTotal3),
+        () -> assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+            .isEqualTo(expectedCumulativeTotal4)
     );
 
   }
