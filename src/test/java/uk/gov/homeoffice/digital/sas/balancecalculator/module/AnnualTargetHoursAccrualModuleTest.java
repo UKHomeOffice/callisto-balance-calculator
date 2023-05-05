@@ -15,20 +15,22 @@ class AnnualTargetHoursAccrualModuleTest {
 
   private static Stream<Arguments> testData() {
     return Stream.of(
-        //Daylight saving switch
+        // Daylight saving switch
         Arguments.of(ZonedDateTime.parse("2023-03-26T00:00:00+00:00"),
             ZonedDateTime.parse("2023-03-26T05:00:00+01:00"),
             BigDecimal.valueOf(240)),
-         Arguments.of(ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
+        Arguments.of(ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
             ZonedDateTime.parse("2023-04-18T10:00:00+01:00"),
-            BigDecimal.valueOf(120))
-    );
+            BigDecimal.valueOf(120)),
+        Arguments.of(ZonedDateTime.parse("2023-10-29T00:00:00+01:00"),
+            ZonedDateTime.parse("2023-10-29T02:00:00+00:00"),
+            BigDecimal.valueOf(180)));
   }
 
   @ParameterizedTest
   @MethodSource("testData")
-  void calculateShiftContribution_default(ZonedDateTime startTime, ZonedDateTime endTime
-      , BigDecimal expectedShiftContribution) {
+  void calculateShiftContribution_default(ZonedDateTime startTime, ZonedDateTime endTime,
+      BigDecimal expectedShiftContribution) {
     BigDecimal minutes = module.calculateShiftContribution(startTime, endTime);
 
     assertThat(minutes).isEqualTo(expectedShiftContribution);
