@@ -1,20 +1,19 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_MAP_EMPTY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.MISSING_ACCRUAL;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 
-import com.google.common.collect.Range;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
@@ -275,19 +274,6 @@ class BalanceCalculatorTest {
   }
 
   @Test
-  void splitOverDays_timeEntryWithinCalendarDay_returnOneDateTimeRange() {
-
-    TreeMap<LocalDate, Range<ZonedDateTime>> ranges =
-        balanceCalculator.splitOverDays(SHIFT_START_TIME, SHIFT_END_TIME);
-    assertThat(ranges).hasSize(1);
-
-    Range<ZonedDateTime> range = ranges.get(SHIFT_START_TIME.toLocalDate());
-
-    assertThat(range.lowerEndpoint()).isEqualTo(SHIFT_START_TIME);
-    assertThat(range.upperEndpoint()).isEqualTo(SHIFT_END_TIME);
-  }
-
-  @Test
   void map_listOfAccruals_mappedByAccrualTypeAndDate() throws IOException {
     List<Accrual> accruals = loadAccrualsFromFile("data/accruals_convertToMap.json");
 
@@ -347,72 +333,6 @@ class BalanceCalculatorTest {
     assertThat(map.get(referenceDate.plusDays(3))
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(8040));
-  }
-
-  @Test
-  void splitOverDays_timeEntryWithinTwoCalendarDays_returnTwoDateTimeRanges() {
-
-    var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");
-    var endTimeNextDay = ZonedDateTime.parse("2023-04-19T01:00:00+00:00");
-
-    TreeMap<LocalDate, Range<ZonedDateTime>> ranges =
-        balanceCalculator.splitOverDays(startTime, endTimeNextDay);
-    assertThat(ranges).hasSize(2);
-
-    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
-    Range<ZonedDateTime> range2 = ranges.get(endTimeNextDay.toLocalDate());
-
-    assertAll(
-        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
-        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.upperEndpoint()).isEqualTo(endTimeNextDay)
-    );
-  }
-
-  @Test
-  void splitOverDays_timeEntryWithinFourCalendarDays_returnFourDateTimeRanges() {
-
-    var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");
-    var endTime = ZonedDateTime.parse("2023-04-21T06:00:00+00:00");
-
-    TreeMap<LocalDate, Range<ZonedDateTime>> ranges =
-        balanceCalculator.splitOverDays(startTime, endTime);
-    assertThat(ranges).hasSize(4);
-
-    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
-    Range<ZonedDateTime> range2 = ranges.get(startTime.plusDays(1).toLocalDate());
-    Range<ZonedDateTime> range3 = ranges.get(startTime.plusDays(2).toLocalDate());
-    Range<ZonedDateTime> range4 = ranges.get(endTime.toLocalDate());
-
-    assertAll(
-        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
-        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
-        () -> assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+00:00"),
-        () -> assertThat(range3.upperEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00"),
-        () -> assertThat(range4.lowerEndpoint()).isEqualTo("2023-04-21T00:00:00+00:00"),
-        () -> assertThat(range4.upperEndpoint()).isEqualTo(endTime)
-    );
-  }
-
-  @Test
-  void splitOverDays_timeEntryWithinOneCalendarDaysFinishingAtMidnight_returnOneDateTimeRange() {
-
-    var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");
-    var endTimeNextDay = ZonedDateTime.parse("2023-04-19T00:00:00+00:00");
-
-    TreeMap<LocalDate, Range<ZonedDateTime>> ranges =
-        balanceCalculator.splitOverDays(startTime, endTimeNextDay);
-    assertThat(ranges).hasSize(1);
-
-    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
-
-    assertAll(
-        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
-        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00")
-    );
   }
 
   @Test

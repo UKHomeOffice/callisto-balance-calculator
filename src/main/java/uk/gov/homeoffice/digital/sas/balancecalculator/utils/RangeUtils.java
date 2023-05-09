@@ -4,18 +4,41 @@ import com.google.common.collect.Range;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.LongStream;
 
 public class RangeUtils {
 
-  public static Range<ZonedDateTime> oneDayRange(ZonedDateTime startDateTime, 
-              ZonedDateTime endDateTime) {
-    return Range.closed(startDateTime, endDateTime);
+  public static TreeMap<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
+                                                                       ZonedDateTime endDateTime) {
+
+    TreeMap<LocalDate, Range<ZonedDateTime>> intervals = new TreeMap<>();
+
+    var numDaysCovered = getNumOfDaysCoveredByDateRange(startDateTime, endDateTime);
+    if (numDaysCovered == 1) {
+      intervals.put(startDateTime.toLocalDate(),
+          Range.closed(startDateTime, endDateTime));
+    } else {
+
+      intervals.put(startDateTime.toLocalDate(), RangeUtils.startDayRange(startDateTime));
+
+      if (numDaysCovered > 2) {
+        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1),
+            numDaysCovered - 1));
+      }
+
+      if (RangeUtils.endDayRange(endDateTime) != null) {
+        intervals.put(endDateTime.toLocalDate(), RangeUtils.endDayRange(endDateTime));
+      }
+    }
+
+    return intervals;
   }
 
-  public static Range<ZonedDateTime> startDayRange(ZonedDateTime startDateTime) {
+  private static Range<ZonedDateTime> startDayRange(ZonedDateTime startDateTime) {
 
     return Range.closed(
         startDateTime,
@@ -25,19 +48,19 @@ public class RangeUtils {
         ));
   }
 
-  public static Range<ZonedDateTime> endDayRange(ZonedDateTime endDateTime) {
+  private static Range<ZonedDateTime> endDayRange(ZonedDateTime endDateTime) {
 
     Range<ZonedDateTime> endDayRange = Range.closed(
         ZonedDateTime.of(endDateTime.toLocalDate().atTime(0, 0),
-        endDateTime.getZone()),
+            endDateTime.getZone()),
         endDateTime
-        );
-    return Duration.between(endDayRange.lowerEndpoint(), 
-            endDayRange.upperEndpoint()).toMinutes() >= 1
-            ? endDayRange : null;
+    );
+    return Duration.between(endDayRange.lowerEndpoint(),
+        endDayRange.upperEndpoint()).toMinutes() >= 1
+        ? endDayRange : null;
   }
 
-  public static Range<ZonedDateTime> fullDayRange(ZonedDateTime dateTime) {
+  private static Range<ZonedDateTime> fullDayRange(ZonedDateTime dateTime) {
 
     return Range.closed(
         ZonedDateTime.of(dateTime.toLocalDate().atTime(0, 0),
@@ -47,16 +70,22 @@ public class RangeUtils {
     );
   }
 
-  public static Map<LocalDate, Range<ZonedDateTime>> midDayRangesMap(ZonedDateTime startDateTime,
-                                                                     long numDaysCovered) {
+  private static Map<LocalDate, Range<ZonedDateTime>> midDayRangesMap(ZonedDateTime startDateTime,
+                                                                      long numDaysCovered) {
 
     Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
-    LongStream.range(0, numDaysCovered - 1).forEach(i -> {
-      intervals.put(startDateTime.plusDays(i).toLocalDate(), 
-          fullDayRange(startDateTime.plusDays(i)));
-    });
+    LongStream.range(0, numDaysCovered - 1).forEach(i ->
+        intervals.put(startDateTime.plusDays(i).toLocalDate(),
+            fullDayRange(startDateTime.plusDays(i)))
+    );
 
     return intervals;
+  }
+
+  private static long getNumOfDaysCoveredByDateRange(ZonedDateTime start, ZonedDateTime end) {
+    LocalDate startDate = start.toLocalDate();
+    LocalDate endDate = end.toLocalDate();
+    return ChronoUnit.DAYS.between(startDate, endDate) + 1;
   }
 
 }

@@ -1,13 +1,13 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
 import com.google.common.collect.Range;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +28,6 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributi
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
-import uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils;
 
 @Component
 @Slf4j
@@ -127,7 +126,7 @@ public class BalanceCalculator {
   }
 
   void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
-      Accrual accrual) {
+                                 Accrual accrual) {
 
     Contributions contributions = accrual.getContributions();
     contributions.getTimeEntries().put(UUID.fromString(timeEntryId), shiftContribution);
@@ -182,7 +181,7 @@ public class BalanceCalculator {
   }
 
   Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId, String personId,
-      LocalDate timeEntryEndDate) {
+                                                     LocalDate timeEntryEndDate) {
     return restClient.getApplicableAgreement(tenantId,
         personId, timeEntryEndDate);
   }
@@ -213,37 +212,5 @@ public class BalanceCalculator {
                     (c1, c2) -> c1, TreeMap::new)
             )
         );
-  }
-
-  TreeMap<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
-      ZonedDateTime endDateTime) {
-
-    TreeMap<LocalDate, Range<ZonedDateTime>> intervals = new TreeMap<>();
-
-    var numDaysCovered = getNumOfDaysCoveredByDateRange(startDateTime, endDateTime);
-    if (numDaysCovered == 1) {
-      intervals.put(startDateTime.toLocalDate(),
-          RangeUtils.oneDayRange(startDateTime, endDateTime));
-    } else {
-
-      intervals.put(startDateTime.toLocalDate(), RangeUtils.startDayRange(startDateTime));
-
-      if (numDaysCovered > 2) {
-        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1),
-            numDaysCovered - 1));
-      }
-
-      if (RangeUtils.endDayRange(endDateTime) != null) {
-        intervals.put(endDateTime.toLocalDate(), RangeUtils.endDayRange(endDateTime));
-      }
-    }
-
-    return intervals;
-  }
-
-  private long getNumOfDaysCoveredByDateRange(ZonedDateTime start, ZonedDateTime end) {
-    LocalDate startDate = start.toLocalDate();
-    LocalDate endDate = end.toLocalDate();
-    return ChronoUnit.DAYS.between(startDate, endDate) + 1;
   }
 }
