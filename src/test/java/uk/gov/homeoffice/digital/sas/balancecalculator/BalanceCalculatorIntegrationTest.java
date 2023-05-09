@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.createTimeEntry;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 import java.math.BigDecimal;
 import java.time.ZonedDateTime;

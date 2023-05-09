@@ -113,10 +113,11 @@ public class BalanceCalculator {
         .flatMap(Collection::stream)
         .toList();
 
-    // TODO : send Batch Update request to Accruals API
-    // restClient.batchUpdate(accrualsToBatchUpdate)
-
     return accrualsToBatchUpdate;
+  }
+
+  public void sendToAccruals(String tenantId, List<Accrual> accruals) {
+    restClient.patchAccruals(tenantId, accruals);
   }
 
   void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,

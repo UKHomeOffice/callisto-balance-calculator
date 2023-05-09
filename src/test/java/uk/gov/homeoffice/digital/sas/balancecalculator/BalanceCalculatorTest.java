@@ -1,15 +1,17 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_MAP_EMPTY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.MISSING_ACCRUAL;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.loadAccrualsFromFile;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils.loadObjectFromFile;
 
 import com.google.common.collect.Range;
 import java.io.IOException;
@@ -43,7 +45,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.Accr
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AnnualTargetHoursAccrualModule;
-import uk.gov.homeoffice.digital.sas.balancecalculator.utils.TestUtils;
+import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BalanceCalculatorTest {
@@ -87,6 +89,19 @@ class BalanceCalculatorTest {
     balanceCalculator = new BalanceCalculator(restClient, accrualModules);
   }
 
+  @Test
+  void sendToAccruals_withValidAccruals_shouldCallPatchAccruals() {
+    String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
+
+    Accrual accrual1 = createAccrual(UUID.fromString("0936e7a6-2b2e-1696-2546-5dd25dcae6a0"));
+    Accrual accrual2 = createAccrual(UUID.fromString("a613dd93-3bdf-d285-c263-84d6866d61c5"));
+    List<Accrual> accrualList = List.of(accrual1, accrual2);
+
+    balanceCalculator.sendToAccruals(tenantId, accrualList);
+
+    verify(restClient).patchAccruals(tenantId, accrualList);
+  }
+
   @ParameterizedTest
   @MethodSource("testData")
   void calculate_withinCalendarDayAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
@@ -95,7 +110,7 @@ class BalanceCalculatorTest {
       BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
       throws IOException {
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
         shiftEndTime);
 
     String tenantId = timeEntry.getTenantId();
@@ -127,7 +142,7 @@ class BalanceCalculatorTest {
   @Test
   void calculate_noAgreementFound_logWarningAndReturnEmptyList(CapturedOutput capturedOutput) {
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
 
     when(restClient.getApplicableAgreement(timeEntry.getTenantId(),
@@ -146,7 +161,7 @@ class BalanceCalculatorTest {
   @Test
   void calculate_noAccrualsFound_logWarningAndReturnEmptyList(CapturedOutput capturedOutput) {
 
-    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
 
     Agreement agreement = mock(Agreement.class);
@@ -173,7 +188,7 @@ class BalanceCalculatorTest {
   @Test
   void calculate_noAccrualFoundForReferenceDate_logErrorAndReturnEmptyList(
       CapturedOutput capturedOutput) {
-    TimeEntry timeEntry = TestUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
 
     Agreement agreement = mock(Agreement.class);

@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.digital.sas.balancecalculator.utils;
+package uk.gov.homeoffice.digital.sas.balancecalculator.testutils;
 
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.EMPTY_STRING;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
@@ -14,12 +14,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.UUID;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import java.util.List;
 import org.springframework.util.ResourceUtils;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
-public class TestUtils {
+public class CommonUtils {
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -70,6 +71,12 @@ public class TestUtils {
     return mapper.writeValueAsString(kafkaMessage);
   }
 
+  public static Accrual createAccrual(UUID id) {
+    return Accrual.builder()
+        .id(id)
+        .tenantId(UUID.randomUUID())
+        .build();
+  }
 
   public static ObjectNode createResourceJson(String id, String ownerId) {
     ObjectNode resourceNode = mapper.createObjectNode();

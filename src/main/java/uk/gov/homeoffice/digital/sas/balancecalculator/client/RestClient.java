@@ -4,34 +4,40 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.ApiResponse;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.PatchBody;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 
+@NoArgsConstructor
 @Component
 public class RestClient {
 
   public static final String TENANT_ID_STRING_IDENTIFIER = "tenantId";
   public static final String FILTER_STRING_IDENTIFIER = "filter";
 
-  private final RestTemplate restTemplate;
-  private final String accrualsFilterUrl;
-  private final String agreementsByIdUrl;
+  private RestTemplate restTemplate;
+  private String accrualsFilterUrl;
+  private String agreementsByIdUrl;
+  private String accrualsNoFilterUrl;
 
 
   @Autowired
   public RestClient(RestTemplateBuilder builder,
-      @Value("${balance.calculator.accruals.url}") String accrualsUrl) {
+                    @Value("${balance.calculator.accruals.url}") String accrualsUrl) {
     this.restTemplate = builder.build();
+    this.accrualsNoFilterUrl = accrualsUrl + "/resources/accruals?tenantId={tenantId}";
     this.accrualsFilterUrl =
         accrualsUrl + "/resources/accruals?tenantId={tenantId}&filter={filter}";
     this.agreementsByIdUrl =
@@ -39,7 +45,7 @@ public class RestClient {
   }
 
   public Accrual getAccrualByTypeAndDate(String tenantId, String personId, String accrualTypeId,
-      LocalDate accrualDate) {
+                                         LocalDate accrualDate) {
     Map<String, String> parameters = Map.of(
         TENANT_ID_STRING_IDENTIFIER, tenantId,
         FILTER_STRING_IDENTIFIER,
@@ -50,7 +56,8 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-          new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {
+          }, parameters);
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
@@ -64,12 +71,13 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Agreement>> entity
         = restTemplate.exchange(agreementsByIdUrl, HttpMethod.GET, null,
-          new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {
+          }, parameters);
 
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
     }
-    return  null;
+    return null;
   }
 
   public List<Accrual> getAccrualsBetweenDates(String tenantId, String personId,
@@ -82,7 +90,8 @@ public class RestClient {
 
     ResponseEntity<ApiResponse<Accrual>> entity
         = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
-          new ParameterizedTypeReference<>() {}, parameters);
+          new ParameterizedTypeReference<>() {
+          }, parameters);
 
     return Objects.requireNonNull(entity.getBody()).getItems();
   }
@@ -95,5 +104,29 @@ public class RestClient {
         .getAgreementId().toString();
 
     return getAgreementById(tenantId, agreementId);
+  }
+
+  public List<Accrual> patchAccruals(String tenantId, List<Accrual> accruals) {
+    Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId);
+
+    List<PatchBody> payloadBody = createPatchBody(accruals);
+    HttpEntity<List<PatchBody>> request = new HttpEntity<>(payloadBody);
+
+    ResponseEntity<ApiResponse<Accrual>> entity = restTemplate.exchange(accrualsNoFilterUrl,
+        HttpMethod.PATCH, request, new ParameterizedTypeReference<>() {
+        }, parameters);
+
+    return Objects.requireNonNull(entity.getBody()).getItems();
+  }
+
+  List<PatchBody> createPatchBody(List<Accrual> accruals) {
+    return accruals.stream()
+        .map(a -> PatchBody.builder()
+              .op("replace")
+              .path("/" + a.getId().toString())
+              .value(a)
+              .build()
+        )
+        .toList();
   }
 }
