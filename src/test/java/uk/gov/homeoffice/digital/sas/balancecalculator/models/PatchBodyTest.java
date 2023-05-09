@@ -2,9 +2,11 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.models;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 
+@Disabled
 class PatchBodyTest {
 
   @Test

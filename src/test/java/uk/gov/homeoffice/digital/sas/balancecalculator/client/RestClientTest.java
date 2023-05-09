@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.client;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -13,9 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -34,6 +38,9 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 class RestClientTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
+
+  @Captor
+  ArgumentCaptor<HttpEntity<List<PatchBody>>> patchBodyListCaptor;
 
   @Mock
   RestTemplate restTemplate;
@@ -61,25 +68,37 @@ class RestClientTest {
 
     PatchBody body1 = createPatchBody(accrual1);
     PatchBody body2 = createPatchBody(accrual2);
-
-    List<PatchBody> payloadBody = List.of(body1, body2);
-    HttpEntity<List<PatchBody>> expectedPayload = new HttpEntity<>(payloadBody);
+    List<PatchBody> expectedPatchBodies = List.of(body1, body2);
 
     String responseString = "{ \"meta\": { \"next\": null }, \"items\": [] }";
     ApiResponse<Accrual> apiResponse =
         objectMapper.readValue(responseString, new TypeReference<>() {
         });
 
-    when(restTemplate.exchange(any(String.class), eq(HttpMethod.PATCH), eq(expectedPayload),
+    when(restTemplate.exchange(any(String.class), eq(HttpMethod.PATCH),
+        Mockito.<HttpEntity<List<PatchBody>>>any() ,
         Mockito.<ParameterizedTypeReference<ApiResponse<Accrual>>>any(),
         Mockito.<Map<String, ?>>any()))
         .thenReturn(new ResponseEntity<>(apiResponse, HttpStatus.OK));
 
     restClient.patchAccruals(tenantId, accrualList);
 
-    verify(restTemplate).exchange(any(String.class), eq(HttpMethod.PATCH), eq(expectedPayload),
+    verify(restTemplate).exchange(any(String.class), eq(HttpMethod.PATCH), patchBodyListCaptor.capture(),
         Mockito.<ParameterizedTypeReference<ApiResponse<Accrual>>>any(),
         Mockito.<Map<String, ?>>any());
+
+    List<PatchBody> actualPatchBodies = patchBodyListCaptor.getValue().getBody();
+
+    assertThat(actualPatchBodies).hasSize(2);
+
+    IntStream.range(0, actualPatchBodies.size()).forEach(index -> {
+      PatchBody expectedBody = expectedPatchBodies.get(index);
+      PatchBody actualBody = actualPatchBodies.get(index);
+
+      assertThat(actualBody.getOp()).isEqualTo(expectedBody.getOp());
+      assertThat(actualBody.getPath()).isEqualTo(expectedBody.getPath());
+      assertThat(actualBody.getValue()).isEqualTo(expectedBody.getValue());
+    });
   }
 
   private PatchBody createPatchBody(Accrual accrual) {
