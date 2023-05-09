@@ -77,7 +77,7 @@ public class RestClient {
     if (Objects.requireNonNull(entity.getBody()).getItems().size() == 1) {
       return Objects.requireNonNull(entity.getBody()).getItems().get(0);
     }
-    return  null;
+    return null;
   }
 
   public List<Accrual> getAccrualsBetweenDates(String tenantId, String personId,
@@ -121,15 +121,12 @@ public class RestClient {
 
   List<PatchBody> createPatchBody(List<Accrual> accruals) {
     return accruals.stream()
-        .map(a -> {
-          PatchBody blob = new PatchBody();
-
-          blob.setOp("replace");
-          blob.setPath("/" + a.getId().toString());
-          blob.setValue(a);
-
-          return blob;
-        })
+        .map(a -> PatchBody.builder()
+              .op("replace")
+              .path("/" + a.getId().toString())
+              .value(a)
+              .build()
+        )
         .toList();
   }
 }

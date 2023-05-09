@@ -31,7 +31,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.PatchBody;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 
 @ExtendWith(MockitoExtension.class)
-public class RestClientTest {
+class RestClientTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -83,11 +83,11 @@ public class RestClientTest {
   }
 
   private PatchBody createPatchBody(Accrual accrual) {
-    PatchBody body1 = new PatchBody();
-    body1.setOp("replace");
-    body1.setPath("/" + accrual.getId().toString());
-    body1.setValue(accrual);
-    return body1;
+    return PatchBody.builder()
+        .op("replace")
+        .path("/" + accrual.getId().toString())
+        .value(accrual)
+        .build();
   }
 
 }

@@ -1,12 +1,14 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.models;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 
 @Getter
-@Setter
+@AllArgsConstructor
+@Builder
 @EqualsAndHashCode
 public class PatchBody {
 
