@@ -112,17 +112,14 @@ public class BalanceCalculator {
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
-    for (Map.Entry<AccrualType, TreeMap<LocalDate, Accrual>> entry : allAccruals.entrySet()) {
-      TreeMap<LocalDate, Accrual> value = entry.getValue();
+    for (TreeMap<LocalDate, Accrual> value : allAccruals.values()) {
       value.remove(value.firstKey());
     }
 
-    List<Accrual> accrualsToBatchUpdate = allAccruals.values().stream()
+    return allAccruals.values().stream()
         .map(Map::values)
         .flatMap(Collection::stream)
         .toList();
-
-    return accrualsToBatchUpdate;
   }
 
   public void sendToAccruals(String tenantId, List<Accrual> accruals) {
@@ -155,18 +152,11 @@ public class BalanceCalculator {
       }
 
       // the first element is only used to calculate base cumulative total so shouldn't be included
-      // in update
-      // Decided to remove it as we are loosing 1 day with multiple day TimeEntry.
-      // Using skip(1) [check below]
-      //accruals.remove(priorAccrualDate);
-
-      // Using skip(1) as accruals contain prior day which shouldn't
-      // be updated by updateSubsequentAccruals method
-      updateSubsequentAccruals(accruals.values().stream().skip(1).toList(), baseCumulativeTotal);
+      List<Accrual> accrualsFromReferenceDate = accruals.values().stream().skip(1).toList();
+      updateSubsequentAccruals(accrualsFromReferenceDate, baseCumulativeTotal);
     } else {
       throw new IllegalArgumentException(ACCRUALS_MAP_EMPTY);
     }
-
   }
 
   private boolean isPriorAccrualRelatedToTheSameAgreement(
