@@ -35,12 +35,13 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils;
 @Import(AccrualModuleConfig.class)
 public class BalanceCalculator {
 
-  private static final String AGREEMENT_NOT_FOUND =
+  static final String AGREEMENT_NOT_FOUND =
       "Agreement record not found for tenantId {0}, personId {1} and date {2}";
-  private static final String ACCRUALS_NOT_FOUND =
+  static final String ACCRUALS_NOT_FOUND =
       "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
-  private static final String MISSING_ACCRUAL =
+  static final String MISSING_ACCRUAL =
       "Accrual missing for tenantId {0}, personId {1}, accrual type {2} and date {3}";
+  static final String ACCRUALS_MAP_EMPTY = "Accruals Map must contain at least one entry!";
 
   private final RestClient restClient;
   private final List<AccrualModule> accrualModules;
@@ -82,7 +83,7 @@ public class BalanceCalculator {
       return List.of();
     }
 
-    TreeMap<LocalDate, Range<ZonedDateTime>> dateRangeMap = 
+    TreeMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
         splitOverDays(timeEntryStart, timeEntryEnd);
 
     for (var entry : dateRangeMap.entrySet()) {
@@ -121,10 +122,11 @@ public class BalanceCalculator {
         .flatMap(Collection::stream)
         .toList();
 
-    // TODO : send Batch Update request to Accruals API
-    // restClient.batchUpdate(accrualsToBatchUpdate)
-
     return accrualsToBatchUpdate;
+  }
+
+  public void sendToAccruals(String tenantId, List<Accrual> accruals) {
+    restClient.patchAccruals(tenantId, accruals);
   }
 
   void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
@@ -154,15 +156,15 @@ public class BalanceCalculator {
 
       // the first element is only used to calculate base cumulative total so shouldn't be included
       // in update
-      // Decided to remove it as we are loosing 1 day with multiple day TimeEntry. 
+      // Decided to remove it as we are loosing 1 day with multiple day TimeEntry.
       // Using skip(1) [check below]
-      //accruals.remove(priorAccrualDate); 
+      //accruals.remove(priorAccrualDate);
 
-      // Using skip(1) as accruals contain prior day which shouldn't 
+      // Using skip(1) as accruals contain prior day which shouldn't
       // be updated by updateSubsequentAccruals method
       updateSubsequentAccruals(accruals.values().stream().skip(1).toList(), baseCumulativeTotal);
     } else {
-      throw new IllegalArgumentException("Accruals Map must contain at least one entry!");
+      throw new IllegalArgumentException(ACCRUALS_MAP_EMPTY);
     }
 
   }
@@ -230,14 +232,14 @@ public class BalanceCalculator {
 
     var numDaysCovered = getNumOfDaysCoveredByDateRange(startDateTime, endDateTime);
     if (numDaysCovered == 1) {
-      intervals.put(startDateTime.toLocalDate(), 
+      intervals.put(startDateTime.toLocalDate(),
           RangeUtils.oneDayRange(startDateTime, endDateTime));
     } else {
 
       intervals.put(startDateTime.toLocalDate(), RangeUtils.startDayRange(startDateTime));
 
       if (numDaysCovered > 2) {
-        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1), 
+        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1),
             numDaysCovered - 1));
       }
 
