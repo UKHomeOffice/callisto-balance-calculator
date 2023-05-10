@@ -3,6 +3,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.utils;
 import com.google.common.collect.Range;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -12,26 +13,36 @@ import java.util.stream.LongStream;
 
 public class RangeUtils {
 
+  private RangeUtils() {
+
+  }
+
+  private static final ZoneId UK_TIME_ZONE = ZoneId.of( "Europe/London" );
+
   public static TreeMap<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
                                                                        ZonedDateTime endDateTime) {
 
     TreeMap<LocalDate, Range<ZonedDateTime>> intervals = new TreeMap<>();
 
-    var numDaysCovered = getNumOfDaysCoveredByDateRange(startDateTime, endDateTime);
+    // The split should be based on UK time
+    ZonedDateTime ukStartTime = startDateTime.withZoneSameInstant(UK_TIME_ZONE);
+    ZonedDateTime ukEndTime = endDateTime.withZoneSameInstant(UK_TIME_ZONE);
+
+    var numDaysCovered = getNumOfDaysCoveredByDateRange(ukStartTime, ukEndTime);
     if (numDaysCovered == 1) {
-      intervals.put(startDateTime.toLocalDate(),
-          Range.closed(startDateTime, endDateTime));
+      intervals.put(ukStartTime.toLocalDate(),
+          Range.closed(ukStartTime, ukEndTime));
     } else {
 
-      intervals.put(startDateTime.toLocalDate(), RangeUtils.startDayRange(startDateTime));
+      intervals.put(ukStartTime.toLocalDate(), RangeUtils.startDayRange(ukStartTime));
 
       if (numDaysCovered > 2) {
-        intervals.putAll(RangeUtils.midDayRangesMap(startDateTime.plusDays(1),
+        intervals.putAll(RangeUtils.midDayRangesMap(ukStartTime.plusDays(1),
             numDaysCovered - 1));
       }
 
-      if (RangeUtils.endDayRange(endDateTime) != null) {
-        intervals.put(endDateTime.toLocalDate(), RangeUtils.endDayRange(endDateTime));
+      if (RangeUtils.endDayRange(ukEndTime) != null) {
+        intervals.put(ukEndTime.toLocalDate(), RangeUtils.endDayRange(ukEndTime));
       }
     }
 

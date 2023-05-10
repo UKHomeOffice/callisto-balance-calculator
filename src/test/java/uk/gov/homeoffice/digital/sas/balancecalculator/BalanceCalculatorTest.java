@@ -2,7 +2,6 @@ package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -88,14 +87,14 @@ class BalanceCalculatorTest {
             LocalDate.of(2023, 4, 19),
             ZonedDateTime.parse("2023-04-18T22:00:00+00:00"),
             ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
-            BigDecimal.valueOf(6600), BigDecimal.valueOf(7560),
+            BigDecimal.valueOf(6540), BigDecimal.valueOf(7560),
             BigDecimal.valueOf(7800), BigDecimal.valueOf(8520)),
         // three day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0013",
             LocalDate.of(2023, 4, 20),
             ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
             ZonedDateTime.parse("2023-04-20T06:00:00+00:00"),
-            BigDecimal.valueOf(6660), BigDecimal.valueOf(8700),
+            BigDecimal.valueOf(6600), BigDecimal.valueOf(8640),
             BigDecimal.valueOf(9300), BigDecimal.valueOf(10020))
     );
   }
@@ -145,24 +144,22 @@ class BalanceCalculatorTest {
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
-    assertThat(accruals.size()).isEqualTo(4);
-    assertAll(
-        () -> assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
-                BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal1),
+    assertThat(accruals).hasSize(4);
+    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal1);
 
-        () -> assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(
-                BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal2),
+    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal2);
 
-        () -> assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(
-                BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal3),
+    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal3);
 
-        () -> assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(
-                BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal4)
-    );
+    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal4);
   }
 
   @Test

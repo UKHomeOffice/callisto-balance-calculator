@@ -42,12 +42,11 @@ class RangeUtilsTest {
     Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
     Range<ZonedDateTime> range2 = ranges.get(endTimeNextDay.toLocalDate());
 
-    assertAll(
-        () -> assertThat(range1.lowerEndpoint()).isEqualTo(startTime),
-        () -> assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+00:00"),
-        () -> assertThat(range2.upperEndpoint()).isEqualTo(endTimeNextDay)
-    );
+        assertThat(range1.lowerEndpoint()).isEqualTo("2023-04-18T23:00:00+01:00");
+        assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+01:00");
+
+        assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+01:00");
+        assertThat(range2.upperEndpoint()).isEqualTo("2023-04-19T02:00:00+01:00");
   }
 
   @Test
