@@ -67,31 +67,30 @@ class BalanceCalculatorTest {
 
   private BalanceCalculator balanceCalculator;
 
-  private static Stream<Arguments> testData() {
+  private static Stream<Arguments> annualTargetHoursTestData() {
     return Stream.of(
+        // creating one day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 18),
             ZonedDateTime.parse("2023-04-18T08:00:00+00:00"),
             ZonedDateTime.parse("2023-04-18T10:00:00+00:00"),
             BigDecimal.valueOf(6600), BigDecimal.valueOf(7200),
             BigDecimal.valueOf(7440), BigDecimal.valueOf(8160)),
+        // updating one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             LocalDate.of(2023, 4, 18),
             ZonedDateTime.parse("2023-04-18T14:00:00+00:00"),
             ZonedDateTime.parse("2023-04-18T14:30:00+00:00"),
             BigDecimal.valueOf(6150), BigDecimal.valueOf(6750),
-            BigDecimal.valueOf(6990), BigDecimal.valueOf(7710))
-    );
-  }
-
-  private static Stream<Arguments> testDataTwoAndThreeDaysSplit() {
-    return Stream.of(
+            BigDecimal.valueOf(6990), BigDecimal.valueOf(7710)),
+        // two day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
             LocalDate.of(2023, 4, 19),
             ZonedDateTime.parse("2023-04-18T22:00:00+00:00"),
             ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
             BigDecimal.valueOf(6600), BigDecimal.valueOf(7560),
             BigDecimal.valueOf(7800), BigDecimal.valueOf(8520)),
+        // three day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0013",
             LocalDate.of(2023, 4, 20),
             ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
@@ -120,11 +119,15 @@ class BalanceCalculatorTest {
   }
 
   @ParameterizedTest
-  @MethodSource("testData")
-  void calculate_withinCalendarDayAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
-      LocalDate referenceDate, ZonedDateTime shiftStartTime, ZonedDateTime shiftEndTime,
-      BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
-      BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
+  @MethodSource("annualTargetHoursTestData")
+  void calculate_annualTargetHours_returnUpdateAccruals(String timeEntryId,
+                                                        LocalDate referenceDate,
+                                                        ZonedDateTime shiftStartTime,
+                                                        ZonedDateTime shiftEndTime,
+                                                        BigDecimal expectedCumulativeTotal1,
+                                                        BigDecimal expectedCumulativeTotal2,
+                                                        BigDecimal expectedCumulativeTotal3,
+                                                        BigDecimal expectedCumulativeTotal4)
       throws IOException {
 
     TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
@@ -135,25 +138,31 @@ class BalanceCalculatorTest {
     when(restClient.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    //ACCRUAL_DATE minus 1 because call to this method is made using reference date minus 1.
-    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID, ACCRUAL_DATE.minusDays(1),
+    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID,
+        shiftStartTime.toLocalDate().minusDays(1),
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
-    //assert Cumulative total of 17th should be 18
-    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal1);
+    assertThat(accruals.size()).isEqualTo(4);
+    assertAll(
+        () -> assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
+                BigDecimal::compareTo)
+            .isEqualTo(expectedCumulativeTotal1),
 
-    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal2);
+        () -> assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(
+                BigDecimal::compareTo)
+            .isEqualTo(expectedCumulativeTotal2),
 
-    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal3);
+        () -> assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(
+                BigDecimal::compareTo)
+            .isEqualTo(expectedCumulativeTotal3),
 
-    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal4);
+        () -> assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(
+                BigDecimal::compareTo)
+            .isEqualTo(expectedCumulativeTotal4)
+    );
   }
 
   @Test
@@ -231,45 +240,6 @@ class BalanceCalculatorTest {
     assertThat(capturedOutput.getOut()).contains(
         MessageFormat.format(MISSING_ACCRUAL, timeEntry.getTenantId(), PERSON_ID,
             accrualType, ACCRUAL_DATE)
-    );
-  }
-
-  @ParameterizedTest
-  @MethodSource("testDataTwoAndThreeDaysSplit")
-  void calculate_withinTwoAndTheCalendarDaysSplitAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
-       LocalDate referenceDate, ZonedDateTime shiftStartTime, ZonedDateTime shiftEndTime,
-       BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
-       BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
-      throws IOException {
-
-    TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
-        shiftEndTime);
-
-    String tenantId = timeEntry.getTenantId();
-
-    when(restClient.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
-        .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
-
-    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID, shiftStartTime.toLocalDate().minusDays(1),
-        AGREEMENT_END_DATE))
-        .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
-
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
-
-    assertAll(
-        () -> assertThat(accruals.size()).isEqualTo(4),
-
-        () -> assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal1),
-
-        () -> assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal2),
-
-        () -> assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal3),
-
-        () -> assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-            .isEqualTo(expectedCumulativeTotal4)
     );
   }
 
