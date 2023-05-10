@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.LongStream;
 
@@ -19,10 +20,11 @@ public class RangeUtils {
 
   private static final ZoneId UK_TIME_ZONE = ZoneId.of("Europe/London");
 
-  public static TreeMap<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
-                                                                       ZonedDateTime endDateTime) {
+  public static SortedMap<LocalDate, Range<ZonedDateTime>> splitOverDays(
+                                                                      ZonedDateTime startDateTime,
+                                                                      ZonedDateTime endDateTime) {
 
-    TreeMap<LocalDate, Range<ZonedDateTime>> intervals = new TreeMap<>();
+    SortedMap<LocalDate, Range<ZonedDateTime>> intervals = new TreeMap<>();
 
     // The split should be based on UK time
     ZonedDateTime ukStartTime = startDateTime.withZoneSameInstant(UK_TIME_ZONE);

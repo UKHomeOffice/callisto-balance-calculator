@@ -21,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
@@ -244,12 +245,12 @@ class BalanceCalculatorTest {
   void map_listOfAccruals_mappedByAccrualTypeAndDate() throws IOException {
     List<Accrual> accruals = loadAccrualsFromFile("data/accruals_convertToMap.json");
 
-    Map<AccrualType, TreeMap<LocalDate, Accrual>> map =
+    Map<AccrualType, SortedMap<LocalDate, Accrual>> map =
         balanceCalculator.map(accruals);
 
     assertThat(map).hasSize(2);
 
-    TreeMap<LocalDate, Accrual> annualTargetHoursMap = map.get(AccrualType.ANNUAL_TARGET_HOURS);
+    SortedMap<LocalDate, Accrual> annualTargetHoursMap = map.get(AccrualType.ANNUAL_TARGET_HOURS);
 
     assertThat(annualTargetHoursMap).hasSize(2);
     assertThat(annualTargetHoursMap.get(LocalDate.of(2023, 4, 19))
@@ -259,7 +260,7 @@ class BalanceCalculatorTest {
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(7320));
 
-    TreeMap<LocalDate, Accrual> nightHoursMap = map.get(AccrualType.NIGHT_HOURS);
+    SortedMap<LocalDate, Accrual> nightHoursMap = map.get(AccrualType.NIGHT_HOURS);
     assertThat(nightHoursMap).hasSize(1);
     assertThat(nightHoursMap.get(LocalDate.of(2023, 4, 19))
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
@@ -271,7 +272,7 @@ class BalanceCalculatorTest {
       throws IOException {
     List<Accrual> accruals = loadAccrualsFromFile("data/accruals_annualTargetHours.json");
 
-    TreeMap<LocalDate, Accrual> map = accruals.stream()
+    SortedMap<LocalDate, Accrual> map = accruals.stream()
         .collect(Collectors.toMap(
             Accrual::getAccrualDate,
             Function.identity(),
@@ -304,7 +305,7 @@ class BalanceCalculatorTest {
 
   @Test
   void cascadeCumulativeTotal_emptyMapOfAccruals_throwException() {
-    TreeMap<LocalDate, Accrual> map = new TreeMap<>();
+    SortedMap<LocalDate, Accrual> map = new TreeMap<>();
 
     LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
 

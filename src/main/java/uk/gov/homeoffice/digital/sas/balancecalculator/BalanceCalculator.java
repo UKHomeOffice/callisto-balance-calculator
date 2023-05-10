@@ -12,6 +12,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
@@ -72,7 +73,7 @@ public class BalanceCalculator {
 
     // Get accruals of all types between the day just before the time entry and the end date of the
     // latest applicable agreement
-    Map<AccrualType, TreeMap<LocalDate, Accrual>> allAccruals =
+    Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
         getAccrualsBetweenDates(tenantId, personId,
             timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate());
 
@@ -82,7 +83,7 @@ public class BalanceCalculator {
       return List.of();
     }
 
-    TreeMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
+    SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
         splitOverDays(timeEntryStart, timeEntryEnd);
 
     for (var entry : dateRangeMap.entrySet()) {
@@ -91,7 +92,7 @@ public class BalanceCalculator {
         ZonedDateTime startTime = entry.getValue().lowerEndpoint();
         ZonedDateTime endTime = entry.getValue().upperEndpoint();
         AccrualType accrualType = module.getAccrualType();
-        TreeMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
+        SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
         Accrual accrual = accruals.get(referenceDate);
 
@@ -111,7 +112,7 @@ public class BalanceCalculator {
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
-    for (TreeMap<LocalDate, Accrual> value : allAccruals.values()) {
+    for (SortedMap<LocalDate, Accrual> value : allAccruals.values()) {
       value.remove(value.firstKey());
     }
 
@@ -136,7 +137,7 @@ public class BalanceCalculator {
   }
 
   void cascadeCumulativeTotal(
-      TreeMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
+      SortedMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
 
     Optional<LocalDate> optional = accruals.keySet().stream().findFirst();
     if (optional.isPresent()) {
@@ -186,7 +187,7 @@ public class BalanceCalculator {
         personId, timeEntryEndDate);
   }
 
-  Map<AccrualType, TreeMap<LocalDate, Accrual>> getAccrualsBetweenDates(
+  Map<AccrualType, SortedMap<LocalDate, Accrual>> getAccrualsBetweenDates(
       String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
 
     List<Accrual> accruals = restClient.getAccrualsBetweenDates(tenantId, personId,
@@ -196,13 +197,13 @@ public class BalanceCalculator {
   }
 
   /**
-   * Groups input list of accruals by Accrual Type then by Accrual Date. Note the use of TreeMap in
-   * the nested map to ensure accrual records are sorted by date
+   * Groups input list of accruals by Accrual Type then by Accrual Date. Note the use of SortedMap
+   * in the nested map to ensure accrual records are sorted by date
    *
    * @param accruals list of accruals
    * @return Accruals mapped by Accrual Type and Accrual Date
    */
-  Map<AccrualType, TreeMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
+  Map<AccrualType, SortedMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
     return accruals.stream()
         .collect(Collectors.groupingBy(
                 Accrual::getAccrualType,

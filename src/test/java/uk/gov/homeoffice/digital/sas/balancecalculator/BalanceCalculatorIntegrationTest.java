@@ -1,7 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 import java.math.BigDecimal;
@@ -81,20 +80,18 @@ class BalanceCalculatorIntegrationTest {
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
-    assertAll(
-        () -> assertThat(accruals).hasSize(3),
-        () -> assertThat(accruals.get(0).getContributions().getTotal())
-                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120)),
-        () -> assertThat(accruals.get(0).getCumulativeTotal())
-                .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160)),
-        () -> assertThat(accruals.get(1).getContributions().getTotal())
-            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(360)),
-        () -> assertThat(accruals.get(1).getCumulativeTotal())
-            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520)),
-        () -> assertThat(accruals.get(2).getContributions().getTotal())
-            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0)),
-        () -> assertThat(accruals.get(2).getCumulativeTotal())
-            .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520))
-    );
+    assertThat(accruals).hasSize(3);
+    assertThat(accruals.get(0).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(60));
+    assertThat(accruals.get(0).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8100));
+    assertThat(accruals.get(1).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(420));
+    assertThat(accruals.get(1).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520));
+    assertThat(accruals.get(2).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
+    assertThat(accruals.get(2).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520));
   }
 }
