@@ -17,7 +17,7 @@ public class RangeUtils {
 
   }
 
-  private static final ZoneId UK_TIME_ZONE = ZoneId.of( "Europe/London" );
+  private static final ZoneId UK_TIME_ZONE = ZoneId.of("Europe/London");
 
   public static TreeMap<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
                                                                        ZonedDateTime endDateTime) {
