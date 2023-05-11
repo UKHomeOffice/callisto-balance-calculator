@@ -11,22 +11,34 @@ import org.junit.jupiter.api.Test;
 
 class RangeUtilsTest {
 
-  private static final ZonedDateTime SHIFT_START_TIME =
-      ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
-  private static final ZonedDateTime SHIFT_END_TIME =
-      ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
-
   @Test
   void splitOverDays_timeEntryWithinCalendarDay_returnOneDateTimeRange() {
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
+    ZonedDateTime endTime = ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
 
     SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
-        splitOverDays(SHIFT_START_TIME, SHIFT_END_TIME);
+        splitOverDays(startTime, endTime);
     assertThat(ranges).hasSize(1);
 
-    Range<ZonedDateTime> range = ranges.get(SHIFT_START_TIME.toLocalDate());
+    Range<ZonedDateTime> range = ranges.get(startTime.toLocalDate());
 
-    assertThat(range.lowerEndpoint()).isEqualTo(SHIFT_START_TIME);
-    assertThat(range.upperEndpoint()).isEqualTo(SHIFT_END_TIME);
+    assertThat(range.lowerEndpoint().toString()).isEqualTo("2023-04-18T09:00+01:00[Europe/London]");
+    assertThat(range.upperEndpoint().toString()).isEqualTo("2023-04-18T11:00+01:00[Europe/London]");
+  }
+
+  @Test
+  void splitOverDays_timeEntryWithinCalendarDayInGmt_returnOneDateTimeRange() {
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-01-18T08:00:00+00:00");
+    ZonedDateTime endTime = ZonedDateTime.parse("2023-01-18T10:00:00+00:00");
+
+    SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
+        splitOverDays(startTime, endTime);
+    assertThat(ranges).hasSize(1);
+
+    Range<ZonedDateTime> range = ranges.get(startTime.toLocalDate());
+
+    assertThat(range.lowerEndpoint().toString()).isEqualTo("2023-01-18T08:00Z[Europe/London]");
+    assertThat(range.upperEndpoint().toString()).isEqualTo("2023-01-18T10:00Z[Europe/London]");
   }
 
   @Test
@@ -41,11 +53,15 @@ class RangeUtilsTest {
     Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
     Range<ZonedDateTime> range2 = ranges.get(endTimeNextDay.toLocalDate());
 
-        assertThat(range1.lowerEndpoint()).isEqualTo("2023-04-18T23:00:00+01:00");
-        assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+01:00");
+    assertThat(range1.lowerEndpoint().toString()).isEqualTo(
+        "2023-04-18T23:00+01:00[Europe/London]");
+    assertThat(range1.upperEndpoint().toString()).isEqualTo(
+        "2023-04-19T00:00+01:00[Europe/London]");
 
-        assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+01:00");
-        assertThat(range2.upperEndpoint()).isEqualTo("2023-04-19T02:00:00+01:00");
+    assertThat(range2.lowerEndpoint().toString()).isEqualTo(
+        "2023-04-19T00:00+01:00[Europe/London]");
+    assertThat(range2.upperEndpoint().toString()).isEqualTo(
+        "2023-04-19T02:00+01:00[Europe/London]");
   }
 
   @Test
@@ -62,14 +78,25 @@ class RangeUtilsTest {
     Range<ZonedDateTime> range3 = ranges.get(startTime.plusDays(2).toLocalDate());
     Range<ZonedDateTime> range4 = ranges.get(endTime.toLocalDate());
 
-    assertThat(range1.lowerEndpoint()).isEqualTo("2023-04-18T23:00:00+01:00");
-    assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+01:00");
-    assertThat(range2.lowerEndpoint()).isEqualTo("2023-04-19T00:00:00+01:00");
-    assertThat(range2.upperEndpoint()).isEqualTo("2023-04-20T00:00:00+01:00");
-    assertThat(range3.lowerEndpoint()).isEqualTo("2023-04-20T00:00:00+01:00");
-    assertThat(range3.upperEndpoint()).isEqualTo("2023-04-21T00:00:00+01:00");
-    assertThat(range4.lowerEndpoint()).isEqualTo("2023-04-21T00:00:00+01:00");
-    assertThat(range4.upperEndpoint()).isEqualTo("2023-04-21T07:00:00+01:00");
+    assertThat(range1.lowerEndpoint().toString()).isEqualTo(
+        "2023-04-18T23:00+01:00[Europe/London]");
+    assertThat(range1.upperEndpoint().toString()).isEqualTo(
+        "2023-04-19T00:00+01:00[Europe/London]");
+
+    assertThat(range2.lowerEndpoint().toString()).isEqualTo(
+        "2023-04-19T00:00+01:00[Europe/London]");
+    assertThat(range2.upperEndpoint().toString()).isEqualTo(
+        "2023-04-20T00:00+01:00[Europe/London]");
+
+    assertThat(range3.lowerEndpoint().toString()).isEqualTo(
+        "2023-04-20T00:00+01:00[Europe/London]");
+    assertThat(range3.upperEndpoint().toString()).isEqualTo(
+        "2023-04-21T00:00+01:00[Europe/London]");
+
+    assertThat(range4.lowerEndpoint().toString()).isEqualTo(
+        "2023-04-21T00:00+01:00[Europe/London]");
+    assertThat(range4.upperEndpoint().toString()).isEqualTo(
+        "2023-04-21T07:00+01:00[Europe/London]");
   }
 
   @Test
@@ -83,7 +110,9 @@ class RangeUtilsTest {
 
     Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
 
-    assertThat(range1.lowerEndpoint()).isEqualTo(startTime);
-    assertThat(range1.upperEndpoint()).isEqualTo("2023-04-19T00:00:00+01:00");
+    assertThat(range1.lowerEndpoint().toString()).isEqualTo(
+        "2023-04-18T22:00+01:00[Europe/London]");
+    assertThat(range1.upperEndpoint().toString()).isEqualTo(
+        "2023-04-19T00:00+01:00[Europe/London]");
   }
 }
