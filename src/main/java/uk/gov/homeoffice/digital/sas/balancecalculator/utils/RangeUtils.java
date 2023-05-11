@@ -1,7 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.utils;
 
 import com.google.common.collect.Range;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
