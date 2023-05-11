@@ -43,8 +43,9 @@ public class RangeUtils {
             numDaysCovered - 1));
       }
 
-      if(hasEndDayRange(ukEndTime))
+      if (hasEndDayRange(ukEndTime)) {
         intervals.put(ukEndTime.toLocalDate(), RangeUtils.endDayRange(ukEndTime));
+      }
 
     }
 
@@ -71,7 +72,9 @@ public class RangeUtils {
   }
 
   /**
-   * This method return false if range is shorten than 1 min (we consider ranges of at least 1 min). Otherwise, true.
+   * This method return false if range is shorten than 1 min
+   * (we consider ranges of at least 1 min). Otherwise, true.
+   *
    * @param endDateTime ZonedDateTime
    * @return boolean
    */
