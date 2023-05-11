@@ -43,9 +43,9 @@ public class RangeUtils {
             numDaysCovered - 1));
       }
 
-      if (RangeUtils.endDayRange(ukEndTime) != null) {
+      if(hasEndDayRange(ukEndTime))
         intervals.put(ukEndTime.toLocalDate(), RangeUtils.endDayRange(ukEndTime));
-      }
+
     }
 
     return intervals;
@@ -63,14 +63,21 @@ public class RangeUtils {
 
   private static Range<ZonedDateTime> endDayRange(ZonedDateTime endDateTime) {
 
-    Range<ZonedDateTime> endDayRange = Range.closed(
+    return Range.closed(
         ZonedDateTime.of(endDateTime.toLocalDate().atTime(0, 0),
             endDateTime.getZone()),
         endDateTime
     );
-    return Duration.between(endDayRange.lowerEndpoint(),
-        endDayRange.upperEndpoint()).toMinutes() >= 1
-        ? endDayRange : null;
+  }
+
+  /**
+   * This method return false if range is shorten than 1 min (we consider ranges of at least 1 min). Otherwise, true.
+   * @param endDateTime ZonedDateTime
+   * @return boolean
+   */
+  private static boolean hasEndDayRange(ZonedDateTime endDateTime) {
+    return Duration.between(endDayRange(endDateTime).lowerEndpoint(),
+        endDayRange(endDateTime).upperEndpoint()).toMinutes() >= 1;
   }
 
   private static Range<ZonedDateTime> fullDayRange(ZonedDateTime dateTime) {
