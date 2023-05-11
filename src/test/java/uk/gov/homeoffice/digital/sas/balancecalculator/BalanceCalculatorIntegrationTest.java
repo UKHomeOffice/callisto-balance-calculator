@@ -67,7 +67,7 @@ class BalanceCalculatorIntegrationTest {
   }
 
   @Test
-  void calculate_accrualsDays_whenTimeEntryHasTwoDaysSpan() {
+  void calculate_timeEntryHasTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
     ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
     ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");

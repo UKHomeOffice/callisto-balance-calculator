@@ -83,14 +83,14 @@ class BalanceCalculatorTest {
             ZonedDateTime.parse("2023-04-18T14:30:00+00:00"),
             BigDecimal.valueOf(6150), BigDecimal.valueOf(6750),
             BigDecimal.valueOf(6990), BigDecimal.valueOf(7710)),
-        // two day time entry
+        // creating two day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
             LocalDate.of(2023, 4, 19),
             ZonedDateTime.parse("2023-04-18T22:00:00+00:00"),
             ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
             BigDecimal.valueOf(6540), BigDecimal.valueOf(7560),
             BigDecimal.valueOf(7800), BigDecimal.valueOf(8520)),
-        // three day time entry
+        // creating three day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0013",
             LocalDate.of(2023, 4, 20),
             ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
