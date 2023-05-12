@@ -65,6 +65,88 @@ class RangeUtilsTest {
   }
 
   @Test
+  void splitOverDays_timeEntryWithinTwoCalendarDaysCrossingGmtToBst_returnTwoDateTimeRanges() {
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-03-25T22:00:00+00:00");
+    ZonedDateTime endTime = ZonedDateTime.parse("2023-03-26T10:00:00+00:00");
+
+    SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
+        splitOverDays(startTime, endTime);
+    assertThat(ranges).hasSize(2);
+
+    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
+    Range<ZonedDateTime> range2 = ranges.get(endTime.toLocalDate());
+
+    assertThat(range1.lowerEndpoint().toString()).isEqualTo("2023-03-25T22:00Z[Europe/London]");
+    assertThat(range1.upperEndpoint().toString()).isEqualTo("2023-03-26T00:00Z[Europe/London]");
+
+    assertThat(range2.lowerEndpoint().toString()).isEqualTo("2023-03-26T00:00Z[Europe/London]");
+    assertThat(range2.upperEndpoint().toString()).isEqualTo("2023-03-26T11:00+01:00[Europe/London]");
+  }
+
+  @Test
+  void splitOverDays_timeEntryWithinCalendarDayCrossingGmtToBst_returnOneDateTimeRange() {
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-03-26T01:00:00+00:00");
+    ZonedDateTime endTime = ZonedDateTime.parse("2023-03-26T02:00:00+01:00");
+
+    SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
+        splitOverDays(startTime, endTime);
+    assertThat(ranges).hasSize(0);
+  }
+
+  @Test
+  void splitOverDays_timeEntryWithinCalendarDayCrossingGmtToBstBoundary_returnOneDateTimeRange() {
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-03-26T00:59:00+00:00");
+    ZonedDateTime endTime = ZonedDateTime.parse("2023-03-26T02:00:00+01:00");
+
+    SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
+        splitOverDays(startTime, endTime);
+    assertThat(ranges).hasSize(1);
+
+    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
+
+    assertThat(range1.lowerEndpoint().toString()).isEqualTo("2023-03-26T00:59Z[Europe/London]");
+    assertThat(range1.upperEndpoint().toString()).isEqualTo("2023-03-26T02:00+01:00[Europe/London]");
+  }
+
+  @Test
+  void splitOverDays_timeEntryWithinTwoCalendarDaysCrossingBstToGmt_returnTwoDateTimeRanges() {
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-28T22:00:00+00:00");
+    ZonedDateTime endTime = ZonedDateTime.parse("2023-10-29T10:00:00+00:00");
+
+    SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
+        splitOverDays(startTime, endTime);
+    assertThat(ranges).hasSize(2);
+
+    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
+    Range<ZonedDateTime> range2 = ranges.get(endTime.toLocalDate());
+
+    assertThat(range1.lowerEndpoint().toString()).isEqualTo("2023-10-28T23:00+01:00[Europe/London]");
+    assertThat(range1.upperEndpoint().toString()).isEqualTo("2023-10-29T00:00+01:00[Europe/London]");
+
+    assertThat(range2.lowerEndpoint().toString()).isEqualTo("2023-10-29T00:00+01:00[Europe/London]");
+    assertThat(range2.upperEndpoint().toString()).isEqualTo("2023-10-29T10:00Z[Europe/London]");
+  }
+
+  @Test
+  void splitOverDays_timeEntryWithinTwoCalendarDaysMismatchingTimeZones_returnTwoDateTimeRanges() {
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-28T22:00:00+03:00");
+    ZonedDateTime endTime = ZonedDateTime.parse("2023-10-29T10:00:00+06:00");
+
+    SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
+        splitOverDays(startTime, endTime);
+    assertThat(ranges).hasSize(2);
+
+    Range<ZonedDateTime> range1 = ranges.get(startTime.toLocalDate());
+    Range<ZonedDateTime> range2 = ranges.get(endTime.toLocalDate());
+
+    assertThat(range1.lowerEndpoint().toString()).isEqualTo("2023-10-28T20:00+01:00[Europe/London]");
+    assertThat(range1.upperEndpoint().toString()).isEqualTo("2023-10-29T00:00+01:00[Europe/London]");
+
+    assertThat(range2.lowerEndpoint().toString()).isEqualTo("2023-10-29T00:00+01:00[Europe/London]");
+    assertThat(range2.upperEndpoint().toString()).isEqualTo("2023-10-29T04:00Z[Europe/London]");
+  }
+
+  @Test
   void splitOverDays_timeEntryWithinFourCalendarDays_returnFourDateTimeRanges() {
 
     var startTime = ZonedDateTime.parse("2023-04-18T22:00:00+00:00");

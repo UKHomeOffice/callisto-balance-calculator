@@ -35,7 +35,9 @@ public class RangeUtils {
       upperEnd = lowerEnd.toLocalDate().plusDays(1).atTime(0, 0).atZone(UK_TIME_ZONE);
     }
 
-    intervals.put(lowerEnd.toLocalDate(), Range.closed(lowerEnd, ukEndTime));
+    if (!lowerEnd.isEqual(ukEndTime)) {
+      intervals.put(lowerEnd.toLocalDate(), Range.closed(lowerEnd, ukEndTime));
+    }
 
     return intervals;
   }
