@@ -30,10 +30,47 @@ class BalanceCalculatorIntegrationTest {
   }
 
   @Test
-  void calculate_endToEnd_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_endToEndInGmtToBst_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
-    ZonedDateTime finishTime = startTime.plusHours(2);
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-03-26T00:59:00+00:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-03-26T03:59:00+01:00");
+
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        startTime,
+        finishTime);
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+
+    assertThat(accruals).hasSize(4);
+
+    assertThat(accruals.get(0).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
+    assertThat(accruals.get(0).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6600));
+
+    assertThat(accruals.get(1).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
+    assertThat(accruals.get(1).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7200));
+
+    assertThat(accruals.get(2).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(240));
+    assertThat(accruals.get(2).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7440));
+
+    assertThat(accruals.get(3).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
+    assertThat(accruals.get(3).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160));
+  }
+
+  @Test
+  void calculate_endToEndInBstToGmt_contributionsAndCumulativeTotalsAsExpected() {
+
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-29T01:59:00+01:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-29T02:59:00+00:00");
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
@@ -85,10 +122,12 @@ class BalanceCalculatorIntegrationTest {
         .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(60));
     assertThat(accruals.get(0).getCumulativeTotal())
         .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8100));
+
     assertThat(accruals.get(1).getContributions().getTotal())
         .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(420));
     assertThat(accruals.get(1).getCumulativeTotal())
         .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520));
+
     assertThat(accruals.get(2).getContributions().getTotal())
         .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
     assertThat(accruals.get(2).getCumulativeTotal())
