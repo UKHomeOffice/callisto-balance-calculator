@@ -56,7 +56,6 @@ class KafkaConsumerIntegrationTest {
   public static final ZonedDateTime SHIFT_START_TIME = LocalDateTime.now().atZone(ZoneOffset.UTC);
   public static final ZonedDateTime SHIFT_END_TIME = SHIFT_START_TIME.plusHours(1);
 
-
   @Value("${spring.kafka.template.default-topic}")
   private String topicName;
 

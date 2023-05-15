@@ -1,19 +1,18 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_MAP_EMPTY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.MISSING_ACCRUAL;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 
-import com.google.common.collect.Range;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
@@ -22,6 +21,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
@@ -67,20 +67,36 @@ class BalanceCalculatorTest {
 
   private BalanceCalculator balanceCalculator;
 
-  private static Stream<Arguments> testData() {
+  private static Stream<Arguments> annualTargetHoursTestData() {
     return Stream.of(
+        // creating one day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 18),
             ZonedDateTime.parse("2023-04-18T08:00:00+00:00"),
             ZonedDateTime.parse("2023-04-18T10:00:00+00:00"),
             BigDecimal.valueOf(6600), BigDecimal.valueOf(7200),
             BigDecimal.valueOf(7440), BigDecimal.valueOf(8160)),
+        // updating one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             LocalDate.of(2023, 4, 18),
             ZonedDateTime.parse("2023-04-18T14:00:00+00:00"),
             ZonedDateTime.parse("2023-04-18T14:30:00+00:00"),
             BigDecimal.valueOf(6150), BigDecimal.valueOf(6750),
-            BigDecimal.valueOf(6990), BigDecimal.valueOf(7710))
+            BigDecimal.valueOf(6990), BigDecimal.valueOf(7710)),
+        // creating two day time entry
+        Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
+            LocalDate.of(2023, 4, 19),
+            ZonedDateTime.parse("2023-04-18T22:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
+            BigDecimal.valueOf(6540), BigDecimal.valueOf(7560),
+            BigDecimal.valueOf(7800), BigDecimal.valueOf(8520)),
+        // creating three day time entry
+        Arguments.of("7f000001-879e-1b02-8187-9ef1640f0013",
+            LocalDate.of(2023, 4, 20),
+            ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-20T06:00:00+00:00"),
+            BigDecimal.valueOf(6600), BigDecimal.valueOf(8640),
+            BigDecimal.valueOf(9300), BigDecimal.valueOf(10020))
     );
   }
 
@@ -103,11 +119,15 @@ class BalanceCalculatorTest {
   }
 
   @ParameterizedTest
-  @MethodSource("testData")
-  void calculate_withinCalendarDayAndAnnualTargetHours_returnUpdateAccruals(String timeEntryId,
-      LocalDate referenceDate, ZonedDateTime shiftStartTime, ZonedDateTime shiftEndTime,
-      BigDecimal expectedCumulativeTotal1, BigDecimal expectedCumulativeTotal2,
-      BigDecimal expectedCumulativeTotal3, BigDecimal expectedCumulativeTotal4)
+  @MethodSource("annualTargetHoursTestData")
+  void calculate_annualTargetHours_returnUpdateAccruals(String timeEntryId,
+                                                        LocalDate referenceDate,
+                                                        ZonedDateTime shiftStartTime,
+                                                        ZonedDateTime shiftEndTime,
+                                                        BigDecimal expectedCumulativeTotal1,
+                                                        BigDecimal expectedCumulativeTotal2,
+                                                        BigDecimal expectedCumulativeTotal3,
+                                                        BigDecimal expectedCumulativeTotal4)
       throws IOException {
 
     TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
@@ -118,24 +138,28 @@ class BalanceCalculatorTest {
     when(restClient.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    //ACCRUAL_DATE minus 1 because call to this method is made using reference date minus 1.
-    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID, ACCRUAL_DATE.minusDays(1),
+    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID,
+        shiftStartTime.toLocalDate().minusDays(1),
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
 
-    //assert Cumulative total of 17th should be 18
-    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(accruals).hasSize(4);
+    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
         .isEqualTo(expectedCumulativeTotal1);
 
-    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
         .isEqualTo(expectedCumulativeTotal2);
 
-    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
         .isEqualTo(expectedCumulativeTotal3);
 
-    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
         .isEqualTo(expectedCumulativeTotal4);
   }
 
@@ -218,28 +242,15 @@ class BalanceCalculatorTest {
   }
 
   @Test
-  void splitOverDays_timeEntryWithinCalendarDay_returnOneDateTimeRange() {
-
-    Map<LocalDate, Range<ZonedDateTime>> ranges =
-        balanceCalculator.splitOverDays(SHIFT_START_TIME, SHIFT_END_TIME);
-    assertThat(ranges).hasSize(1);
-
-    Range<ZonedDateTime> range = ranges.get(SHIFT_START_TIME.toLocalDate());
-
-    assertThat(range.lowerEndpoint()).isEqualTo(SHIFT_START_TIME);
-    assertThat(range.upperEndpoint()).isEqualTo(SHIFT_END_TIME);
-  }
-
-  @Test
   void map_listOfAccruals_mappedByAccrualTypeAndDate() throws IOException {
     List<Accrual> accruals = loadAccrualsFromFile("data/accruals_convertToMap.json");
 
-    Map<AccrualType, TreeMap<LocalDate, Accrual>> map =
+    Map<AccrualType, SortedMap<LocalDate, Accrual>> map =
         balanceCalculator.map(accruals);
 
     assertThat(map).hasSize(2);
 
-    TreeMap<LocalDate, Accrual> annualTargetHoursMap = map.get(AccrualType.ANNUAL_TARGET_HOURS);
+    SortedMap<LocalDate, Accrual> annualTargetHoursMap = map.get(AccrualType.ANNUAL_TARGET_HOURS);
 
     assertThat(annualTargetHoursMap).hasSize(2);
     assertThat(annualTargetHoursMap.get(LocalDate.of(2023, 4, 19))
@@ -249,7 +260,7 @@ class BalanceCalculatorTest {
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(7320));
 
-    TreeMap<LocalDate, Accrual> nightHoursMap = map.get(AccrualType.NIGHT_HOURS);
+    SortedMap<LocalDate, Accrual> nightHoursMap = map.get(AccrualType.NIGHT_HOURS);
     assertThat(nightHoursMap).hasSize(1);
     assertThat(nightHoursMap.get(LocalDate.of(2023, 4, 19))
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
@@ -261,7 +272,7 @@ class BalanceCalculatorTest {
       throws IOException {
     List<Accrual> accruals = loadAccrualsFromFile("data/accruals_annualTargetHours.json");
 
-    TreeMap<LocalDate, Accrual> map = accruals.stream()
+    SortedMap<LocalDate, Accrual> map = accruals.stream()
         .collect(Collectors.toMap(
             Accrual::getAccrualDate,
             Function.identity(),
@@ -274,7 +285,7 @@ class BalanceCalculatorTest {
 
     balanceCalculator.cascadeCumulativeTotal(map, agreementStartDate);
 
-    assertThat(map).hasSize(4);
+    assertThat(map).hasSize(5);
     assertThat(map.get(referenceDate)
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(6480));
@@ -294,7 +305,7 @@ class BalanceCalculatorTest {
 
   @Test
   void cascadeCumulativeTotal_emptyMapOfAccruals_throwException() {
-    TreeMap<LocalDate, Accrual> map = new TreeMap<>();
+    SortedMap<LocalDate, Accrual> map = new TreeMap<>();
 
     LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
 

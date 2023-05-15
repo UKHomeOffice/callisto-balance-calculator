@@ -26,7 +26,6 @@ public class CommonUtils {
 
   public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,
                                           ZonedDateTime finishTime) {
-
     return createTimeEntry(id, VALID_TENANT_ID, ownerId, startTime, finishTime);
   }
 

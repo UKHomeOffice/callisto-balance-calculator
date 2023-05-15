@@ -1,6 +1,7 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
 import com.google.common.collect.Range;
 import java.math.BigDecimal;
@@ -8,10 +9,10 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
@@ -72,7 +73,7 @@ public class BalanceCalculator {
 
     // Get accruals of all types between the day just before the time entry and the end date of the
     // latest applicable agreement
-    Map<AccrualType, TreeMap<LocalDate, Accrual>> allAccruals =
+    Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
         getAccrualsBetweenDates(tenantId, personId,
             timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate());
 
@@ -82,7 +83,8 @@ public class BalanceCalculator {
       return List.of();
     }
 
-    Map<LocalDate, Range<ZonedDateTime>> dateRangeMap = splitOverDays(timeEntryStart, timeEntryEnd);
+    SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
+        splitOverDays(timeEntryStart, timeEntryEnd);
 
     for (var entry : dateRangeMap.entrySet()) {
       for (var module : accrualModules) {
@@ -90,7 +92,7 @@ public class BalanceCalculator {
         ZonedDateTime startTime = entry.getValue().lowerEndpoint();
         ZonedDateTime endTime = entry.getValue().upperEndpoint();
         AccrualType accrualType = module.getAccrualType();
-        TreeMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
+        SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
         Accrual accrual = accruals.get(referenceDate);
 
@@ -108,12 +110,16 @@ public class BalanceCalculator {
       }
     }
 
-    List<Accrual> accrualsToBatchUpdate = allAccruals.values().stream()
+    // Each AccrualType within allAccruals map still containing entry for prior day
+    // which shouldn't be sent to batch update. Lines below removing that entry from the Map
+    for (SortedMap<LocalDate, Accrual> value : allAccruals.values()) {
+      value.remove(value.firstKey());
+    }
+
+    return allAccruals.values().stream()
         .map(Map::values)
         .flatMap(Collection::stream)
         .toList();
-
-    return accrualsToBatchUpdate;
   }
 
   public void sendToAccruals(String tenantId, List<Accrual> accruals) {
@@ -121,7 +127,7 @@ public class BalanceCalculator {
   }
 
   void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
-      Accrual accrual) {
+                                 Accrual accrual) {
 
     Contributions contributions = accrual.getContributions();
     contributions.getTimeEntries().put(UUID.fromString(timeEntryId), shiftContribution);
@@ -131,7 +137,7 @@ public class BalanceCalculator {
   }
 
   void cascadeCumulativeTotal(
-      TreeMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
+      SortedMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
 
     Optional<LocalDate> optional = accruals.keySet().stream().findFirst();
     if (optional.isPresent()) {
@@ -146,10 +152,8 @@ public class BalanceCalculator {
       }
 
       // the first element is only used to calculate base cumulative total so shouldn't be included
-      // in update
-      accruals.remove(priorAccrualDate);
-
-      updateSubsequentAccruals(accruals.values().stream().toList(), baseCumulativeTotal);
+      List<Accrual> accrualsFromReferenceDate = accruals.values().stream().skip(1).toList();
+      updateSubsequentAccruals(accrualsFromReferenceDate, baseCumulativeTotal);
     } else {
       throw new IllegalArgumentException(ACCRUALS_MAP_EMPTY);
     }
@@ -178,12 +182,12 @@ public class BalanceCalculator {
   }
 
   Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId, String personId,
-      LocalDate timeEntryEndDate) {
+                                                     LocalDate timeEntryEndDate) {
     return restClient.getApplicableAgreement(tenantId,
         personId, timeEntryEndDate);
   }
 
-  Map<AccrualType, TreeMap<LocalDate, Accrual>> getAccrualsBetweenDates(
+  Map<AccrualType, SortedMap<LocalDate, Accrual>> getAccrualsBetweenDates(
       String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
 
     List<Accrual> accruals = restClient.getAccrualsBetweenDates(tenantId, personId,
@@ -193,13 +197,13 @@ public class BalanceCalculator {
   }
 
   /**
-   * Groups input list of accruals by Accrual Type then by Accrual Date. Note the use of TreeMap in
-   * the nested map to ensure accrual records are sorted by date
+   * Groups input list of accruals by Accrual Type then by Accrual Date. Note the use of SortedMap
+   * in the nested map to ensure accrual records are sorted by date
    *
    * @param accruals list of accruals
    * @return Accruals mapped by Accrual Type and Accrual Date
    */
-  Map<AccrualType, TreeMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
+  Map<AccrualType, SortedMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
     return accruals.stream()
         .collect(Collectors.groupingBy(
                 Accrual::getAccrualType,
@@ -209,25 +213,5 @@ public class BalanceCalculator {
                     (c1, c2) -> c1, TreeMap::new)
             )
         );
-  }
-
-  Map<LocalDate, Range<ZonedDateTime>> splitOverDays(ZonedDateTime startDateTime,
-      ZonedDateTime endDateTime) {
-    Map<LocalDate, Range<ZonedDateTime>> intervals = new HashMap<>();
-
-    if (isOnSameDay(startDateTime, endDateTime)) {
-      Range<ZonedDateTime> range = Range.closed(startDateTime, endDateTime);
-      intervals.put(startDateTime.toLocalDate(), range);
-    } else {
-      // TODO: cover case when time entry span multiple days
-      throw new UnsupportedOperationException(
-          "Case when time entry spans multiple days isn't implemented yet");
-    }
-
-    return intervals;
-  }
-
-  private boolean isOnSameDay(ZonedDateTime dateTimeOne, ZonedDateTime dateTimeTwo) {
-    return dateTimeOne.toLocalDate().isEqual(dateTimeTwo.toLocalDate());
   }
 }
