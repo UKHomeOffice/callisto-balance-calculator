@@ -16,5 +16,5 @@ kafka:
   bootstrapSecretKeyRefName: callisto-dev-bootstrap
 
 env:
-  name: ACCRUALS_URL
-  value: "https://accruals.dev.callisto-notprod.homeoffice.gov.uk/"
+  - name: ACCRUALS_URL
+    value: "https://accruals.dev.callisto-notprod.homeoffice.gov.uk"

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -22,6 +23,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.Accr
 
 @NoArgsConstructor
 @Component
+@Slf4j
 public class RestClient {
 
   public static final String TENANT_ID_STRING_IDENTIFIER = "tenantId";
@@ -36,6 +38,7 @@ public class RestClient {
   @Autowired
   public RestClient(RestTemplateBuilder builder,
                     @Value("${balance.calculator.accruals.url}") String accrualsUrl) {
+    log.info("ACCRUALS URL: " + accrualsUrl);
     this.restTemplate = builder.build();
     this.accrualsNoFilterUrl = accrualsUrl + "/resources/accruals?tenantId={tenantId}";
     this.accrualsFilterUrl =
