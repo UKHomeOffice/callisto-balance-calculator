@@ -14,3 +14,6 @@ kafka:
   identity: balance-calculator
   mskSecretKeyRefName: callisto-dev-msk
   bootstrapSecretKeyRefName: callisto-dev-bootstrap
+
+env:
+  ACCRUALS_URL: "https://accruals.dev.callisto-notprod.homeoffice.gov.uk"
