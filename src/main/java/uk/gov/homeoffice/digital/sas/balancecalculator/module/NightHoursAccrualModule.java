@@ -1,16 +1,16 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.module;
 
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.UK_TIME_ZONE;
+
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 
 public class NightHoursAccrualModule extends AccrualModule {
-  private static final ZoneId UK_TIME_ZONE = ZoneId.of("Europe/London");
 
   public NightHoursAccrualModule() {
     super(AccrualType.NIGHT_HOURS);
@@ -20,32 +20,41 @@ public class NightHoursAccrualModule extends AccrualModule {
     ZonedDateTime ukStartTime = startTime.withZoneSameInstant(UK_TIME_ZONE);
     ZonedDateTime ukEndTime = endTime.withZoneSameInstant(UK_TIME_ZONE);
 
-    ZonedDateTime midnightCurrentDay =
-        ukStartTime.toLocalDate().atTime(0, 0).atZone(UK_TIME_ZONE);
-    ZonedDateTime endOfPreviousDayNightHours =
-        ukStartTime.toLocalDate().atTime(6, 0).atZone(UK_TIME_ZONE);
-    ZonedDateTime startOfCurrentDayNightHours =
-        ukStartTime.toLocalDate().atTime(23, 0).atZone(UK_TIME_ZONE);
-    ZonedDateTime midnightNextDay =
-        ukStartTime.toLocalDate().plusDays(1).atTime(0, 0).atZone(UK_TIME_ZONE);
+    RangeSet<ZonedDateTime> timeEntryNightHours =
+        getIntersectionWithNightHours(ukStartTime, ukEndTime);
 
-    Range<ZonedDateTime> morningNightHours = Range.closed(midnightCurrentDay, endOfPreviousDayNightHours);
-    Range<ZonedDateTime> eveningNightHours = Range.closed(startOfCurrentDayNightHours, midnightNextDay);
-    Range<ZonedDateTime> timeEntry = Range.closed(ukStartTime, ukEndTime);
+    return timeEntryNightHours.asRanges().stream()
+        .map(range -> new BigDecimal(
+            Duration.between(range.lowerEndpoint(), range.upperEndpoint()).toMinutes()))
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+  }
+
+  private RangeSet<ZonedDateTime> getIntersectionWithNightHours(ZonedDateTime startTime,
+                                                                ZonedDateTime endTime) {
+
+    ZonedDateTime midnightCurrentDay = atTime(startTime, 0);
+    ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, 6);
+    ZonedDateTime startOfCurrentDayNightHours = atTime(startTime, 23);
+    ZonedDateTime midnightNextDay = nextDayAtMidnight(startTime);
+
+    Range<ZonedDateTime> morningNightHours =
+        Range.closed(midnightCurrentDay, endOfPreviousDayNightHours);
+    Range<ZonedDateTime> eveningNightHours =
+        Range.closed(startOfCurrentDayNightHours, midnightNextDay);
+    Range<ZonedDateTime> timeEntry = Range.closed(startTime, endTime);
 
     RangeSet<ZonedDateTime> nightHoursFilter = TreeRangeSet.create();
     nightHoursFilter.add(morningNightHours);
     nightHoursFilter.add(eveningNightHours);
 
-    RangeSet<ZonedDateTime> filteredTimeEntry = nightHoursFilter.subRangeSet(timeEntry);
+    return nightHoursFilter.subRangeSet(timeEntry);
+  }
 
-    BigDecimal result = BigDecimal.ZERO;
+  private ZonedDateTime atTime(ZonedDateTime date, int hour) {
+    return date.toLocalDate().atTime(hour, 0).atZone(UK_TIME_ZONE);
+  }
 
-    for (Range<ZonedDateTime> range : filteredTimeEntry.asRanges()) {
-      Duration shiftDuration = Duration.between(range.lowerEndpoint(), range.upperEndpoint());
-      result = result.add(new BigDecimal(shiftDuration.toMinutes()));
-    }
-
-    return result;
+  private ZonedDateTime nextDayAtMidnight(ZonedDateTime date) {
+    return date.toLocalDate().plusDays(1).atTime(0, 0).atZone(UK_TIME_ZONE);
   }
 }
