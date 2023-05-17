@@ -1,20 +1,9 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
-import com.google.common.collect.Range;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
-import org.springframework.stereotype.Component;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
-import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
-import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
+import static org.springframework.util.CollectionUtils.isEmpty;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
+import com.google.common.collect.Range;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -28,9 +17,19 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static org.springframework.util.CollectionUtils.isEmpty;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Component;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 @Component
 @Slf4j
@@ -88,58 +87,48 @@ public class BalanceCalculator {
     switch (action) {
       case CREATE -> {
 
-      }
-      case DELETE -> {
-        // Get all accruals in the time range (timeEntryStart - timeEntryEnd)
-        // Find contributions with that TimeEntry ID in ^
-        //
+        SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
+            splitOverDays(timeEntryStart, timeEntryEnd);
 
+        for (var entry : dateRangeMap.entrySet()) {
+          LocalDate referenceDate = entry.getKey();
+          ZonedDateTime startTime = entry.getValue().lowerEndpoint();
+          ZonedDateTime endTime = entry.getValue().upperEndpoint();
 
-        // Theoretical steps req. for delete
-        // 1. Delete TimeEntry contrib from the list of accruals in the time range (timeEntryStart - timeEntryEnd)
+          for (AccrualModule module : accrualModules) {
 
-        // Get that ^ updatedListOfAccruals after Delete Action -> execute calculateShiftContribution
+            AccrualType accrualType = module.getAccrualType();
+            SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
-        // steps executed 'behind the scenes' (current code)
-        // 2. Get total from one day before TimeEnrtryStart date
-        // 3. Rippling through ... till the end of the agreement
+            Accrual accrual = accruals.get(referenceDate);
 
+            if (accrual == null) {
+              log.error(MessageFormat.format(
+                  MISSING_ACCRUAL, tenantId, personId, accrualType, referenceDate));
+              return List.of();
+            }
 
+            BigDecimal shiftContribution = module.calculateShiftContribution(startTime, endTime);
 
-      }
-      case UPDATE -> {
-          throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
-      }
-      default -> { throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION"); }
-    }
+            updateAccrualContribution(timeEntryId, shiftContribution, accrual);
 
-    SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
-        splitOverDays(timeEntryStart, timeEntryEnd);
-
-    for (var entry : dateRangeMap.entrySet()) {
-      LocalDate referenceDate = entry.getKey();
-      ZonedDateTime startTime = entry.getValue().lowerEndpoint();
-      ZonedDateTime endTime = entry.getValue().upperEndpoint();
-
-      for (AccrualModule module : accrualModules) {
-        AccrualType accrualType = module.getAccrualType();
-        SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
-
-        Accrual accrual = accruals.get(referenceDate);
-
-        if (accrual == null) {
-          log.error(MessageFormat.format(
-              MISSING_ACCRUAL, tenantId, personId, accrualType, referenceDate));
-          return List.of();
+            cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
+          }
         }
 
-        BigDecimal shiftContribution = module.calculateShiftContribution(startTime, endTime);
-
-        updateAccrualContribution(timeEntryId, shiftContribution, accrual);
-
-        cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
       }
+      case DELETE ->
+          deleteAccrualContribution(timeEntry, timeEntryStart, timeEntryStartDate,
+            timeEntryEndDate, applicableAgreement, allAccruals);
+
+      case UPDATE ->
+        throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
+      
+      default ->
+        throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION");
+
     }
+
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
@@ -151,6 +140,39 @@ public class BalanceCalculator {
         .map(Map::values)
         .flatMap(Collection::stream)
         .toList();
+  }
+
+  private void deleteAccrualContribution(TimeEntry timeEntry, ZonedDateTime timeEntryStart,
+                                         LocalDate timeEntryStartDate, LocalDate timeEntryEndDate,
+                                         Agreement applicableAgreement, Map<AccrualType,
+      SortedMap<LocalDate, Accrual>> allAccruals) {
+
+    for (AccrualModule module : accrualModules) {
+      AccrualType accrualType = module.getAccrualType();
+      SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
+
+      Accrual accrual = accruals.get(timeEntryStart.toLocalDate());
+
+      accruals.entrySet().stream()
+          .filter(key -> key.getKey().isAfter(timeEntryStartDate.minusDays(1))
+              && key.getKey().isBefore(timeEntryEndDate.plusDays(1)))
+          .forEach(accrualsmap -> {
+
+            BigDecimal timeEntryContribution =
+                accrualsmap.getValue().getContributions().getTimeEntries()
+                .get(UUID.fromString(timeEntry.getId()));
+
+            BigDecimal currentTotal = accrualsmap.getValue().getContributions().getTotal();
+            accrualsmap.getValue().getContributions()
+                .setTotal(currentTotal.subtract(timeEntryContribution));
+
+            accrualsmap.getValue().getContributions().getTimeEntries()
+                .remove(UUID.fromString(timeEntry.getId()));
+
+          });
+
+      cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
+    }
   }
 
   public void sendToAccruals(String tenantId, List<Accrual> accruals) {
