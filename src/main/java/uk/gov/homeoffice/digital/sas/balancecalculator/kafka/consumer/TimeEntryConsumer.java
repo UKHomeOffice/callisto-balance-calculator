@@ -1,14 +1,7 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
-import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_COULD_NOT_DESERIALIZE_RESOURCE;
-import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
-import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
-import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getResourceFromMessageAsString;
-import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -24,6 +17,14 @@ import uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerService;
 import uk.gov.homeoffice.digital.sas.kafka.consumer.configuration.KafkaConsumerConfig;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaEventMessage;
+
+import java.util.List;
+
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_COULD_NOT_DESERIALIZE_RESOURCE;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_RESOURCE_NOT_UNDERSTOOD;
+import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCCESSFUL_DESERIALIZATION;
+import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getResourceFromMessageAsString;
+import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
 
 @Service
 @Slf4j
@@ -57,7 +58,7 @@ public class TimeEntryConsumer {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
         log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, payload));
 
-        List<Accrual> accrualsToBatchUpdate = balanceCalculator.calculate(timeEntry);
+        List<Accrual> accrualsToBatchUpdate = balanceCalculator.calculate(timeEntry, kafkaEventMessage.getAction());
         balanceCalculator.sendToAccruals(timeEntry.getTenantId(), accrualsToBatchUpdate);
       }
 

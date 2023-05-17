@@ -1,11 +1,5 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
-
-import java.math.BigDecimal;
-import java.time.ZonedDateTime;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +7,14 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
+
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 @SpringBootTest
 @AutoConfigureWireMock(port = 9999)
@@ -41,7 +43,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(4);
 
@@ -78,7 +80,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(4);
 
@@ -115,7 +117,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(3);
     assertThat(accruals.get(0).getContributions().getTotal())

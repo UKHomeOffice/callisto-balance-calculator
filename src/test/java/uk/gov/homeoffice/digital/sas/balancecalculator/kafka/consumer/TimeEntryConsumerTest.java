@@ -1,5 +1,29 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.kafka.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.test.annotation.DirtiesContext;
+import uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
+import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
@@ -21,28 +45,6 @@ import static uk.gov.homeoffice.digital.sas.kafka.constants.Constants.KAFKA_SUCC
 import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getResourceFromMessageAsString;
 import static uk.gov.homeoffice.digital.sas.kafka.consumer.KafkaConsumerUtils.getSchemaFromMessageAsString;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.system.CapturedOutput;
-import org.springframework.boot.test.system.OutputCaptureExtension;
-import org.springframework.test.annotation.DirtiesContext;
-import uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
-import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
-
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
@@ -50,6 +52,9 @@ class TimeEntryConsumerTest {
 
   @Captor
   private ArgumentCaptor<TimeEntry> timeEntryCaptor;
+
+  @Captor
+  private ArgumentCaptor<KafkaAction> kafkaActionArgumentCaptor;
 
   @Captor
   private ArgumentCaptor<String> tenantIdCaptor;
@@ -83,13 +88,13 @@ class TimeEntryConsumerTest {
     accrualList.add(accrual2);
 
     //when
-    when(balanceCalculator.calculate(timeEntryCaptor.capture())).thenReturn(accrualList);
+    when(balanceCalculator.calculate(timeEntryCaptor.capture(), kafkaActionArgumentCaptor.capture())).thenReturn(accrualList);
     timeEntryConsumer.onMessage(message);
 
     // then
     assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
         message));
-    verify(balanceCalculator).calculate(timeEntryCaptor.capture());
+    verify(balanceCalculator).calculate(timeEntryCaptor.capture(), kafkaActionArgumentCaptor.capture());
     assertThat(timeEntryCaptor.getValue().getId()).isEqualTo(id);
 
     verify(balanceCalculator).sendToAccruals(tenantIdCaptor.capture(), accrualsCaptor.capture());

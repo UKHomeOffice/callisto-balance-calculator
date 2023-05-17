@@ -1,9 +1,20 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
-import static org.springframework.util.CollectionUtils.isEmpty;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
-
 import com.google.common.collect.Range;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Import;
+import org.springframework.stereotype.Component;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
+
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -17,18 +28,9 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Import;
-import org.springframework.stereotype.Component;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
-import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
+
+import static org.springframework.util.CollectionUtils.isEmpty;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
 @Component
 @Slf4j
@@ -52,7 +54,7 @@ public class BalanceCalculator {
     this.accrualModules = accrualModules;
   }
 
-  public List<Accrual> calculate(TimeEntry timeEntry) {
+  public List<Accrual> calculate(TimeEntry timeEntry, KafkaAction action) {
 
     String timeEntryId = timeEntry.getId();
     String tenantId = timeEntry.getTenantId();
@@ -83,14 +85,43 @@ public class BalanceCalculator {
       return List.of();
     }
 
+    switch (action) {
+      case CREATE -> {
+
+      }
+      case DELETE -> {
+        // Get all accruals in the time range (timeEntryStart - timeEntryEnd)
+        // Find contributions with that TimeEntry ID in ^
+        //
+
+
+        // Theoretical steps req. for delete
+        // 1. Delete TimeEntry contrib from the list of accruals in the time range (timeEntryStart - timeEntryEnd)
+
+        // Get that ^ updatedListOfAccruals after Delete Action -> execute calculateShiftContribution
+
+        // steps executed 'behind the scenes' (current code)
+        // 2. Get total from one day before TimeEnrtryStart date
+        // 3. Rippling through ... till the end of the agreement
+
+
+
+      }
+      case UPDATE -> {
+          throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
+      }
+      default -> { throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION"); }
+    }
+
     SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
         splitOverDays(timeEntryStart, timeEntryEnd);
 
     for (var entry : dateRangeMap.entrySet()) {
-      for (var module : accrualModules) {
-        LocalDate referenceDate = entry.getKey();
-        ZonedDateTime startTime = entry.getValue().lowerEndpoint();
-        ZonedDateTime endTime = entry.getValue().upperEndpoint();
+      LocalDate referenceDate = entry.getKey();
+      ZonedDateTime startTime = entry.getValue().lowerEndpoint();
+      ZonedDateTime endTime = entry.getValue().upperEndpoint();
+
+      for (AccrualModule module : accrualModules) {
         AccrualType accrualType = module.getAccrualType();
         SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 

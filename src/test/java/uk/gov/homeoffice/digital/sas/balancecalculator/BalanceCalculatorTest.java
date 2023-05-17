@@ -1,32 +1,5 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_MAP_EMPTY;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.MISSING_ACCRUAL;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.text.MessageFormat;
-import java.time.LocalDate;
-import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.UUID;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,6 +19,35 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AnnualTargetHoursAccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.MessageFormat;
+import java.time.LocalDate;
+import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_MAP_EMPTY;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.MISSING_ACCRUAL;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BalanceCalculatorTest {
@@ -143,7 +145,7 @@ class BalanceCalculatorTest {
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(4);
     assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
@@ -172,7 +174,7 @@ class BalanceCalculatorTest {
     when(restClient.getApplicableAgreement(timeEntry.getTenantId(),
         PERSON_ID, ACCRUAL_DATE)).thenReturn(null);
 
-    List<Accrual> result = balanceCalculator.calculate(timeEntry);
+    List<Accrual> result = balanceCalculator.calculate(timeEntry,KafkaAction.CREATE);
 
     assertThat(result).isEmpty();
 
@@ -198,7 +200,7 @@ class BalanceCalculatorTest {
         ACCRUAL_DATE.minusDays(1), agreement.getEndDate()))
         .thenReturn(noAccruals);
 
-    List<Accrual> result = balanceCalculator.calculate(timeEntry);
+    List<Accrual> result = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(result).isEmpty();
 
@@ -230,7 +232,7 @@ class BalanceCalculatorTest {
         ACCRUAL_DATE.minusDays(1), agreement.getEndDate()))
         .thenReturn(accruals);
 
-    List<Accrual> result = balanceCalculator.calculate(timeEntry);
+    List<Accrual> result = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(result).isEmpty();
 
