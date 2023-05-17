@@ -118,12 +118,12 @@ public class BalanceCalculator {
 
       }
       case DELETE ->
-          deleteAccrualContribution(timeEntry, timeEntryStart, timeEntryStartDate,
+          deleteAccrualContribution(timeEntry, timeEntryStartDate,
             timeEntryEndDate, applicableAgreement, allAccruals);
 
       case UPDATE ->
         throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
-      
+
       default ->
         throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION");
 
@@ -142,7 +142,7 @@ public class BalanceCalculator {
         .toList();
   }
 
-  private void deleteAccrualContribution(TimeEntry timeEntry, ZonedDateTime timeEntryStart,
+  private void deleteAccrualContribution(TimeEntry timeEntry,
                                          LocalDate timeEntryStartDate, LocalDate timeEntryEndDate,
                                          Agreement applicableAgreement, Map<AccrualType,
       SortedMap<LocalDate, Accrual>> allAccruals) {
@@ -151,22 +151,20 @@ public class BalanceCalculator {
       AccrualType accrualType = module.getAccrualType();
       SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
-      Accrual accrual = accruals.get(timeEntryStart.toLocalDate());
-
       accruals.entrySet().stream()
           .filter(key -> key.getKey().isAfter(timeEntryStartDate.minusDays(1))
               && key.getKey().isBefore(timeEntryEndDate.plusDays(1)))
-          .forEach(accrualsmap -> {
+          .forEach(accrualsMap -> {
 
             BigDecimal timeEntryContribution =
-                accrualsmap.getValue().getContributions().getTimeEntries()
+                accrualsMap.getValue().getContributions().getTimeEntries()
                 .get(UUID.fromString(timeEntry.getId()));
 
-            BigDecimal currentTotal = accrualsmap.getValue().getContributions().getTotal();
-            accrualsmap.getValue().getContributions()
+            BigDecimal currentTotal = accrualsMap.getValue().getContributions().getTotal();
+            accrualsMap.getValue().getContributions()
                 .setTotal(currentTotal.subtract(timeEntryContribution));
 
-            accrualsmap.getValue().getContributions().getTimeEntries()
+            accrualsMap.getValue().getContributions().getTimeEntries()
                 .remove(UUID.fromString(timeEntry.getId()));
 
           });
