@@ -20,6 +20,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributi
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 @Component
 @Slf4j
@@ -30,10 +31,10 @@ public class ContributionsHandler {
       "Accrual missing for tenantId {0}, personId {1}, accrual type {2} and date {3}";
 
 
-  public boolean createAccrualContribution(TimeEntry timeEntry,
-          Agreement applicableAgreement,
-          Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals,
-          List<AccrualModule> accrualModules) {
+  public boolean handleCreateAction(TimeEntry timeEntry,
+                                    Agreement applicableAgreement,
+                                    Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals,
+                                    List<AccrualModule> accrualModules) {
 
     SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
         splitOverDays(timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
@@ -68,21 +69,26 @@ public class ContributionsHandler {
     return true;
   }
 
-  public void deleteAccrualContribution(TimeEntry timeEntry,
-              Agreement applicableAgreement, Map<AccrualType,
+  public boolean handleDeteleAction(TimeEntry timeEntry,
+                                    Agreement applicableAgreement, Map<AccrualType,
               SortedMap<LocalDate, Accrual>> allAccruals,
-              List<AccrualModule> accrualModules) {
+                                    List<AccrualModule> accrualModules) {
 
     LocalDate timeEntryStartDate = timeEntry.getActualStartTime().toLocalDate();
     LocalDate timeEntryEndDate = timeEntry.getActualEndTime().toLocalDate();
 
     for (AccrualModule module : accrualModules) {
       AccrualType accrualType = module.getAccrualType();
+
       SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
+      if (accruals == null) {
+        return false;
+      }
+
       accruals.entrySet().stream()
-          .filter(key -> key.getKey().isAfter(timeEntryStartDate.minusDays(1))
-              && key.getKey().isBefore(timeEntryEndDate.plusDays(1)))
+          .filter(key -> key.getKey().compareTo(timeEntryStartDate) >= 0
+              && key.getKey().compareTo(timeEntryEndDate) <= 0)
           .forEach(accrualsMap -> {
 
             BigDecimal timeEntryContribution =
@@ -100,6 +106,8 @@ public class ContributionsHandler {
 
       cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
     }
+
+    return true;
   }
 
   public void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
@@ -156,4 +164,23 @@ public class ContributionsHandler {
     }
   }
 
+  public boolean handle(TimeEntry timeEntry, Agreement applicableAgreement,
+                     Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals,
+                     List<AccrualModule> accrualModules,
+                     KafkaAction action) {
+    switch (action) {
+      case CREATE -> handleCreateAction(
+            timeEntry, applicableAgreement, allAccruals, accrualModules);
+
+      case DELETE -> handleDeteleAction(
+              timeEntry, applicableAgreement, allAccruals, accrualModules);
+      case UPDATE ->
+          throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
+
+      default ->
+          throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION");
+
+    }
+    return true;
+  }
 }

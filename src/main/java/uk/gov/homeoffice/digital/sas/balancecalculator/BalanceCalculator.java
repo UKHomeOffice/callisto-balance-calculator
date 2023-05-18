@@ -79,23 +79,12 @@ public class BalanceCalculator {
       return List.of();
     }
 
-    switch (action) {
-      case CREATE -> {
-        if (!contributionsHandler.createAccrualContribution(
-                timeEntry, applicableAgreement, allAccruals, accrualModules)) {
-          return List.of();
-        }
-      }
-      case DELETE ->
-          contributionsHandler.deleteAccrualContribution(
-              timeEntry, applicableAgreement, allAccruals, accrualModules);
-      case UPDATE ->
-        throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
 
-      default ->
-        throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION");
-
+    if (!contributionsHandler.handle(timeEntry, applicableAgreement,
+        allAccruals, accrualModules, action)) {
+      return List.of();
     }
+
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
