@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
@@ -31,13 +32,6 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BalanceCalculatorDeleteActionTest {
 
-  private static final ZonedDateTime SHIFT_START_TIME =
-      ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
-  private static final ZonedDateTime SHIFT_END_TIME =
-      ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
-  private static final BigDecimal SHIFT_DURATION = new BigDecimal(120);
-
-  private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
   private static final String TIME_ENTRY_ID = "38e09687-5ae7-40d6-82b4-b022ae456bb1";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
@@ -49,9 +43,12 @@ class BalanceCalculatorDeleteActionTest {
 
   private BalanceCalculator balanceCalculator;
 
+  private ContributionsHandler contributionsHandler;
+
   @BeforeEach
   void setup() {
-    balanceCalculator = new BalanceCalculator(restClient, accrualModules);
+    contributionsHandler = new ContributionsHandler();
+    balanceCalculator = new BalanceCalculator(restClient, accrualModules, contributionsHandler);
   }
 
   private static Stream<Arguments> annualTargetHoursTestData() {

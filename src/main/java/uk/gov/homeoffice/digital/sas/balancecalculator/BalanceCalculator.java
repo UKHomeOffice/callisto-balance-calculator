@@ -1,20 +1,15 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
-import com.google.common.collect.Range;
-import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +18,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
 import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
+import uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
@@ -40,22 +35,22 @@ public class BalanceCalculator {
       "Agreement record not found for tenantId {0}, personId {1} and date {2}";
   static final String ACCRUALS_NOT_FOUND =
       "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
-  static final String MISSING_ACCRUAL =
-      "Accrual missing for tenantId {0}, personId {1}, accrual type {2} and date {3}";
-  static final String ACCRUALS_MAP_EMPTY = "Accruals Map must contain at least one entry!";
+
 
   private final RestClient restClient;
   private final List<AccrualModule> accrualModules;
+  private final ContributionsHandler contributionsHandler;
 
   @Autowired
-  public BalanceCalculator(RestClient restClient, List<AccrualModule> accrualModules) {
+  public BalanceCalculator(RestClient restClient, List<AccrualModule> accrualModules,
+                           ContributionsHandler contributionsHandler) {
     this.restClient = restClient;
     this.accrualModules = accrualModules;
+    this.contributionsHandler = contributionsHandler;
   }
 
   public List<Accrual> calculate(TimeEntry timeEntry, KafkaAction action) {
 
-    String timeEntryId = timeEntry.getId();
     String tenantId = timeEntry.getTenantId();
     String personId = timeEntry.getOwnerId();
     ZonedDateTime timeEntryStart = timeEntry.getActualStartTime();
@@ -86,41 +81,14 @@ public class BalanceCalculator {
 
     switch (action) {
       case CREATE -> {
-
-        SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
-            splitOverDays(timeEntryStart, timeEntryEnd);
-
-        for (var entry : dateRangeMap.entrySet()) {
-          LocalDate referenceDate = entry.getKey();
-          ZonedDateTime startTime = entry.getValue().lowerEndpoint();
-          ZonedDateTime endTime = entry.getValue().upperEndpoint();
-
-          for (AccrualModule module : accrualModules) {
-
-            AccrualType accrualType = module.getAccrualType();
-            SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
-
-            Accrual accrual = accruals.get(referenceDate);
-
-            if (accrual == null) {
-              log.error(MessageFormat.format(
-                  MISSING_ACCRUAL, tenantId, personId, accrualType, referenceDate));
+            if(!contributionsHandler.createAccrualContribution(
+                timeEntry, applicableAgreement, allAccruals, accrualModules)){
               return List.of();
             }
-
-            BigDecimal shiftContribution = module.calculateShiftContribution(startTime, endTime);
-
-            updateAccrualContribution(timeEntryId, shiftContribution, accrual);
-
-            cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
-          }
-        }
-
       }
       case DELETE ->
-          deleteAccrualContribution(timeEntry, timeEntryStartDate,
-            timeEntryEndDate, applicableAgreement, allAccruals);
-
+          contributionsHandler.deleteAccrualContribution(
+              timeEntry, applicableAgreement, allAccruals , accrualModules);
       case UPDATE ->
         throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
 
@@ -128,7 +96,6 @@ public class BalanceCalculator {
         throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION");
 
     }
-
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
@@ -142,97 +109,12 @@ public class BalanceCalculator {
         .toList();
   }
 
-  private void deleteAccrualContribution(TimeEntry timeEntry,
-                                         LocalDate timeEntryStartDate, LocalDate timeEntryEndDate,
-                                         Agreement applicableAgreement, Map<AccrualType,
-      SortedMap<LocalDate, Accrual>> allAccruals) {
-
-    for (AccrualModule module : accrualModules) {
-      AccrualType accrualType = module.getAccrualType();
-      SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
-
-      accruals.entrySet().stream()
-          .filter(key -> key.getKey().isAfter(timeEntryStartDate.minusDays(1))
-              && key.getKey().isBefore(timeEntryEndDate.plusDays(1)))
-          .forEach(accrualsMap -> {
-
-            BigDecimal timeEntryContribution =
-                accrualsMap.getValue().getContributions().getTimeEntries()
-                .get(UUID.fromString(timeEntry.getId()));
-
-            BigDecimal currentTotal = accrualsMap.getValue().getContributions().getTotal();
-            accrualsMap.getValue().getContributions()
-                .setTotal(currentTotal.subtract(timeEntryContribution));
-
-            accrualsMap.getValue().getContributions().getTimeEntries()
-                .remove(UUID.fromString(timeEntry.getId()));
-
-          });
-
-      cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
-    }
-  }
-
   public void sendToAccruals(String tenantId, List<Accrual> accruals) {
     restClient.patchAccruals(tenantId, accruals);
   }
 
-  void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
-                                 Accrual accrual) {
-
-    Contributions contributions = accrual.getContributions();
-    contributions.getTimeEntries().put(UUID.fromString(timeEntryId), shiftContribution);
-    BigDecimal total =
-        contributions.getTimeEntries().values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    contributions.setTotal(total);
-  }
-
-  void cascadeCumulativeTotal(
-      SortedMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
-
-    Optional<LocalDate> optional = accruals.keySet().stream().findFirst();
-    if (optional.isPresent()) {
-      LocalDate priorAccrualDate = optional.get();
-      Accrual priorAccrual = accruals.get(priorAccrualDate);
-
-      BigDecimal baseCumulativeTotal = BigDecimal.ZERO;
-      // if prior accrual is related to the same agreement then use its cumulative total
-      // as starting point; otherwise, start at 0
-      if (isPriorAccrualRelatedToTheSameAgreement(priorAccrualDate, agreementStartDate)) {
-        baseCumulativeTotal = priorAccrual.getCumulativeTotal();
-      }
-
-      // the first element is only used to calculate base cumulative total so shouldn't be included
-      List<Accrual> accrualsFromReferenceDate = accruals.values().stream().skip(1).toList();
-      updateSubsequentAccruals(accrualsFromReferenceDate, baseCumulativeTotal);
-    } else {
-      throw new IllegalArgumentException(ACCRUALS_MAP_EMPTY);
-    }
-  }
-
-  private boolean isPriorAccrualRelatedToTheSameAgreement(
-      LocalDate priorAccrualDate, LocalDate agreementStatDate) {
-    return !priorAccrualDate.isBefore(agreementStatDate);
-  }
-
-
-  void updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
-
-    //update the cumulative total for referenceDate
-    accruals.get(0).setCumulativeTotal(
-        priorCumulativeTotal.add(accruals.get(0).getContributions().getTotal()));
-
-    //cascade through until end of agreement
-    for (int i = 1; i < accruals.size(); i++) {
-      BigDecimal priorTotal =
-          accruals.get(i - 1).getCumulativeTotal();
-      Accrual currentAccrual = accruals.get(i);
-      currentAccrual.setCumulativeTotal(
-          priorTotal.add(currentAccrual.getContributions().getTotal()));
-    }
-  }
-
-  Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId, String personId,
+  Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId,
+                                                     String personId,
                                                      LocalDate timeEntryEndDate) {
     return restClient.getApplicableAgreement(tenantId,
         personId, timeEntryEndDate);
