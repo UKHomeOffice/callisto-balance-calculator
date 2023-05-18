@@ -11,6 +11,7 @@ public class AnnualTargetHoursAccrualModule extends AccrualModule {
     super(AccrualType.ANNUAL_TARGET_HOURS);
   }
 
+  @Override
   public BigDecimal calculateShiftContribution(ZonedDateTime startTime, ZonedDateTime endTime) {
     Duration shiftDuration = Duration.between(startTime, endTime);
     return new BigDecimal(shiftDuration.toMinutes());

@@ -90,9 +90,9 @@ class RangeUtilsTest {
 
     for (int i = 0; i < ranges.size(); i++) {
       LocalDate date = keys.get(i);
-      assertThat(ranges.get(date).lowerEndpoint().toString()).isEqualTo(
+      assertThat(ranges.get(date).lowerEndpoint()).hasToString(
           expectedEndpoints.get(i * 2));
-      assertThat(ranges.get(date).upperEndpoint().toString()).isEqualTo(
+      assertThat(ranges.get(date).upperEndpoint()).hasToString(
           expectedEndpoints.get((i * 2) + 1));
     }
   }
@@ -104,6 +104,6 @@ class RangeUtilsTest {
 
     SortedMap<LocalDate, Range<ZonedDateTime>> ranges =
         splitOverDays(startTime, endTime);
-    assertThat(ranges).hasSize(0);
+    assertThat(ranges).isEmpty();
   }
 }

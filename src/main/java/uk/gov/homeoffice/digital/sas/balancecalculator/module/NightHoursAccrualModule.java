@@ -16,6 +16,7 @@ public class NightHoursAccrualModule extends AccrualModule {
     super(AccrualType.NIGHT_HOURS);
   }
 
+  @Override
   public BigDecimal calculateShiftContribution(ZonedDateTime startTime, ZonedDateTime endTime) {
     ZonedDateTime ukStartTime = startTime.withZoneSameInstant(UK_TIME_ZONE);
     ZonedDateTime ukEndTime = endTime.withZoneSameInstant(UK_TIME_ZONE);
