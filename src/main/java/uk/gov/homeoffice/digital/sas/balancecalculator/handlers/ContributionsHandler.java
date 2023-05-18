@@ -36,7 +36,7 @@ public class ContributionsHandler {
           List<AccrualModule> accrualModules) {
 
     SortedMap<LocalDate, Range<ZonedDateTime>> dateRangeMap =
-        splitOverDays( timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
+        splitOverDays(timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
 
     for (var entry : dateRangeMap.entrySet()) {
       LocalDate referenceDate = entry.getKey();
@@ -52,7 +52,8 @@ public class ContributionsHandler {
 
         if (accrual == null) {
           log.error(MessageFormat.format(
-              MISSING_ACCRUAL, timeEntry.getTenantId(), timeEntry.getOwnerId(), accrualType, referenceDate));
+              MISSING_ACCRUAL, timeEntry.getTenantId(), timeEntry.getOwnerId(),
+              accrualType, referenceDate));
           return false;
         }
 
@@ -111,7 +112,7 @@ public class ContributionsHandler {
     contributions.setTotal(total);
   }
 
-   public void cascadeCumulativeTotal(
+  public void cascadeCumulativeTotal(
       SortedMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
 
     Optional<LocalDate> optional = accruals.keySet().stream().findFirst();

@@ -81,14 +81,14 @@ public class BalanceCalculator {
 
     switch (action) {
       case CREATE -> {
-            if(!contributionsHandler.createAccrualContribution(
-                timeEntry, applicableAgreement, allAccruals, accrualModules)){
-              return List.of();
-            }
+        if (!contributionsHandler.createAccrualContribution(
+                timeEntry, applicableAgreement, allAccruals, accrualModules)) {
+          return List.of();
+        }
       }
       case DELETE ->
           contributionsHandler.deleteAccrualContribution(
-              timeEntry, applicableAgreement, allAccruals , accrualModules);
+              timeEntry, applicableAgreement, allAccruals, accrualModules);
       case UPDATE ->
         throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
 
