@@ -69,7 +69,7 @@ public class ContributionsHandler {
     return true;
   }
 
-  public boolean handleDeteleAction(TimeEntry timeEntry,
+  public boolean handleDeleteAction(TimeEntry timeEntry,
                                     Agreement applicableAgreement, Map<AccrualType,
               SortedMap<LocalDate, Accrual>> allAccruals,
                                     List<AccrualModule> accrualModules) {
@@ -172,7 +172,7 @@ public class ContributionsHandler {
       case CREATE -> handleCreateAction(
             timeEntry, applicableAgreement, allAccruals, accrualModules);
 
-      case DELETE -> handleDeteleAction(
+      case DELETE -> handleDeleteAction(
               timeEntry, applicableAgreement, allAccruals, accrualModules);
       case UPDATE ->
           throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
