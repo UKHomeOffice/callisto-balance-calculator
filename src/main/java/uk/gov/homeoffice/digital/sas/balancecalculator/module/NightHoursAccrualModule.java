@@ -13,15 +13,15 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.Accr
 public class NightHoursAccrualModule extends AccrualModule {
 
   private static final int MIDNIGHT = 0;
-  private static final int SIX_AM = 6;
-  private static final int ELEVEN_PM = 23;
+  private static final int NIGHT_HOURS_START = 6;
+  private static final int NIGHT_HOURS_END = 23;
 
   public NightHoursAccrualModule() {
     super(AccrualType.NIGHT_HOURS);
   }
 
   /**
-   * Counts the minutes of a shift that fall within midnight to 6am and 11pm to midnight
+   * Counts the minutes of a shift that fall within midnight to 6am and 11pm to midnight.
    *
    * @param startTime the start time of the shift
    * @param endTime the end time of the shift
@@ -45,8 +45,8 @@ public class NightHoursAccrualModule extends AccrualModule {
                                                                 ZonedDateTime endTime) {
 
     ZonedDateTime midnightCurrentDay = atTime(startTime, MIDNIGHT);
-    ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, SIX_AM);
-    ZonedDateTime startOfCurrentDayNightHours = atTime(startTime, ELEVEN_PM);
+    ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, NIGHT_HOURS_START);
+    ZonedDateTime startOfCurrentDayNightHours = atTime(startTime, NIGHT_HOURS_END);
     ZonedDateTime midnightNextDay = nextDayAtMidnight(startTime);
 
     Range<ZonedDateTime> morningNightHours =
