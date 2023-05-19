@@ -32,7 +32,6 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BalanceCalculatorDeleteActionTest {
 
-  private static final String TIME_ENTRY_ID = "38e09687-5ae7-40d6-82b4-b022ae456bb1";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
   private final List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
@@ -54,19 +53,26 @@ class BalanceCalculatorDeleteActionTest {
   private static Stream<Arguments> annualTargetHoursTestData() {
     return Stream.of(
         // creating one day time entry
-        Arguments.of(TIME_ENTRY_ID,
+        Arguments.of("38e09687-5ae7-40d6-82b4-b022ae456bb1",
             LocalDate.of(2023, 4, 18),
             ZonedDateTime.parse("2023-04-18T08:00:00+00:00"),
             ZonedDateTime.parse("2023-04-18T10:00:00+00:00"),
-            BigDecimal.valueOf(6360), BigDecimal.valueOf(6960),
-            BigDecimal.valueOf(7200), BigDecimal.valueOf(7920)),
-        // updating one day time entry
+            BigDecimal.valueOf(6720), BigDecimal.valueOf(7320),
+            BigDecimal.valueOf(7920), BigDecimal.valueOf(8640)),
+        // updating two day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             LocalDate.of(2023, 4, 19),
             ZonedDateTime.parse("2023-04-18T18:00:00+00:00"),
             ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
-            BigDecimal.valueOf(6120), BigDecimal.valueOf(6360),
-            BigDecimal.valueOf(6600), BigDecimal.valueOf(7320))
+            BigDecimal.valueOf(6480), BigDecimal.valueOf(6720),
+            BigDecimal.valueOf(7320), BigDecimal.valueOf(8040)),
+        //updating three day time entry
+        Arguments.of("51a0a8eb-5972-406b-a539-4f4793ec3cb9",
+            LocalDate.of(2023, 4, 20),
+            ZonedDateTime.parse("2023-04-18T18:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-20T06:00:00+00:00"),
+            BigDecimal.valueOf(6480), BigDecimal.valueOf(6960),
+            BigDecimal.valueOf(7200), BigDecimal.valueOf(7920))
     );
   }
 
