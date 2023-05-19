@@ -1,7 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.module;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import lombok.Getter;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
@@ -15,9 +14,7 @@ public abstract class AccrualModule {
     this.accrualType = accrualType;
   }
 
-  public BigDecimal calculateShiftContribution(ZonedDateTime startTime, ZonedDateTime endTime) {
-    Duration shiftDuration = Duration.between(startTime, endTime);
-    return new BigDecimal(shiftDuration.toMinutes());
-  }
+  public abstract BigDecimal calculateShiftContribution(ZonedDateTime startTime,
+                                                        ZonedDateTime endTime);
 
 }
