@@ -50,12 +50,51 @@ class ContributionsHandlerTest {
   private static final String TENANT_ID = "52a8188b-d41e-6768-19e9-09938016342f";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
 
+  Agreement applicableAgreement;
+  List<Accrual> accruals;
+  Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals;
+  List<AccrualModule> accrualModules;
 
   private  ContributionsHandler contributionsHandler;
 
   @BeforeEach
-  void setup() {
+  void setup() throws IOException {
     contributionsHandler = spy(new ContributionsHandler());
+    applicableAgreement = loadObjectFromFile("data/agreement.json", Agreement.class);
+    accruals = loadAccrualsFromFile("data/accruals_annualTargetHours.json");
+    allAccruals = accrualListToAccrualTypeMap(accruals);
+    accrualModules = List.of(new AnnualTargetHoursAccrualModule());
+  }
+
+  private static Stream<Arguments> annualTargetHoursTestDataActionCreate() {
+    return Stream.of(
+        Arguments.of(
+            "b63d75f8-f62b-11ed-b67e-0242ac120002",
+            new BigDecimal[] {
+                BigDecimal.valueOf(120), BigDecimal.valueOf(6000),
+                BigDecimal.valueOf(600), BigDecimal.valueOf(6600),
+                BigDecimal.valueOf(600), BigDecimal.valueOf(7200),
+                BigDecimal.valueOf(240), BigDecimal.valueOf(7440),
+                BigDecimal.valueOf(720), BigDecimal.valueOf(8160)},
+                ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
+                ZonedDateTime.parse("2023-04-18T10:00:00+01:00"))
+    );
+  }
+
+  private static Stream<Arguments> annualTargetHoursTestDataActionDelete() {
+    return Stream.of(
+        Arguments.of(
+            "9caab6a7-31a5-4679-bd14-fbf09b1cec92", // covers 1 day range
+            new BigDecimal[] {
+                BigDecimal.valueOf(120), BigDecimal.valueOf(6000),
+                BigDecimal.valueOf(480), BigDecimal.valueOf(6480),
+                BigDecimal.valueOf(600), BigDecimal.valueOf(7080),
+                BigDecimal.valueOf(0), BigDecimal.valueOf(7080),
+                BigDecimal.valueOf(720), BigDecimal.valueOf(7800)},
+                ZonedDateTime.parse("2023-04-20T08:00:00+01:00"),
+                ZonedDateTime.parse("2023-04-20T12:00:00+01:00")
+            )
+    );
   }
 
   @Test
@@ -153,33 +192,14 @@ class ContributionsHandlerTest {
         UUID.fromString(TIME_ENTRY_ID), SHIFT_DURATION);
   }
 
-  private static Stream<Arguments> annualTargetHoursTestDataActionCreate() {
-    return Stream.of(
-        Arguments.of(
-            "b63d75f8-f62b-11ed-b67e-0242ac120002",
-            new BigDecimal[] {
-            BigDecimal.valueOf(120), BigDecimal.valueOf(6000),
-            BigDecimal.valueOf(600), BigDecimal.valueOf(6600),
-            BigDecimal.valueOf(600), BigDecimal.valueOf(7200),
-            BigDecimal.valueOf(240), BigDecimal.valueOf(7440),
-            BigDecimal.valueOf(720), BigDecimal.valueOf(8160)})
-    );
-  }
-
   @ParameterizedTest
   @MethodSource("annualTargetHoursTestDataActionCreate")
-  void handleMethod_createAction_returnUpdatedAccrual (
-      String timeEntryId, BigDecimal[] totals) throws IOException {
-
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+01:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-18T10:00:00+01:00");
+  void handleMethod_createAction_returnUpdatedAccrualsList (
+      String timeEntryId, BigDecimal[] totals,
+      ZonedDateTime startTime, ZonedDateTime finishTime) {
 
     TimeEntry timeEntry = createTimeEntry(timeEntryId, TENANT_ID, PERSON_ID,
         startTime, finishTime);
-    Agreement applicableAgreement = loadObjectFromFile("data/agreement.json", Agreement.class);
-    List<Accrual> accruals = loadAccrualsFromFile("data/accruals_annualTargetHours.json");
-    Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals = accrualListToAccrualTypeMap(accruals);
-    List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
 
     contributionsHandler.handle(timeEntry, applicableAgreement, allAccruals, accrualModules,
         KafkaAction.CREATE);
@@ -195,7 +215,31 @@ class ContributionsHandlerTest {
       assertThat(updatedAccrualsList.get(i).getCumulativeTotal())
           .usingComparator(BigDecimal::compareTo).isEqualTo(totals[i*2+1]);
     }
+  }
 
+  @ParameterizedTest
+  @MethodSource("annualTargetHoursTestDataActionDelete")
+  void handleMethod_deleteAction_returnUpdatedAccrualsList (
+      String timeEntryId, BigDecimal[] totals ,
+      ZonedDateTime startTime, ZonedDateTime finishTime)  {
+
+    TimeEntry timeEntry = createTimeEntry(timeEntryId, TENANT_ID, PERSON_ID,
+        startTime, finishTime);
+
+    contributionsHandler.handle(timeEntry, applicableAgreement, allAccruals, accrualModules,
+        KafkaAction.DELETE);
+
+    verify(contributionsHandler)
+        .handleDeleteAction(timeEntry, applicableAgreement, allAccruals, accrualModules);
+
+    List<Accrual> updatedAccrualsList = allAccrualsMapToAccrualsList(allAccruals);
+
+    for (int i=0 ; i<totals.length / 2; i++) {
+      assertThat(updatedAccrualsList.get(i).getContributions().getTotal())
+          .usingComparator(BigDecimal::compareTo).isEqualTo(totals[i*2]);
+      assertThat(updatedAccrualsList.get(i).getCumulativeTotal())
+          .usingComparator(BigDecimal::compareTo).isEqualTo(totals[i*2+1]);
+    }
   }
 
   private List<Accrual> allAccrualsMapToAccrualsList(Map<AccrualType,
