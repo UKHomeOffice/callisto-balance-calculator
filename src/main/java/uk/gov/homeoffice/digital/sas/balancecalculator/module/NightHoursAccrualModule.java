@@ -13,8 +13,8 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.Accr
 public class NightHoursAccrualModule extends AccrualModule {
 
   private static final int MIDNIGHT = 0;
-  private static final int NIGHT_HOURS_START = 6;
-  private static final int NIGHT_HOURS_END = 23;
+  private static final int NIGHT_HOURS_END = 6;
+  private static final int NIGHT_HOURS_START = 23;
 
   public NightHoursAccrualModule() {
     super(AccrualType.NIGHT_HOURS);
@@ -45,8 +45,8 @@ public class NightHoursAccrualModule extends AccrualModule {
                                                                 ZonedDateTime endTime) {
 
     ZonedDateTime midnightCurrentDay = atTime(startTime, MIDNIGHT);
-    ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, NIGHT_HOURS_START);
-    ZonedDateTime startOfCurrentDayNightHours = atTime(startTime, NIGHT_HOURS_END);
+    ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, NIGHT_HOURS_END);
+    ZonedDateTime startOfCurrentDayNightHours = atTime(startTime, NIGHT_HOURS_START);
     ZonedDateTime midnightNextDay = nextDayAtMidnight(startTime);
 
     Range<ZonedDateTime> morningNightHours =
