@@ -99,11 +99,15 @@ public class RestClient {
   public Agreement getApplicableAgreement(String tenantId, String personId, LocalDate accrualDate) {
 
     // Using Annual Target Hours accrual type, but any other accrual type would do
-    String agreementId = getAccrualByTypeAndDate(tenantId, personId,
-        AccrualType.ANNUAL_TARGET_HOURS.getId().toString(), accrualDate)
-        .getAgreementId().toString();
+    Accrual accrual = getAccrualByTypeAndDate(tenantId, personId,
+        AccrualType.ANNUAL_TARGET_HOURS.getId().toString(), accrualDate);
 
-    return getAgreementById(tenantId, agreementId);
+    if (accrual != null) {
+      String agreementId = accrual.getAgreementId().toString();
+
+      return getAgreementById(tenantId, agreementId);
+    }
+    return null;
   }
 
   public List<Accrual> patchAccruals(String tenantId, List<Accrual> accruals) {
