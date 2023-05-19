@@ -66,10 +66,10 @@ class ContributionsHandlerTest {
     accrualModules = List.of(new AnnualTargetHoursAccrualModule());
   }
 
-  private static Stream<Arguments> annualTargetHoursTestDataActionCreate() {
+  private static Stream<Arguments> annualTargetHoursTestData() {
     return Stream.of(
         Arguments.of(
-            "b63d75f8-f62b-11ed-b67e-0242ac120002",
+            "b63d75f8-f62b-11ed-b67e-0242ac120002", // Action CREATE
             new BigDecimal[] {
                 BigDecimal.valueOf(120), BigDecimal.valueOf(6000),
                 BigDecimal.valueOf(600), BigDecimal.valueOf(6600),
@@ -77,14 +77,11 @@ class ContributionsHandlerTest {
                 BigDecimal.valueOf(240), BigDecimal.valueOf(7440),
                 BigDecimal.valueOf(720), BigDecimal.valueOf(8160)},
                 ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
-                ZonedDateTime.parse("2023-04-18T10:00:00+01:00"))
-    );
-  }
-
-  private static Stream<Arguments> annualTargetHoursTestDataActionDelete() {
-    return Stream.of(
+                ZonedDateTime.parse("2023-04-18T10:00:00+01:00"),
+                KafkaAction.CREATE
+            ),
         Arguments.of(
-            "9caab6a7-31a5-4679-bd14-fbf09b1cec92", // covers 1 day range
+            "9caab6a7-31a5-4679-bd14-fbf09b1cec92", // Action DELETE
             new BigDecimal[] {
                 BigDecimal.valueOf(120), BigDecimal.valueOf(6000),
                 BigDecimal.valueOf(480), BigDecimal.valueOf(6480),
@@ -92,8 +89,9 @@ class ContributionsHandlerTest {
                 BigDecimal.valueOf(0), BigDecimal.valueOf(7080),
                 BigDecimal.valueOf(720), BigDecimal.valueOf(7800)},
                 ZonedDateTime.parse("2023-04-20T08:00:00+01:00"),
-                ZonedDateTime.parse("2023-04-20T12:00:00+01:00")
-            )
+                ZonedDateTime.parse("2023-04-20T12:00:00+01:00"),
+                KafkaAction.DELETE
+        )
     );
   }
 
@@ -193,44 +191,23 @@ class ContributionsHandlerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("annualTargetHoursTestDataActionCreate")
+  @MethodSource("annualTargetHoursTestData")
   void handleMethod_createAction_updateAccrualsList (
       String timeEntryId, BigDecimal[] totals,
-      ZonedDateTime startTime, ZonedDateTime finishTime) {
+      ZonedDateTime startTime, ZonedDateTime finishTime, KafkaAction action) {
 
     TimeEntry timeEntry = createTimeEntry(timeEntryId, TENANT_ID, PERSON_ID,
         startTime, finishTime);
 
     contributionsHandler.handle(timeEntry, applicableAgreement, allAccruals, accrualModules,
-        KafkaAction.CREATE);
+        action);
 
-    verify(contributionsHandler)
-        .handleCreateAction(timeEntry, applicableAgreement, allAccruals, accrualModules);
-
-    List<Accrual> updatedAccrualsList = allAccrualsMapToAccrualsList(allAccruals);
-
-    for (int i=0 ; i<totals.length / 2; i++) {
-      assertThat(updatedAccrualsList.get(i).getContributions().getTotal())
-          .usingComparator(BigDecimal::compareTo).isEqualTo(totals[i*2]);
-      assertThat(updatedAccrualsList.get(i).getCumulativeTotal())
-          .usingComparator(BigDecimal::compareTo).isEqualTo(totals[i*2+1]);
+    switch (action){
+      case CREATE -> verify(contributionsHandler)
+          .handleCreateAction(timeEntry, applicableAgreement, allAccruals, accrualModules);
+      case DELETE -> verify(contributionsHandler)
+          .handleDeleteAction(timeEntry, applicableAgreement, allAccruals, accrualModules);
     }
-  }
-
-  @ParameterizedTest
-  @MethodSource("annualTargetHoursTestDataActionDelete")
-  void handleMethod_deleteAction_updateAccrualsList (
-      String timeEntryId, BigDecimal[] totals ,
-      ZonedDateTime startTime, ZonedDateTime finishTime)  {
-
-    TimeEntry timeEntry = createTimeEntry(timeEntryId, TENANT_ID, PERSON_ID,
-        startTime, finishTime);
-
-    contributionsHandler.handle(timeEntry, applicableAgreement, allAccruals, accrualModules,
-        KafkaAction.DELETE);
-
-    verify(contributionsHandler)
-        .handleDeleteAction(timeEntry, applicableAgreement, allAccruals, accrualModules);
 
     List<Accrual> updatedAccrualsList = allAccrualsMapToAccrualsList(allAccruals);
 
