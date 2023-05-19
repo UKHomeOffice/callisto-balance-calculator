@@ -91,6 +91,8 @@ public class ContributionsHandler {
               && key.getKey().compareTo(timeEntryEndDate) <= 0)
           .forEach(accrualsMap -> {
 
+            //TODO handle if timeEntryID can't be found
+
             BigDecimal timeEntryContribution =
                 accrualsMap.getValue().getContributions().getTimeEntries()
                     .get(UUID.fromString(timeEntry.getId()));

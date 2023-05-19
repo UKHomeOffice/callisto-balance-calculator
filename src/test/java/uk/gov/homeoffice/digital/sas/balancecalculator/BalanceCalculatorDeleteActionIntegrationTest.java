@@ -26,7 +26,7 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   private  BalanceCalculator balanceCalculator;
 
   @Test
-  void calculate_endToEndInBstToGmt_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_endToEnd_contributionsAndCumulativeTotalsAsExpected() {
 
     ZonedDateTime startTime = ZonedDateTime.parse("2023-10-29T01:59:00+01:00");
     ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-29T02:59:00+00:00");
@@ -60,5 +60,36 @@ class BalanceCalculatorDeleteActionIntegrationTest {
         .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
     assertThat(accruals.get(3).getCumulativeTotal())
         .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7920));
+  }
+
+  @Test
+  void calculate_timeEntryHasTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");
+
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        startTime,
+        finishTime);
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
+
+    assertThat(accruals).hasSize(3);
+    assertThat(accruals.get(0).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
+    assertThat(accruals.get(0).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8040));
+
+    assertThat(accruals.get(1).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
+    assertThat(accruals.get(1).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8040));
+
+    assertThat(accruals.get(2).getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
+    assertThat(accruals.get(2).getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8040));
   }
 }
