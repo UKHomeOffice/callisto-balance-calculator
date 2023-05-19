@@ -194,7 +194,7 @@ class ContributionsHandlerTest {
 
   @ParameterizedTest
   @MethodSource("annualTargetHoursTestDataActionCreate")
-  void handleMethod_createAction_returnUpdatedAccrualsList (
+  void handleMethod_createAction_updateAccrualsList (
       String timeEntryId, BigDecimal[] totals,
       ZonedDateTime startTime, ZonedDateTime finishTime) {
 
@@ -219,7 +219,7 @@ class ContributionsHandlerTest {
 
   @ParameterizedTest
   @MethodSource("annualTargetHoursTestDataActionDelete")
-  void handleMethod_deleteAction_returnUpdatedAccrualsList (
+  void handleMethod_deleteAction_updateAccrualsList (
       String timeEntryId, BigDecimal[] totals ,
       ZonedDateTime startTime, ZonedDateTime finishTime)  {
 
