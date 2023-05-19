@@ -13,7 +13,7 @@ public class RangeUtils {
 
   }
 
-  private static final ZoneId UK_TIME_ZONE = ZoneId.of("Europe/London");
+  public static final ZoneId UK_TIME_ZONE = ZoneId.of("Europe/London");
 
   public static SortedMap<LocalDate, Range<ZonedDateTime>> splitOverDays(
                                                                       ZonedDateTime startDateTime,

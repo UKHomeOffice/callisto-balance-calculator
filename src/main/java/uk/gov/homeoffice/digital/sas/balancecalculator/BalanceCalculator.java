@@ -46,6 +46,7 @@ public class BalanceCalculator {
 
   public List<Accrual> calculate(TimeEntry timeEntry, KafkaAction action) {
 
+    // TODO: what to do if TimeEntry has no end date ?? / exit ??
     String tenantId = timeEntry.getTenantId();
     String personId = timeEntry.getOwnerId();
     ZonedDateTime timeEntryStart = timeEntry.getActualStartTime();
@@ -64,7 +65,7 @@ public class BalanceCalculator {
 
     // Get accruals of all types between the day just before the time entry and the end date of the
     // latest applicable agreement
-    Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
+    SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
         getAccrualsBetweenDates(tenantId, personId,
             timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate());
 
@@ -105,7 +106,7 @@ public class BalanceCalculator {
         personId, timeEntryEndDate);
   }
 
-  Map<AccrualType, SortedMap<LocalDate, Accrual>> getAccrualsBetweenDates(
+  SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getAccrualsBetweenDates(
       String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
 
     List<Accrual> accruals = restClient.getAccrualsBetweenDates(tenantId, personId,
@@ -121,8 +122,8 @@ public class BalanceCalculator {
    * @param accruals list of accruals
    * @return Accruals mapped by Accrual Type and Accrual Date
    */
-  Map<AccrualType, SortedMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
-    return accruals.stream()
+  SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> map(List<Accrual> accruals) {
+    Map<AccrualType, SortedMap<LocalDate, Accrual>> accrualsMap = accruals.stream()
         .collect(Collectors.groupingBy(
                 Accrual::getAccrualType,
                 Collectors.toMap(
@@ -131,5 +132,6 @@ public class BalanceCalculator {
                     (c1, c2) -> c1, TreeMap::new)
             )
         );
+    return new TreeMap<>(accrualsMap);
   }
 }

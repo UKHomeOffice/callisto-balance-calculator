@@ -1,20 +1,22 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.ANNUAL_TARGET_HOURS;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.NIGHT_HOURS;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
+
+import java.math.BigDecimal;
+import java.time.ZonedDateTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
-
-import java.math.BigDecimal;
-import java.time.ZonedDateTime;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 @SpringBootTest
 @AutoConfigureWireMock(port = 9999)
@@ -45,27 +47,19 @@ class BalanceCalculatorIntegrationTest {
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
-    assertThat(accruals).hasSize(4);
+    assertThat(accruals).hasSize(8);
 
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6600));
+    // Annual Target Hours
+    assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
+    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
 
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7200));
-
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(240));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7440));
-
-    assertThat(accruals.get(3).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
-    assertThat(accruals.get(3).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160));
+    // Night Hours
+    assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
+    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
+    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1240);
   }
 
   @Test
@@ -82,34 +76,26 @@ class BalanceCalculatorIntegrationTest {
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
-    assertThat(accruals).hasSize(4);
+    assertThat(accruals).hasSize(8);
 
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6600));
+    // Annual Target Hours
+    assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
+    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
 
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7200));
-
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(240));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7440));
-
-    assertThat(accruals.get(3).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
-    assertThat(accruals.get(3).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160));
+    // Night Hours
+    assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
+    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
+    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1240);
   }
 
   @Test
   void calculate_timeEntryHasTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+01:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T07:00:00+01:00");
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
@@ -119,20 +105,28 @@ class BalanceCalculatorIntegrationTest {
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
-    assertThat(accruals).hasSize(3);
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(60));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8100));
+    assertThat(accruals).hasSize(6);
 
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(420));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520));
+    // Annual Target Hours
+    assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 120, 8160);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 420, 8580);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 0, 8580);
 
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8520));
+    // Night Hours
+    assertTypeAndTotals(accruals.get(3), NIGHT_HOURS, 60, 1060);
+    assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 360, 1420);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1540);
+  }
+
+  private void assertTypeAndTotals(Accrual accrual, AccrualType expectedAccrualType,
+                                   int expectedContributionTotal,
+                                   int expectedCumulativeTotal) {
+    assertThat(accrual.getAccrualType()).isEqualTo(expectedAccrualType);
+    assertThat(accrual.getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedContributionTotal));
+    assertThat(accrual.getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedCumulativeTotal));
   }
 }

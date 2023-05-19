@@ -5,7 +5,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.s
 import com.google.common.collect.Range;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -36,10 +35,8 @@ public abstract class AccrualModule {
     this.accrualType = accrualType;
   }
 
-  public BigDecimal calculateShiftContribution(ZonedDateTime startTime, ZonedDateTime endTime) {
-    Duration shiftDuration = Duration.between(startTime, endTime);
-    return new BigDecimal(shiftDuration.toMinutes());
-  }
+  public abstract BigDecimal calculateShiftContribution(ZonedDateTime startTime,
+                                                        ZonedDateTime endTime);
 
   public boolean applyTimeEntryToAccruals(TimeEntry timeEntry,
                                       KafkaAction action,

@@ -40,26 +40,9 @@ class BalanceCalculatorDeleteActionIntegrationTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 
     assertThat(accruals).hasSize(4);
-
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(360));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6360));
-
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6960));
-
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(240));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7200));
-
-    assertThat(accruals.get(3).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
-    assertThat(accruals.get(3).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7920));
+    assertTotals(accruals.get(0), 360, 6360);
+    assertTotals(accruals.get(1), 600, 6960);
+    assertTotals(accruals.get(3), 720, 7920);
   }
 
   @Test
@@ -77,19 +60,19 @@ class BalanceCalculatorDeleteActionIntegrationTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 
     assertThat(accruals).hasSize(3);
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8040));
+    assertTotals(accruals.get(0), 0, 8040);
+    assertTotals(accruals.get(1), 120, 8160);
+    assertTotals(accruals.get(2), 300, 8460);
+  }
 
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8040));
-
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8040));
+  private void assertTotals(Accrual accrual,
+                                   int expectedContributionTotal,
+                                   int expectedCumulativeTotal) {
+    assertThat(accrual.getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedContributionTotal));
+    assertThat(accrual.getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedCumulativeTotal));
   }
 }
