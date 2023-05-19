@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.handlers;
 
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,9 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 @Slf4j
 public class ContributionsHandler {
 
+  public static final String NO_ACCRUALS_FOUND_FOR_TYPE =
+      "No {0} Accrual records found for agreement between {1} and {2}";
+
   private final List<AccrualModule> accrualModules;
 
   @Autowired
@@ -33,6 +37,12 @@ public class ContributionsHandler {
     for (AccrualModule module : accrualModules) {
       AccrualType accrualType = module.getAccrualType();
       SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
+
+      if (accruals == null) {
+        log.warn(MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE,
+            accrualType, applicableAgreement.getStartDate(), applicableAgreement.getEndDate()));
+        continue;
+      }
 
       boolean result = module.applyTimeEntryToAccruals(timeEntry, action,
           accruals, applicableAgreement);
