@@ -13,11 +13,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.UUID;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.util.ResourceUtils;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class CommonUtils {
@@ -121,4 +128,17 @@ public class CommonUtils {
 
     return mapper.readValue(file, type);
   }
+
+  public static Map<AccrualType, SortedMap<LocalDate, Accrual>> accrualListToAccrualTypeMap(List<Accrual> accruals) {
+    return accruals.stream()
+        .collect(Collectors.groupingBy(
+                Accrual::getAccrualType,
+                Collectors.toMap(
+                    Accrual::getAccrualDate,
+                    Function.identity(),
+                    (c1, c2) -> c1, TreeMap::new)
+            )
+        );
+  }
+
 }

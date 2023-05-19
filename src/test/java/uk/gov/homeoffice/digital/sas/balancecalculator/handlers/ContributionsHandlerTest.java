@@ -2,8 +2,13 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler.ACCRUALS_MAP_EMPTY;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.accrualListToAccrualTypeMap;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -17,26 +22,40 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.AnnualTargetHoursAccrualModule;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
+@ExtendWith({MockitoExtension.class})
 class ContributionsHandlerTest {
 
   private static final ZonedDateTime SHIFT_START_TIME =
       ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
   private static final BigDecimal SHIFT_DURATION = new BigDecimal(120);
-
   private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
-  private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
+  private static final String TIME_ENTRY_ID = "b63d75f8-f62b-11ed-b67e-0242ac120002";
+  private static final String TENANT_ID = "52a8188b-d41e-6768-19e9-09938016342f";
+  private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+
 
   private  ContributionsHandler contributionsHandler;
 
-
   @BeforeEach
   void setup() {
-    contributionsHandler = new ContributionsHandler();
+    contributionsHandler = spy(new ContributionsHandler());
   }
 
   @Test
@@ -132,6 +151,58 @@ class ContributionsHandlerTest {
         existingTimeEntryId, BigDecimal.TEN);
     assertThat(accrual.getContributions().getTimeEntries()).containsEntry(
         UUID.fromString(TIME_ENTRY_ID), SHIFT_DURATION);
+  }
+
+  private static Stream<Arguments> annualTargetHoursTestDataActionCreate() {
+    return Stream.of(
+        Arguments.of(
+            "b63d75f8-f62b-11ed-b67e-0242ac120002",
+            new BigDecimal[] {
+            BigDecimal.valueOf(120), BigDecimal.valueOf(6000),
+            BigDecimal.valueOf(600), BigDecimal.valueOf(6600),
+            BigDecimal.valueOf(600), BigDecimal.valueOf(7200),
+            BigDecimal.valueOf(240), BigDecimal.valueOf(7440),
+            BigDecimal.valueOf(720), BigDecimal.valueOf(8160)})
+    );
+  }
+
+  @ParameterizedTest
+  @MethodSource("annualTargetHoursTestDataActionCreate")
+  void handleMethod_createAction_returnUpdatedAccrual (
+      String timeEntryId, BigDecimal[] totals) throws IOException {
+
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-18T08:00:00+01:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-18T10:00:00+01:00");
+
+    TimeEntry timeEntry = createTimeEntry(timeEntryId, TENANT_ID, PERSON_ID,
+        startTime, finishTime);
+    Agreement applicableAgreement = loadObjectFromFile("data/agreement.json", Agreement.class);
+    List<Accrual> accruals = loadAccrualsFromFile("data/accruals_annualTargetHours.json");
+    Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals = accrualListToAccrualTypeMap(accruals);
+    List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
+
+    contributionsHandler.handle(timeEntry, applicableAgreement, allAccruals, accrualModules,
+        KafkaAction.CREATE);
+
+    verify(contributionsHandler)
+        .handleCreateAction(timeEntry, applicableAgreement, allAccruals, accrualModules);
+
+    List<Accrual> updatedAccrualsList = allAccrualsMapToAccrualsList(allAccruals);
+
+    for (int i=0 ; i<totals.length / 2; i++) {
+      assertThat(updatedAccrualsList.get(i).getContributions().getTotal())
+          .usingComparator(BigDecimal::compareTo).isEqualTo(totals[i*2]);
+      assertThat(updatedAccrualsList.get(i).getCumulativeTotal())
+          .usingComparator(BigDecimal::compareTo).isEqualTo(totals[i*2+1]);
+    }
+
+  }
+
+  private List<Accrual> allAccrualsMapToAccrualsList(Map<AccrualType,
+      SortedMap<LocalDate, Accrual>> allAccruals) {
+    return allAccruals.values().stream()
+        .flatMap(m -> m.values().stream())
+        .collect(Collectors.toList());
   }
 
 }
