@@ -12,10 +12,21 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.Accr
 
 public class NightHoursAccrualModule extends AccrualModule {
 
+  private static final int MIDNIGHT = 0;
+  private static final int SIX_AM = 6;
+  private static final int ELEVEN_PM = 23;
+
   public NightHoursAccrualModule() {
     super(AccrualType.NIGHT_HOURS);
   }
 
+  /**
+   * Counts the minutes of a shift that fall within midnight to 6am and 11pm to midnight
+   *
+   * @param startTime the start time of the shift
+   * @param endTime the end time of the shift
+   * @return night hour contribution in minutes
+   */
   @Override
   public BigDecimal calculateShiftContribution(ZonedDateTime startTime, ZonedDateTime endTime) {
     ZonedDateTime ukStartTime = startTime.withZoneSameInstant(UK_TIME_ZONE);
@@ -33,9 +44,9 @@ public class NightHoursAccrualModule extends AccrualModule {
   private RangeSet<ZonedDateTime> getIntersectionWithNightHours(ZonedDateTime startTime,
                                                                 ZonedDateTime endTime) {
 
-    ZonedDateTime midnightCurrentDay = atTime(startTime, 0);
-    ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, 6);
-    ZonedDateTime startOfCurrentDayNightHours = atTime(startTime, 23);
+    ZonedDateTime midnightCurrentDay = atTime(startTime, MIDNIGHT);
+    ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, SIX_AM);
+    ZonedDateTime startOfCurrentDayNightHours = atTime(startTime, ELEVEN_PM);
     ZonedDateTime midnightNextDay = nextDayAtMidnight(startTime);
 
     Range<ZonedDateTime> morningNightHours =
@@ -56,6 +67,6 @@ public class NightHoursAccrualModule extends AccrualModule {
   }
 
   private ZonedDateTime nextDayAtMidnight(ZonedDateTime date) {
-    return date.toLocalDate().plusDays(1).atTime(0, 0).atZone(UK_TIME_ZONE);
+    return date.toLocalDate().plusDays(1).atTime(MIDNIGHT, 0).atZone(UK_TIME_ZONE);
   }
 }

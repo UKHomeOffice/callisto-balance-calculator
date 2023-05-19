@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 @SpringBootTest
@@ -48,54 +49,16 @@ class BalanceCalculatorIntegrationTest {
     assertThat(accruals).hasSize(8);
 
     // Annual Target Hours
-    assertThat(accruals.get(0).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6600));
-
-    assertThat(accruals.get(1).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7200));
-
-    assertThat(accruals.get(2).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(240));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7440));
-
-    assertThat(accruals.get(3).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(3).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
-    assertThat(accruals.get(3).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160));
+    assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
+    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
 
     // Night Hours
-    assertThat(accruals.get(4).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(4).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120));
-    assertThat(accruals.get(4).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1120));
-
-    assertThat(accruals.get(5).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(5).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120));
-    assertThat(accruals.get(5).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1240));
-
-    assertThat(accruals.get(6).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(6).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(6).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1240));
-
-    assertThat(accruals.get(7).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(7).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(7).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1240));
+    assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
+    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
+    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1240);
   }
 
   @Test
@@ -115,54 +78,16 @@ class BalanceCalculatorIntegrationTest {
     assertThat(accruals).hasSize(8);
 
     // Annual Target Hours
-    assertThat(accruals.get(0).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(6600));
-
-    assertThat(accruals.get(1).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(600));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7200));
-
-    assertThat(accruals.get(2).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(240));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(7440));
-
-    assertThat(accruals.get(3).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(3).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(720));
-    assertThat(accruals.get(3).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160));
+    assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
+    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
 
     // Night Hours
-    assertThat(accruals.get(4).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(4).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120));
-    assertThat(accruals.get(4).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1120));
-
-    assertThat(accruals.get(5).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(5).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120));
-    assertThat(accruals.get(5).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1240));
-
-    assertThat(accruals.get(6).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(6).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(6).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1240));
-
-    assertThat(accruals.get(7).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(7).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(7).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1240));
+    assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
+    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
+    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1240);
   }
 
   @Test
@@ -182,41 +107,25 @@ class BalanceCalculatorIntegrationTest {
     assertThat(accruals).hasSize(6);
 
     // Annual Target Hours
-    assertThat(accruals.get(0).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(0).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120));
-    assertThat(accruals.get(0).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8160));
-
-    assertThat(accruals.get(1).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(1).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(420));
-    assertThat(accruals.get(1).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8580));
-
-    assertThat(accruals.get(2).getAccrualType()).isEqualTo(ANNUAL_TARGET_HOURS);
-    assertThat(accruals.get(2).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(0));
-    assertThat(accruals.get(2).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(8580));
+    assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 120, 8160);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 420, 8580);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 0, 8580);
 
     // Night Hours
-    assertThat(accruals.get(3).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(3).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(60));
-    assertThat(accruals.get(3).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1060));
+    assertTypeAndTotals(accruals.get(3), NIGHT_HOURS, 60, 1060);
+    assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 360, 1420);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1540);
+  }
 
-    assertThat(accruals.get(4).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(4).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(360));
-    assertThat(accruals.get(4).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1420));
-
-    assertThat(accruals.get(5).getAccrualType()).isEqualTo(NIGHT_HOURS);
-    assertThat(accruals.get(5).getContributions().getTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(120));
-    assertThat(accruals.get(5).getCumulativeTotal())
-        .usingComparator(BigDecimal::compareTo).isEqualTo(BigDecimal.valueOf(1540));
+  private void assertTypeAndTotals(Accrual accrual, AccrualType expectedAccrualType,
+                                   int expectedContributionTotal,
+                                   int expectedCumulativeTotal) {
+    assertThat(accrual.getAccrualType()).isEqualTo(expectedAccrualType);
+    assertThat(accrual.getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedContributionTotal));
+    assertThat(accrual.getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedCumulativeTotal));
   }
 }
