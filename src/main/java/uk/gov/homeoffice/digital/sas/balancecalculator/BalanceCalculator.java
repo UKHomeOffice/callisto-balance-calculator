@@ -51,6 +51,7 @@ public class BalanceCalculator {
 
   public List<Accrual> calculate(TimeEntry timeEntry, KafkaAction action) {
 
+    // TODO: what to do if TimeEntry has no end date ?? / exit ??
     String tenantId = timeEntry.getTenantId();
     String personId = timeEntry.getOwnerId();
     ZonedDateTime timeEntryStart = timeEntry.getActualStartTime();
