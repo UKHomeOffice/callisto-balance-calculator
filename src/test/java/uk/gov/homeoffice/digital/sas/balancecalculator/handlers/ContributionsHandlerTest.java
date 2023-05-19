@@ -192,7 +192,7 @@ class ContributionsHandlerTest {
 
   @ParameterizedTest
   @MethodSource("annualTargetHoursTestData")
-  void handleMethod_createAction_updateAccrualsList (
+  void handleMethod_kafkaCorrectAction_updateAccrualsList (
       String timeEntryId, BigDecimal[] totals,
       ZonedDateTime startTime, ZonedDateTime finishTime, KafkaAction action) {
 
