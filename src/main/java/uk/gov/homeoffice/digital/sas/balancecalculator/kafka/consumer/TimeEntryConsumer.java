@@ -59,7 +59,9 @@ public class TimeEntryConsumer {
 
         List<Accrual> accrualsToBatchUpdate =
             balanceCalculator.calculate(timeEntry, kafkaEventMessage.getAction());
-        balanceCalculator.sendToAccruals(timeEntry.getTenantId(), accrualsToBatchUpdate);
+        if (!accrualsToBatchUpdate.isEmpty()) {
+          balanceCalculator.sendToAccruals(timeEntry.getTenantId(), accrualsToBatchUpdate);
+        }
       }
 
       // TODO What should we do with Kafka offset when errors are thrown during balance calculation?

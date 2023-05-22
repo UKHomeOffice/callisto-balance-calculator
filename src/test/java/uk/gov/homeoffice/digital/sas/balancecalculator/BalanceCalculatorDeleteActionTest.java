@@ -46,8 +46,8 @@ class BalanceCalculatorDeleteActionTest {
 
   @BeforeEach
   void setup() {
-    contributionsHandler = new ContributionsHandler();
-    balanceCalculator = new BalanceCalculator(restClient, accrualModules, contributionsHandler);
+    contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(restClient, contributionsHandler);
   }
 
   private static Stream<Arguments> annualTargetHoursTestData() {

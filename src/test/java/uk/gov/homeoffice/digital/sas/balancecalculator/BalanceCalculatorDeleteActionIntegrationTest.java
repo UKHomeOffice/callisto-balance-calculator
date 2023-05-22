@@ -42,6 +42,7 @@ class BalanceCalculatorDeleteActionIntegrationTest {
     assertThat(accruals).hasSize(4);
     assertTotals(accruals.get(0), 360, 6360);
     assertTotals(accruals.get(1), 600, 6960);
+    assertTotals(accruals.get(2), 240, 7200);
     assertTotals(accruals.get(3), 720, 7920);
   }
 

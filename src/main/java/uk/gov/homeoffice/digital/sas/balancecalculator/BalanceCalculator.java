@@ -23,7 +23,6 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
-import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 @Component
@@ -36,16 +35,12 @@ public class BalanceCalculator {
   static final String ACCRUALS_NOT_FOUND =
       "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
 
-
   private final RestClient restClient;
-  private final List<AccrualModule> accrualModules;
   private final ContributionsHandler contributionsHandler;
 
   @Autowired
-  public BalanceCalculator(RestClient restClient, List<AccrualModule> accrualModules,
-                           ContributionsHandler contributionsHandler) {
+  public BalanceCalculator(RestClient restClient, ContributionsHandler contributionsHandler) {
     this.restClient = restClient;
-    this.accrualModules = accrualModules;
     this.contributionsHandler = contributionsHandler;
   }
 
@@ -80,9 +75,10 @@ public class BalanceCalculator {
       return List.of();
     }
 
+    boolean handledSuccessfully =
+        contributionsHandler.handle(timeEntry, action, applicableAgreement, allAccruals);
+    if (!handledSuccessfully) {
 
-    if (!contributionsHandler.handle(timeEntry, applicableAgreement,
-        allAccruals, accrualModules, action)) {
       return List.of();
     }
 

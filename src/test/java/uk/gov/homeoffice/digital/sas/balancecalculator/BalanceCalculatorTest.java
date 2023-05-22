@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler.MISSING_ACCRUAL;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule.MISSING_ACCRUAL;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
@@ -99,8 +99,8 @@ class BalanceCalculatorTest {
 
   @BeforeEach
   void setup() {
-    contributionsHandler = new ContributionsHandler();
-    balanceCalculator = new BalanceCalculator(restClient, accrualModules, contributionsHandler);
+    contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(restClient, contributionsHandler);
   }
 
   @Test
