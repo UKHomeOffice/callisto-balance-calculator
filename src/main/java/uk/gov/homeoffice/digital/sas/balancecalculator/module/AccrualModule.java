@@ -83,10 +83,10 @@ public abstract class AccrualModule {
       case DELETE -> timeEntries.remove(UUID.fromString(timeEntryId));
 
       case UPDATE -> throw new
-          UnsupportedOperationException(String.format(OPERATION_NOT_IMPLEMENTED, action));
+          UnsupportedOperationException(MessageFormat.format(OPERATION_NOT_IMPLEMENTED, action));
 
-      default -> throw new UnsupportedOperationException(String.format(UNKNOWN_KAFKA_EVENT_ACTION,
-          action));
+      default -> throw new UnsupportedOperationException(MessageFormat.format(
+          UNKNOWN_KAFKA_EVENT_ACTION, action));
     }
 
     BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
