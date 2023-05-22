@@ -28,10 +28,10 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   @Test
   void calculate_endToEnd_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-29T01:59:00+01:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-29T02:59:00+00:00");
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T10:00:00+00:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T12:00+00:00");
 
-    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+    TimeEntry timeEntry = createTimeEntry("85cd140e-9eeb-4771-ab6c-6dea17fcfcba",
         TENANT_ID,
         PERSON_ID,
         startTime,
@@ -40,10 +40,10 @@ class BalanceCalculatorDeleteActionIntegrationTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 
     assertThat(accruals).hasSize(4);
-    assertTotals(accruals.get(0), 360, 6360);
-    assertTotals(accruals.get(1), 600, 6960);
-    assertTotals(accruals.get(2), 240, 7200);
-    assertTotals(accruals.get(3), 720, 7920);
+    assertTotals(accruals.get(0), 480, 6960);
+    assertTotals(accruals.get(1), 240, 7200);
+    assertTotals(accruals.get(2), 720, 7920);
+    assertTotals(accruals.get(3), 120, 8040);
   }
 
   @Test
