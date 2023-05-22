@@ -26,7 +26,7 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   private  BalanceCalculator balanceCalculator;
 
   @Test
-  void calculate_endToEnd_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_deleteTimeEntryOneDay_contributionsAndCumulativeTotalsAsExpected() {
 
     ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T10:00:00+00:00");
     ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T12:00+00:00");
@@ -48,7 +48,7 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   }
 
   @Test
-  void calculate_timeEntryHasTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_deleteTimeEntryTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
     ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
     ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");
