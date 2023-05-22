@@ -42,31 +42,29 @@ class BalanceCalculatorDeleteActionTest {
 
   private BalanceCalculator balanceCalculator;
 
-  private ContributionsHandler contributionsHandler;
-
   @BeforeEach
   void setup() {
-    contributionsHandler = new ContributionsHandler(accrualModules);
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
     balanceCalculator = new BalanceCalculator(restClient, contributionsHandler);
   }
 
   private static Stream<Arguments> annualTargetHoursTestData() {
     return Stream.of(
-        // creating one day time entry
+        // deleting one day time entry
         Arguments.of("38e09687-5ae7-40d6-82b4-b022ae456bb1",
             LocalDate.of(2023, 4, 18),
             ZonedDateTime.parse("2023-04-18T08:00:00+00:00"),
             ZonedDateTime.parse("2023-04-18T10:00:00+00:00"),
             BigDecimal.valueOf(6720), BigDecimal.valueOf(7320),
             BigDecimal.valueOf(7920), BigDecimal.valueOf(8640)),
-        // updating two day time entry
+        // deleting two day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             LocalDate.of(2023, 4, 19),
             ZonedDateTime.parse("2023-04-18T18:00:00+00:00"),
             ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
             BigDecimal.valueOf(6480), BigDecimal.valueOf(6720),
             BigDecimal.valueOf(7320), BigDecimal.valueOf(8040)),
-        //updating three day time entry
+        // deleting three day time entry
         Arguments.of("51a0a8eb-5972-406b-a539-4f4793ec3cb9",
             LocalDate.of(2023, 4, 20),
             ZonedDateTime.parse("2023-04-18T18:00:00+00:00"),
