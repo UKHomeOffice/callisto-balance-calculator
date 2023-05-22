@@ -43,7 +43,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
-class BalanceCalculatorTest {
+class BalanceCalculatorCreateActionTest {
 
   private static final ZonedDateTime SHIFT_START_TIME =
       ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
@@ -60,8 +60,6 @@ class BalanceCalculatorTest {
   private RestClient restClient;
 
   private BalanceCalculator balanceCalculator;
-
-  private ContributionsHandler contributionsHandler;
 
   private static Stream<Arguments> annualTargetHoursTestData() {
     return Stream.of(
@@ -98,7 +96,7 @@ class BalanceCalculatorTest {
 
   @BeforeEach
   void setup() {
-    contributionsHandler = new ContributionsHandler(accrualModules);
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
     balanceCalculator = new BalanceCalculator(restClient, contributionsHandler);
   }
 

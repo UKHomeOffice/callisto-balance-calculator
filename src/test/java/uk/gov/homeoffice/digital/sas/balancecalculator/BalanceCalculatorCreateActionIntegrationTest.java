@@ -20,7 +20,7 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 @SpringBootTest
 @AutoConfigureWireMock(port = 9999)
-class BalanceCalculatorIntegrationTest {
+class BalanceCalculatorCreateActionIntegrationTest {
 
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String TENANT_ID = "52a8188b-d41e-6768-19e9-09938016342f";
