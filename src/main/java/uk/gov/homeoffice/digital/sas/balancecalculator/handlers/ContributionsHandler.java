@@ -1,5 +1,7 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.handlers;
 
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.NO_ACCRUALS_FOUND_FOR_TYPE;
+
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,9 +20,6 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 @Component
 @Slf4j
 public class ContributionsHandler {
-
-  public static final String NO_ACCRUALS_FOUND_FOR_TYPE =
-      "No {0} Accrual records found for agreement between {1} and {2}";
 
   private final List<AccrualModule> accrualModules;
 

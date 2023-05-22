@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule.MISSING_ACCRUAL;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.MISSING_ACCRUAL;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
@@ -49,7 +49,6 @@ class BalanceCalculatorTest {
       ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
   private static final ZonedDateTime SHIFT_END_TIME =
       ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
-  private static final BigDecimal SHIFT_DURATION = new BigDecimal(120);
 
   private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";

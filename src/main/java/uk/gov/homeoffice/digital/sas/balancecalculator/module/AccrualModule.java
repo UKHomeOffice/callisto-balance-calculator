@@ -1,5 +1,9 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.module;
 
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACCRUALS_MAP_EMPTY;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.MISSING_ACCRUAL;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.OPERATION_NOT_IMPLEMENTED;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.UNKNOWN_KAFKA_EVENT_ACTION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
 import com.google.common.collect.Range;
@@ -24,10 +28,6 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 @Getter
 @Slf4j
 public abstract class AccrualModule {
-
-  public static final String ACCRUALS_MAP_EMPTY = "Accruals Map must contain at least one entry!";
-  public static final String MISSING_ACCRUAL =
-      "Accrual missing for tenantId {0}, personId {1}, accrual type {2} and date {3}";
 
   protected AccrualType accrualType;
 
@@ -82,9 +82,11 @@ public abstract class AccrualModule {
 
       case DELETE -> timeEntries.remove(UUID.fromString(timeEntryId));
 
-      case UPDATE -> throw new UnsupportedOperationException("NOT IMPLEMENTED YET");
+      case UPDATE -> throw new
+          UnsupportedOperationException(String.format(OPERATION_NOT_IMPLEMENTED, action));
 
-      default -> throw new UnsupportedOperationException("UNKNOWN KAFKA EVENT ACTION");
+      default -> throw new UnsupportedOperationException(String.format(UNKNOWN_KAFKA_EVENT_ACTION,
+          action));
     }
 
     BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);

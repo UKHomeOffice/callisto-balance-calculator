@@ -2,7 +2,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.module;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule.ACCRUALS_MAP_EMPTY;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACCRUALS_MAP_EMPTY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 
 import java.io.IOException;
