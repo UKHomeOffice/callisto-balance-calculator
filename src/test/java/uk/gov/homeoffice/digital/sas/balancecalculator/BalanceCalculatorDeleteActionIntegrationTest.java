@@ -40,6 +40,7 @@ class BalanceCalculatorDeleteActionIntegrationTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 
     assertThat(accruals).hasSize(4);
+
     assertTotals(accruals.get(0), 480, 6960);
     assertTotals(accruals.get(1), 240, 7200);
     assertTotals(accruals.get(2), 720, 7920);
