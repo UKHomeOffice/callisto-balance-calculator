@@ -22,7 +22,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.Accr
 
 @NoArgsConstructor
 @Component
-public class RestClient {
+public class AccrualsService {
 
   public static final String TENANT_ID_STRING_IDENTIFIER = "tenantId";
   public static final String FILTER_STRING_IDENTIFIER = "filter";
@@ -34,7 +34,7 @@ public class RestClient {
 
 
   @Autowired
-  public RestClient(RestTemplateBuilder builder,
+  public AccrualsService(RestTemplateBuilder builder,
                     @Value("${balance.calculator.accruals.url}") String accrualsUrl) {
     this.restTemplate = builder.build();
     this.accrualsNoFilterUrl = accrualsUrl + "/resources/accruals?tenantId={tenantId}";
@@ -80,7 +80,8 @@ public class RestClient {
     return null;
   }
 
-  public List<Accrual> getAccrualsBetweenDates(String tenantId, String personId,
+  // TODO: Implementation will be modified when addressing Update Action
+  public List<Accrual> getImpactedAccruals(String tenantId, String personId,
                                                LocalDate startDate, LocalDate endDate) {
     Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId,
         FILTER_STRING_IDENTIFIER,
@@ -110,7 +111,7 @@ public class RestClient {
     return null;
   }
 
-  public List<Accrual> patchAccruals(String tenantId, List<Accrual> accruals) {
+  public List<Accrual> updateAccruals(String tenantId, List<Accrual> accruals) {
     Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId);
 
     List<PatchBody> payloadBody = createPatchBody(accruals);

@@ -19,7 +19,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.OutputCaptureExtension;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.AccrualsService;
 import uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
@@ -38,14 +38,14 @@ class BalanceCalculatorDeleteActionTest {
 
 
   @Mock
-  private RestClient restClient;
+  private AccrualsService accrualsService;
 
   private BalanceCalculator balanceCalculator;
 
   @BeforeEach
   void setup() {
     ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
-    balanceCalculator = new BalanceCalculator(restClient, contributionsHandler);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
   }
 
   private static Stream<Arguments> annualTargetHoursTestData() {
@@ -92,10 +92,10 @@ class BalanceCalculatorDeleteActionTest {
 
     String tenantId = timeEntry.getTenantId();
 
-    when(restClient.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
+    when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID,
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID,
         shiftStartTime.toLocalDate().minusDays(1),
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHoursDeleteAction.json"));

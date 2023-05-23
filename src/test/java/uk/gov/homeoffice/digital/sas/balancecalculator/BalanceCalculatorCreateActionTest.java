@@ -31,7 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.AccrualsService;
 import uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
@@ -57,7 +57,7 @@ class BalanceCalculatorCreateActionTest {
   private final List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
 
   @Mock
-  private RestClient restClient;
+  private AccrualsService accrualsService;
 
   private BalanceCalculator balanceCalculator;
 
@@ -97,7 +97,7 @@ class BalanceCalculatorCreateActionTest {
   @BeforeEach
   void setup() {
     ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
-    balanceCalculator = new BalanceCalculator(restClient, contributionsHandler);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
   }
 
   @Test
@@ -110,7 +110,7 @@ class BalanceCalculatorCreateActionTest {
 
     balanceCalculator.sendToAccruals(tenantId, accrualList);
 
-    verify(restClient).patchAccruals(tenantId, accrualList);
+    verify(accrualsService).updateAccruals(tenantId, accrualList);
   }
 
   @ParameterizedTest
@@ -130,10 +130,10 @@ class BalanceCalculatorCreateActionTest {
 
     String tenantId = timeEntry.getTenantId();
 
-    when(restClient.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
+    when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(restClient.getAccrualsBetweenDates(tenantId, PERSON_ID,
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID,
         shiftStartTime.toLocalDate().minusDays(1),
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
@@ -164,7 +164,7 @@ class BalanceCalculatorCreateActionTest {
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
 
-    when(restClient.getApplicableAgreement(timeEntry.getTenantId(),
+    when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(),
         PERSON_ID, ACCRUAL_DATE)).thenReturn(null);
 
     List<Accrual> result = balanceCalculator.calculate(timeEntry,KafkaAction.CREATE);
@@ -185,11 +185,11 @@ class BalanceCalculatorCreateActionTest {
 
     Agreement agreement = mock(Agreement.class);
     when(agreement.getEndDate()).thenReturn(AGREEMENT_END_DATE);
-    when(restClient.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
+    when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
         .thenReturn(agreement);
 
     List<Accrual> noAccruals = List.of();
-    when(restClient.getAccrualsBetweenDates(timeEntry.getTenantId(), PERSON_ID,
+    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), PERSON_ID,
         ACCRUAL_DATE.minusDays(1), agreement.getEndDate()))
         .thenReturn(noAccruals);
 
@@ -212,7 +212,7 @@ class BalanceCalculatorCreateActionTest {
 
     Agreement agreement = mock(Agreement.class);
     when(agreement.getEndDate()).thenReturn(AGREEMENT_END_DATE);
-    when(restClient.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
+    when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
         .thenReturn(agreement);
 
     AccrualType accrualType = AccrualType.ANNUAL_TARGET_HOURS;
@@ -221,7 +221,7 @@ class BalanceCalculatorCreateActionTest {
         .accrualTypeId(accrualType.getId())
         .build();
     List<Accrual> accruals = List.of(accrual);
-    when(restClient.getAccrualsBetweenDates(timeEntry.getTenantId(), PERSON_ID,
+    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), PERSON_ID,
         ACCRUAL_DATE.minusDays(1), agreement.getEndDate()))
         .thenReturn(accruals);
 

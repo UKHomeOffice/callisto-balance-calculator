@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
-import uk.gov.homeoffice.digital.sas.balancecalculator.client.RestClient;
+import uk.gov.homeoffice.digital.sas.balancecalculator.client.AccrualsService;
 import uk.gov.homeoffice.digital.sas.balancecalculator.configuration.AccrualModuleConfig;
 import uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
@@ -35,12 +35,12 @@ public class BalanceCalculator {
   static final String ACCRUALS_NOT_FOUND =
       "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
 
-  private final RestClient restClient;
+  private final AccrualsService accrualsService;
   private final ContributionsHandler contributionsHandler;
 
   @Autowired
-  public BalanceCalculator(RestClient restClient, ContributionsHandler contributionsHandler) {
-    this.restClient = restClient;
+  public BalanceCalculator(AccrualsService accrualsService, ContributionsHandler contributionsHandler) {
+    this.accrualsService = accrualsService;
     this.contributionsHandler = contributionsHandler;
   }
 
@@ -96,20 +96,20 @@ public class BalanceCalculator {
   }
 
   public void sendToAccruals(String tenantId, List<Accrual> accruals) {
-    restClient.patchAccruals(tenantId, accruals);
+    accrualsService.updateAccruals(tenantId, accruals);
   }
 
   Agreement getAgreementApplicableToTimeEntryEndDate(String tenantId,
                                                      String personId,
                                                      LocalDate timeEntryEndDate) {
-    return restClient.getApplicableAgreement(tenantId,
+    return accrualsService.getApplicableAgreement(tenantId,
         personId, timeEntryEndDate);
   }
 
   SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getAccrualsBetweenDates(
       String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
 
-    List<Accrual> accruals = restClient.getAccrualsBetweenDates(tenantId, personId,
+    List<Accrual> accruals = accrualsService.getImpactedAccruals(tenantId, personId,
         startDate, endDate);
 
     return map(accruals);
