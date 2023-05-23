@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -35,6 +36,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.client.AccrualsService;
 import uk.gov.homeoffice.digital.sas.balancecalculator.handlers.ContributionsHandler;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
@@ -216,9 +218,13 @@ class BalanceCalculatorCreateActionTest {
         .thenReturn(agreement);
 
     AccrualType accrualType = AccrualType.ANNUAL_TARGET_HOURS;
+
+    Map<UUID, BigDecimal> emptyMap = new HashMap<>();
+
     Accrual accrual = Accrual.builder()
         .accrualDate(ACCRUAL_DATE.minusDays(1))
         .accrualTypeId(accrualType.getId())
+        .contributions(Contributions.builder().timeEntries(emptyMap).build())
         .build();
     List<Accrual> accruals = List.of(accrual);
     when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), PERSON_ID,

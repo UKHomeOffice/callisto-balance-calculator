@@ -3,8 +3,6 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.handlers;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACCRUALS_MAP_EMPTY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.MISSING_ACCRUAL;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.NO_ACCRUALS_FOUND_FOR_TYPE;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.OPERATION_NOT_IMPLEMENTED;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.UNKNOWN_KAFKA_EVENT_ACTION;
 
 import java.math.BigDecimal;
 import java.text.MessageFormat;
@@ -51,6 +49,9 @@ public class ContributionsHandler {
         continue;
       }
 
+      accruals.forEach((key, value) -> value.getContributions().getTimeEntries()
+          .remove(UUID.fromString(timeEntry.getId())));
+
       SortedMap<LocalDate, BigDecimal> contributionsMap = module.getContributions(timeEntry);
 
       for (var entry : contributionsMap.entrySet()) {
@@ -80,16 +81,8 @@ public class ContributionsHandler {
     Contributions contributions = accrual.getContributions();
     Map<UUID, BigDecimal> timeEntries = contributions.getTimeEntries();
 
-    switch (action) {
-      case CREATE -> timeEntries.put(UUID.fromString(timeEntryId), shiftContribution);
-
-      case DELETE -> timeEntries.remove(UUID.fromString(timeEntryId));
-
-      case UPDATE -> throw new
-          UnsupportedOperationException(MessageFormat.format(OPERATION_NOT_IMPLEMENTED, action));
-
-      default -> throw new UnsupportedOperationException(MessageFormat.format(
-          UNKNOWN_KAFKA_EVENT_ACTION, action));
+    if (!action.equals(KafkaAction.DELETE)) {
+      timeEntries.put(UUID.fromString(timeEntryId), shiftContribution);
     }
 
     BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);

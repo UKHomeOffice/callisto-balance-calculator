@@ -11,9 +11,4 @@ public class Constants {
 
   public static final String MISSING_ACCRUAL =
       "Accrual missing for tenantId {0}, personId {1}, accrual type {2} and date {3}";
-
-  public static final String OPERATION_NOT_IMPLEMENTED = "Operation {0} not supported";
-
-  public static final String UNKNOWN_KAFKA_EVENT_ACTION =
-      "Unknown Kafka event action received {0}";
 }

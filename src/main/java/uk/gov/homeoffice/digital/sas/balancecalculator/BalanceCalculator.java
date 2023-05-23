@@ -47,7 +47,6 @@ public class BalanceCalculator {
 
   public List<Accrual> calculate(TimeEntry timeEntry, KafkaAction action) {
 
-    // TODO: what to do if TimeEntry has no end date ?? / exit ??
     String tenantId = timeEntry.getTenantId();
     String personId = timeEntry.getOwnerId();
     ZonedDateTime timeEntryStart = timeEntry.getActualStartTime();
@@ -67,7 +66,7 @@ public class BalanceCalculator {
     // Get accruals of all types between the day just before the time entry and the end date of the
     // latest applicable agreement
     SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
-        getAccrualsBetweenDates(tenantId, personId,
+        getImpactedAccruals(tenantId, personId,
             timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate());
 
     if (isEmpty(allAccruals)) {
@@ -107,7 +106,7 @@ public class BalanceCalculator {
         personId, timeEntryEndDate);
   }
 
-  SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getAccrualsBetweenDates(
+  SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getImpactedAccruals(
       String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
 
     List<Accrual> accruals = accrualsService.getImpactedAccruals(tenantId, personId,
