@@ -28,8 +28,8 @@ public class CommonUtils {
 
   public static TimeEntry createTimeEntry(ZonedDateTime startTime,
                                           ZonedDateTime finishTime) {
-    return createTimeEntry(VALID_TIME_ENTRY_ID, VALID_TENANT_ID, VALID_PERSON_ID
-        , startTime, finishTime);
+    return createTimeEntry(VALID_TIME_ENTRY_ID, VALID_TENANT_ID, VALID_PERSON_ID,
+        startTime, finishTime);
   }
 
   public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,

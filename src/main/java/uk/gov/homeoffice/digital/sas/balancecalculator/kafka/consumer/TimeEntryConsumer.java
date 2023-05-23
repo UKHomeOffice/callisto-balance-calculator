@@ -45,8 +45,8 @@ public class TimeEntryConsumer {
   }
 
   @KafkaListener(topics = {"${spring.kafka.template.default-topic}"},
-      groupId = "${spring.kafka.consumer.group-id}",
-      errorHandler = "kafkaConsumerErrorHandler")
+                 groupId = "${spring.kafka.consumer.group-id}",
+                 errorHandler = "kafkaConsumerErrorHandler")
   public void onMessage(@Payload String payload) throws JsonProcessingException {
 
     if (kafkaConsumerService.isResourceOfType(payload, TimeEntry.class)) {

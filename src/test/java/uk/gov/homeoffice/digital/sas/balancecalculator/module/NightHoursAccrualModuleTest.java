@@ -19,7 +19,7 @@ class NightHoursAccrualModuleTest {
   private final NightHoursAccrualModule module = new NightHoursAccrualModule();
 
   private static Stream<Arguments> testData() {
-    // TODO: ad multi-day time entry
+    // TODO: add multi-day time entry
     return Stream.of(
         // Outside night hours
         Arguments.of(createTimeEntry(ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
@@ -84,7 +84,7 @@ class NightHoursAccrualModuleTest {
   @ParameterizedTest
   @MethodSource("testData")
   void getContributions_default(TimeEntry timeEntry,
-      SortedMap<LocalDate, BigDecimal> expectedContributions) {
+                                SortedMap<LocalDate, BigDecimal> expectedContributions) {
     SortedMap<LocalDate, BigDecimal> actualContributions = module.getContributions(timeEntry);
 
     assertThat(actualContributions).isEqualTo(expectedContributions);

@@ -35,9 +35,9 @@ public class ContributionsHandler {
   }
 
   public boolean handle(TimeEntry timeEntry,
-                              KafkaAction action,
-                              Agreement applicableAgreement,
-                              Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals) {
+                        KafkaAction action,
+                        Agreement applicableAgreement,
+                        Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals) {
 
     for (AccrualModule module : accrualModules) {
       AccrualType accrualType = module.getAccrualType();
@@ -75,8 +75,9 @@ public class ContributionsHandler {
     return true;
   }
 
-  void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
-      Accrual accrual, KafkaAction action) {
+  void updateAccrualContribution(String timeEntryId,
+                                 BigDecimal shiftContribution,
+                                 Accrual accrual, KafkaAction action) {
 
     Contributions contributions = accrual.getContributions();
     Map<UUID, BigDecimal> timeEntries = contributions.getTimeEntries();
@@ -89,8 +90,8 @@ public class ContributionsHandler {
     contributions.setTotal(total);
   }
 
-  void cascadeCumulativeTotal(
-      SortedMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {
+  void cascadeCumulativeTotal(SortedMap<LocalDate, Accrual> accruals,
+                              LocalDate agreementStartDate) {
 
     Optional<LocalDate> optional = accruals.keySet().stream().findFirst();
     if (optional.isPresent()) {
@@ -112,12 +113,13 @@ public class ContributionsHandler {
     }
   }
 
-  private boolean isPriorAccrualRelatedToTheSameAgreement(
-      LocalDate priorAccrualDate, LocalDate agreementStatDate) {
+  private boolean isPriorAccrualRelatedToTheSameAgreement(LocalDate priorAccrualDate,
+                                                          LocalDate agreementStatDate) {
     return !priorAccrualDate.isBefore(agreementStatDate);
   }
 
-  void updateSubsequentAccruals(List<Accrual> accruals, BigDecimal priorCumulativeTotal) {
+  void updateSubsequentAccruals(List<Accrual> accruals,
+                                BigDecimal priorCumulativeTotal) {
 
     //update the cumulative total for referenceDate
     accruals.get(0).setCumulativeTotal(

@@ -23,7 +23,7 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   private static final String PERSON_ID = "b810a175-9b87-473c-94f3-9bcdf87f3a58";
 
   @Autowired
-  private  BalanceCalculator balanceCalculator;
+  private BalanceCalculator balanceCalculator;
 
   @Test
   void calculate_deleteTimeEntryOneDay_contributionsAndCumulativeTotalsAsExpected() {
@@ -68,8 +68,8 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   }
 
   private void assertTotals(Accrual accrual,
-                                   int expectedContributionTotal,
-                                   int expectedCumulativeTotal) {
+                            int expectedContributionTotal,
+                            int expectedCumulativeTotal) {
     assertThat(accrual.getContributions().getTotal())
         .usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(expectedContributionTotal));

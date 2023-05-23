@@ -18,7 +18,7 @@ class AnnualTargetHoursAccrualModuleTest {
 
   private final AnnualTargetHoursAccrualModule module = new AnnualTargetHoursAccrualModule();
 
-  // TODO: ad multi-day time entry
+  // TODO: add multi-day time entry
   private static Stream<Arguments> testData() {
     return Stream.of(
         // Daylight saving switch
@@ -43,7 +43,7 @@ class AnnualTargetHoursAccrualModuleTest {
   @ParameterizedTest
   @MethodSource("testData")
   void getContributions_default(TimeEntry timeEntry,
-      SortedMap<LocalDate, BigDecimal> expectedContributions) {
+                                SortedMap<LocalDate, BigDecimal> expectedContributions) {
     SortedMap<LocalDate, BigDecimal> actualContributions = module.getContributions(timeEntry);
 
     assertThat(actualContributions).isEqualTo(expectedContributions);
