@@ -1,17 +1,23 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.handlers;
 
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.MISSING_ACCRUAL;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.NO_ACCRUALS_FOUND_FOR_TYPE;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.OPERATION_NOT_IMPLEMENTED;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.UNKNOWN_KAFKA_EVENT_ACTION;
 
+import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
@@ -43,6 +49,25 @@ public class ContributionsHandler {
         continue;
       }
 
+      SortedMap<LocalDate, BigDecimal> contributionsMap = module.getContributions(timeEntry);
+
+      for (var entry : contributionsMap.entrySet()) {
+
+        LocalDate accrualDate = entry.getKey();
+        BigDecimal contribution = entry.getValue();
+        Accrual accrual = accruals.get(accrualDate);
+
+        if (accrual == null) {
+          log.error(MessageFormat.format(
+              MISSING_ACCRUAL, timeEntry.getTenantId(), timeEntry.getOwnerId(),
+              accrualType, accrualDate));
+          return false;
+        }
+
+        updateAccrualContribution(timeEntry.getId(), contribution, accrual, action);
+      }
+
+
       boolean result = module.applyTimeEntryToAccruals(timeEntry, action,
           accruals, applicableAgreement);
 
@@ -52,4 +77,27 @@ public class ContributionsHandler {
     }
     return true;
   }
+
+  void updateAccrualContribution(String timeEntryId, BigDecimal shiftContribution,
+      Accrual accrual, KafkaAction action) {
+
+    Contributions contributions = accrual.getContributions();
+    Map<UUID, BigDecimal> timeEntries = contributions.getTimeEntries();
+
+    switch (action) {
+      case CREATE -> timeEntries.put(UUID.fromString(timeEntryId), shiftContribution);
+
+      case DELETE -> timeEntries.remove(UUID.fromString(timeEntryId));
+
+      case UPDATE -> throw new
+          UnsupportedOperationException(MessageFormat.format(OPERATION_NOT_IMPLEMENTED, action));
+
+      default -> throw new UnsupportedOperationException(MessageFormat.format(
+          UNKNOWN_KAFKA_EVENT_ACTION, action));
+    }
+
+    BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+    contributions.setTotal(total);
+  }
+
 }

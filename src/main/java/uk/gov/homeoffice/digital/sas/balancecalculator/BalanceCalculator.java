@@ -39,7 +39,8 @@ public class BalanceCalculator {
   private final ContributionsHandler contributionsHandler;
 
   @Autowired
-  public BalanceCalculator(AccrualsService accrualsService, ContributionsHandler contributionsHandler) {
+  public BalanceCalculator(AccrualsService accrualsService,
+                           ContributionsHandler contributionsHandler) {
     this.accrualsService = accrualsService;
     this.contributionsHandler = contributionsHandler;
   }

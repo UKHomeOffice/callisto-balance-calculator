@@ -2,8 +2,6 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.module;
 
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACCRUALS_MAP_EMPTY;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.MISSING_ACCRUAL;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.OPERATION_NOT_IMPLEMENTED;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.UNKNOWN_KAFKA_EVENT_ACTION;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
 import com.google.common.collect.Range;
@@ -12,15 +10,12 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.SortedMap;
-import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
@@ -35,8 +30,8 @@ public abstract class AccrualModule {
     this.accrualType = accrualType;
   }
 
-  public abstract BigDecimal calculateShiftContribution(ZonedDateTime startTime,
-                                                        ZonedDateTime endTime);
+  public abstract SortedMap<LocalDate, BigDecimal> getContributions(TimeEntry timeEntry);
+
 
   public boolean applyTimeEntryToAccruals(TimeEntry timeEntry,
                                       KafkaAction action,
@@ -61,37 +56,12 @@ public abstract class AccrualModule {
         return false;
       }
 
-      this.updateAccrualContribution(timeEntry.getId(), startTime, endTime, accrual, action);
     }
 
     this.cascadeCumulativeTotal(accruals, agreement.getStartDate());
     return true;
   }
 
-  void updateAccrualContribution(String timeEntryId, ZonedDateTime startTime, ZonedDateTime endTime,
-      Accrual accrual, KafkaAction action) {
-
-    Contributions contributions = accrual.getContributions();
-    Map<UUID, BigDecimal> timeEntries = contributions.getTimeEntries();
-
-    switch (action) {
-      case CREATE -> {
-        BigDecimal shiftContribution = this.calculateShiftContribution(startTime, endTime);
-        timeEntries.put(UUID.fromString(timeEntryId), shiftContribution);
-      }
-
-      case DELETE -> timeEntries.remove(UUID.fromString(timeEntryId));
-
-      case UPDATE -> throw new
-          UnsupportedOperationException(MessageFormat.format(OPERATION_NOT_IMPLEMENTED, action));
-
-      default -> throw new UnsupportedOperationException(MessageFormat.format(
-          UNKNOWN_KAFKA_EVENT_ACTION, action));
-    }
-
-    BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    contributions.setTotal(total);
-  }
 
   void cascadeCumulativeTotal(
       SortedMap<LocalDate, Accrual> accruals, LocalDate agreementStartDate) {

@@ -1,14 +1,19 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.module;
 
 import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.UK_TIME_ZONE;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.utils.RangeUtils.splitOverDays;
 
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.google.common.collect.TreeRangeSet;
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class NightHoursAccrualModule extends AccrualModule {
 
@@ -21,28 +26,39 @@ public class NightHoursAccrualModule extends AccrualModule {
   }
 
   /**
-   * Counts the minutes of a shift that fall within midnight to 6am and 11pm to midnight.
+   * Counts the night hour contributions for each day (falling within midnight to 6am
+   * and 11pm to midnight).
    *
-   * @param startTime the start time of the shift
-   * @param endTime the end time of the shift
-   * @return night hour contribution in minutes
+   * @param timeEntry Time Entry
+   * @return night hour contributions in minutes, mapped by days covered by time entry
    */
   @Override
-  public BigDecimal calculateShiftContribution(ZonedDateTime startTime, ZonedDateTime endTime) {
-    ZonedDateTime ukStartTime = startTime.withZoneSameInstant(UK_TIME_ZONE);
-    ZonedDateTime ukEndTime = endTime.withZoneSameInstant(UK_TIME_ZONE);
+  public SortedMap<LocalDate, BigDecimal> getContributions(TimeEntry timeEntry) {
+    SortedMap<LocalDate, BigDecimal> result = new TreeMap<>();
 
-    RangeSet<ZonedDateTime> timeEntryNightHours =
-        getIntersectionWithNightHours(ukStartTime, ukEndTime);
+    SortedMap<LocalDate, Range<ZonedDateTime>> dateRanges =
+        splitOverDays(timeEntry.getActualStartTime(), timeEntry.getActualEndTime());
 
-    return timeEntryNightHours.asRanges().stream()
-        .map(range -> new BigDecimal(
-            Duration.between(range.lowerEndpoint(), range.upperEndpoint()).toMinutes()))
-        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    dateRanges.forEach((key, value) -> {
+      ZonedDateTime startTime = value.lowerEndpoint();
+      ZonedDateTime endTime = value.upperEndpoint();
+
+      RangeSet<ZonedDateTime> timeEntryNightHours =
+          getIntersectionWithNightHours(startTime, endTime);
+
+      BigDecimal contribution = timeEntryNightHours.asRanges().stream()
+          .map(range -> new BigDecimal(
+              Duration.between(range.lowerEndpoint(), range.upperEndpoint()).toMinutes()))
+          .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+      result.put(key, contribution);
+    });
+
+    return result;
   }
 
   private RangeSet<ZonedDateTime> getIntersectionWithNightHours(ZonedDateTime startTime,
-                                                                ZonedDateTime endTime) {
+      ZonedDateTime endTime) {
 
     ZonedDateTime midnightCurrentDay = atTime(startTime, MIDNIGHT);
     ZonedDateTime endOfPreviousDayNightHours = atTime(startTime, NIGHT_HOURS_END);
