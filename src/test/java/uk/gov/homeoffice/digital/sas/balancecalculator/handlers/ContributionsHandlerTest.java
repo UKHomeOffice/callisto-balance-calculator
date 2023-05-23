@@ -1,14 +1,22 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.handlers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.ACCRUALS_MAP_EMPTY;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Contributions;
@@ -77,5 +85,51 @@ class ContributionsHandlerTest {
         UUID.fromString(TIME_ENTRY_ID), SHIFT_DURATION);
   }
 
+  @Test
+  void cascadeCumulativeTotal_priorDateWithinSameAgreement_usePriorCumulativeTotalAsBasis()
+      throws IOException {
+    List<Accrual> accruals = loadAccrualsFromFile("data/accruals_annualTargetHours.json");
 
+    SortedMap<LocalDate, Accrual> map = accruals.stream()
+        .collect(Collectors.toMap(
+            Accrual::getAccrualDate,
+            Function.identity(),
+            (k1, k2) -> k2,
+            TreeMap::new)
+        );
+
+    LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
+    LocalDate referenceDate = LocalDate.of(2023, 4, 18);
+
+    contributionsHandler.cascadeCumulativeTotal(map, agreementStartDate);
+
+    assertThat(map).hasSize(5);
+    assertThat(map.get(referenceDate)
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(6480));
+
+    assertThat(map.get(referenceDate.plusDays(1))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7080));
+
+    assertThat(map.get(referenceDate.plusDays(2))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(7320));
+
+    assertThat(map.get(referenceDate.plusDays(3))
+        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(8040));
+  }
+
+  @Test
+  void cascadeCumulativeTotal_emptyMapOfAccruals_throwException() {
+    SortedMap<LocalDate, Accrual> map = new TreeMap<>();
+
+    LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
+
+    assertThatThrownBy(() ->
+        contributionsHandler.cascadeCumulativeTotal(map, agreementStartDate))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining(ACCRUALS_MAP_EMPTY);
+  }
 }
