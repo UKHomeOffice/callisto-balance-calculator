@@ -8,6 +8,8 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.MISSING_ACCRUAL;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.NO_ACCRUALS_FOUND_FOR_TYPE;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.ERROR_LOG;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.WARNING_LOG;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
@@ -249,7 +251,7 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(result).isEmpty();
 
-    assertThat(capturedOutput.getOut()).contains("WARN");
+    assertThat(capturedOutput.getOut()).contains(WARNING_LOG);
     assertThat(capturedOutput.getOut()).contains(
         MessageFormat.format(AGREEMENT_NOT_FOUND, timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE)
     );
@@ -280,7 +282,7 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(result).isEmpty();
 
-    assertThat(capturedOutput.getOut()).contains("WARN");
+    assertThat(capturedOutput.getOut()).contains(ERROR_LOG);
     assertThat(capturedOutput.getOut()).contains(
         MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE, AccrualType.ANNUAL_TARGET_HOURS,
             AGREEMENT_START_DATE, AGREEMENT_END_DATE)
@@ -310,7 +312,7 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(result).isEmpty();
 
-    assertThat(capturedOutput.getOut()).contains("WARN");
+    assertThat(capturedOutput.getOut()).contains(WARNING_LOG);
     assertThat(capturedOutput.getOut()).contains(
         MessageFormat.format(ACCRUALS_NOT_FOUND, timeEntry.getTenantId(), PERSON_ID,
             ACCRUAL_DATE.minusDays(1), AGREEMENT_END_DATE)
@@ -351,7 +353,7 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(result).isEmpty();
 
-    assertThat(capturedOutput.getOut()).contains("ERROR");
+    assertThat(capturedOutput.getOut()).contains(ERROR_LOG);
     assertThat(capturedOutput.getOut()).contains(
         MessageFormat.format(MISSING_ACCRUAL, timeEntry.getTenantId(), PERSON_ID,
             accrualType, ACCRUAL_DATE)

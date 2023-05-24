@@ -44,7 +44,7 @@ public class ContributionsHandler {
       SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
       if (accruals == null) {
-        log.warn(MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE,
+        log.error(MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE,
             accrualType, applicableAgreement.getStartDate(), applicableAgreement.getEndDate()));
         return false;
       }

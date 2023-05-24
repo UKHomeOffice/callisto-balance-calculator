@@ -26,4 +26,8 @@ public class TestConstants {
 
   public static final String INVALID_RESOURCE_SCHEMA =
       "uk.gov.homeoffice.digital.sas.model.unknownResource";
+
+  public static final String WARNING_LOG = "WARN";
+
+  public static final String ERROR_LOG = "ERROR";
 }
