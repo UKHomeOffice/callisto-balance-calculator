@@ -48,7 +48,7 @@ class ContributionsHandlerTest {
         .contributions(contributions)
         .build();
 
-    contributionsHandler.updateAccrualContribution(TIME_ENTRY_ID, BigDecimal.valueOf(120),
+    contributionsHandler.updateAccrualContribution(TIME_ENTRY_ID, SHIFT_DURATION,
         accrual, KafkaAction.CREATE);
 
     assertThat(accrual.getContributions().getTotal()).usingComparator(BigDecimal::compareTo)
@@ -71,7 +71,7 @@ class ContributionsHandlerTest {
         .contributions(contributions)
         .build();
 
-    contributionsHandler.updateAccrualContribution(TIME_ENTRY_ID, BigDecimal.valueOf(120),
+    contributionsHandler.updateAccrualContribution(TIME_ENTRY_ID, SHIFT_DURATION,
         accrual, KafkaAction.CREATE);
 
     assertThat(accrual.getContributions().getTotal()).usingComparator(BigDecimal::compareTo)
