@@ -56,7 +56,7 @@ class BalanceCalculatorCreateActionTest {
   private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
-  private static final LocalDate AGREEMENT_START_DATE = LocalDate.of(2023, 4, 1  );
+  private static final LocalDate AGREEMENT_START_DATE = LocalDate.of(2023, 4, 1);
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
 
   private List<AccrualModule> accrualModules;
@@ -132,8 +132,8 @@ class BalanceCalculatorCreateActionTest {
         // creating three day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 20),
-            ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
-            ZonedDateTime.parse("2023-04-20T06:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-18T22:00:00+01:00"),
+            ZonedDateTime.parse("2023-04-20T07:00:00+01:00"),
             BigDecimal.valueOf(6240), BigDecimal.valueOf(6780),
             BigDecimal.valueOf(7140), BigDecimal.valueOf(7140))
     );
@@ -187,33 +187,23 @@ class BalanceCalculatorCreateActionTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(4);
-    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal1);
 
-    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal2);
-
-    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal3);
-
-    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal4);
+    assertCumulativeTotal(accruals.get(0), expectedCumulativeTotal1);
+    assertCumulativeTotal(accruals.get(1), expectedCumulativeTotal2);
+    assertCumulativeTotal(accruals.get(2), expectedCumulativeTotal3);
+    assertCumulativeTotal(accruals.get(3), expectedCumulativeTotal4);
   }
 
   @ParameterizedTest
   @MethodSource("nightHoursTestData")
   void calculate_nightHours_returnUpdatedAccruals(String timeEntryId,
-                                                        LocalDate referenceDate,
-                                                        ZonedDateTime shiftStartTime,
-                                                        ZonedDateTime shiftEndTime,
-                                                        BigDecimal expectedCumulativeTotal1,
-                                                        BigDecimal expectedCumulativeTotal2,
-                                                        BigDecimal expectedCumulativeTotal3,
-                                                        BigDecimal expectedCumulativeTotal4)
+                                                  LocalDate referenceDate,
+                                                  ZonedDateTime shiftStartTime,
+                                                  ZonedDateTime shiftEndTime,
+                                                  BigDecimal expectedCumulativeTotal1,
+                                                  BigDecimal expectedCumulativeTotal2,
+                                                  BigDecimal expectedCumulativeTotal3,
+                                                  BigDecimal expectedCumulativeTotal4)
       throws IOException {
 
     accrualModules = List.of(new NightHoursAccrualModule());
@@ -236,21 +226,11 @@ class BalanceCalculatorCreateActionTest {
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(4);
-    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal1);
 
-    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal2);
-
-    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal3);
-
-    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal4);
+    assertCumulativeTotal(accruals.get(0), expectedCumulativeTotal1);
+    assertCumulativeTotal(accruals.get(1), expectedCumulativeTotal2);
+    assertCumulativeTotal(accruals.get(2), expectedCumulativeTotal3);
+    assertCumulativeTotal(accruals.get(3), expectedCumulativeTotal4);
   }
 
   @Test
@@ -265,7 +245,7 @@ class BalanceCalculatorCreateActionTest {
     when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(),
         PERSON_ID, ACCRUAL_DATE)).thenReturn(null);
 
-    List<Accrual> result = balanceCalculator.calculate(timeEntry,KafkaAction.CREATE);
+    List<Accrual> result = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(result).isEmpty();
 
@@ -302,7 +282,8 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(capturedOutput.getOut()).contains("WARN");
     assertThat(capturedOutput.getOut()).contains(
-        MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE, AccrualType.ANNUAL_TARGET_HOURS, AGREEMENT_START_DATE, AGREEMENT_END_DATE)
+        MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE, AccrualType.ANNUAL_TARGET_HOURS,
+            AGREEMENT_START_DATE, AGREEMENT_END_DATE)
     );
   }
 
@@ -393,18 +374,22 @@ class BalanceCalculatorCreateActionTest {
     SortedMap<LocalDate, Accrual> annualTargetHoursMap = map.get(AccrualType.ANNUAL_TARGET_HOURS);
 
     assertThat(annualTargetHoursMap).hasSize(2);
-    assertThat(annualTargetHoursMap.get(LocalDate.of(2023, 4, 19))
-        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(7080));
-    assertThat(annualTargetHoursMap.get(LocalDate.of(2023, 4, 20))
-        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(7320));
+
+    assertCumulativeTotal(annualTargetHoursMap.get(LocalDate.of(2023, 4, 19)),
+        BigDecimal.valueOf(7080));
+    assertCumulativeTotal(annualTargetHoursMap.get(LocalDate.of(2023, 4, 20)),
+        BigDecimal.valueOf(7320));
 
     SortedMap<LocalDate, Accrual> nightHoursMap = map.get(AccrualType.NIGHT_HOURS);
     assertThat(nightHoursMap).hasSize(1);
-    assertThat(nightHoursMap.get(LocalDate.of(2023, 4, 19))
-        .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
-        .isEqualTo(BigDecimal.valueOf(8040));
+
+    assertCumulativeTotal(nightHoursMap.get(LocalDate.of(2023, 4, 19)), BigDecimal.valueOf(8040));
+  }
+
+  private void assertCumulativeTotal(Accrual accrual, BigDecimal expectedCumulativeTotal) {
+    assertThat(accrual.getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal);
   }
 
 
