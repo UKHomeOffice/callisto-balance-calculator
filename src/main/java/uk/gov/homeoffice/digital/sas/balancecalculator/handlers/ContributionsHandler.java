@@ -46,7 +46,7 @@ public class ContributionsHandler {
       if (accruals == null) {
         log.warn(MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE,
             accrualType, applicableAgreement.getStartDate(), applicableAgreement.getEndDate()));
-        continue;
+        return false;
       }
 
       accruals.forEach((key, value) -> value.getContributions().getTimeEntries()
