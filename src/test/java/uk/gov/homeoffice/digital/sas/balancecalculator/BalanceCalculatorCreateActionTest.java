@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.ACCRUALS_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.BalanceCalculator.AGREEMENT_NOT_FOUND;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.MISSING_ACCRUAL;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.Constants.NO_ACCRUALS_FOUND_FOR_TYPE;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
@@ -22,7 +23,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.UUID;
 import java.util.stream.Stream;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -41,6 +41,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.Accr
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AnnualTargetHoursAccrualModule;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.NightHoursAccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
@@ -55,8 +56,10 @@ class BalanceCalculatorCreateActionTest {
   private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
+  private static final LocalDate AGREEMENT_START_DATE = LocalDate.of(2023, 4, 1  );
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
-  private final List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
+
+  private List<AccrualModule> accrualModules;
 
   @Mock
   private AccrualsService accrualsService;
@@ -96,14 +99,51 @@ class BalanceCalculatorCreateActionTest {
     );
   }
 
-  @BeforeEach
-  void setup() {
-    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
-    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
+  private static Stream<Arguments> nightHoursTestData() {
+    return Stream.of(
+        // outside night hours
+        Arguments.of(TIME_ENTRY_ID,
+            LocalDate.of(2023, 4, 18),
+            ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
+            ZonedDateTime.parse("2023-04-18T10:00:00+01:00"),
+            BigDecimal.valueOf(6180), BigDecimal.valueOf(6300),
+            BigDecimal.valueOf(6300), BigDecimal.valueOf(6300)),
+        // creating one day time entry
+        Arguments.of(TIME_ENTRY_ID,
+            LocalDate.of(2023, 4, 18),
+            ZonedDateTime.parse("2023-04-18T00:00:00+01:00"),
+            ZonedDateTime.parse("2023-04-18T03:00:00+01:00"),
+            BigDecimal.valueOf(6360), BigDecimal.valueOf(6480),
+            BigDecimal.valueOf(6480), BigDecimal.valueOf(6480)),
+        // updating one day time entry
+        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
+            LocalDate.of(2023, 4, 18),
+            ZonedDateTime.parse("2023-04-18T01:00:00+01:00"),
+            ZonedDateTime.parse("2023-04-18T05:00:00+01:00"),
+            BigDecimal.valueOf(6240), BigDecimal.valueOf(6360),
+            BigDecimal.valueOf(6360), BigDecimal.valueOf(6360)),
+        // creating two day time entry
+        Arguments.of(TIME_ENTRY_ID,
+            LocalDate.of(2023, 4, 19),
+            ZonedDateTime.parse("2023-04-18T22:00:00+01:00"),
+            ZonedDateTime.parse("2023-04-19T06:00:00+01:00"),
+            BigDecimal.valueOf(6240), BigDecimal.valueOf(6720),
+            BigDecimal.valueOf(6720), BigDecimal.valueOf(6720)),
+        // creating three day time entry
+        Arguments.of(TIME_ENTRY_ID,
+            LocalDate.of(2023, 4, 20),
+            ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
+            ZonedDateTime.parse("2023-04-20T06:00:00+00:00"),
+            BigDecimal.valueOf(6240), BigDecimal.valueOf(6780),
+            BigDecimal.valueOf(7140), BigDecimal.valueOf(7140))
+    );
   }
 
   @Test
   void sendToAccruals_withValidAccruals_shouldCallPatchAccruals() {
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
+
     String tenantId = "52a8188b-d41e-6768-19e9-09938016342f";
 
     Accrual accrual1 = createAccrual(UUID.fromString("0936e7a6-2b2e-1696-2546-5dd25dcae6a0"));
@@ -126,6 +166,10 @@ class BalanceCalculatorCreateActionTest {
                                                         BigDecimal expectedCumulativeTotal3,
                                                         BigDecimal expectedCumulativeTotal4)
       throws IOException {
+
+    accrualModules = List.of(new AnnualTargetHoursAccrualModule());
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
 
     TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
         shiftEndTime);
@@ -160,8 +204,60 @@ class BalanceCalculatorCreateActionTest {
         .isEqualTo(expectedCumulativeTotal4);
   }
 
+  @ParameterizedTest
+  @MethodSource("nightHoursTestData")
+  void calculate_nightHours_returnUpdatedAccruals(String timeEntryId,
+                                                        LocalDate referenceDate,
+                                                        ZonedDateTime shiftStartTime,
+                                                        ZonedDateTime shiftEndTime,
+                                                        BigDecimal expectedCumulativeTotal1,
+                                                        BigDecimal expectedCumulativeTotal2,
+                                                        BigDecimal expectedCumulativeTotal3,
+                                                        BigDecimal expectedCumulativeTotal4)
+      throws IOException {
+
+    accrualModules = List.of(new NightHoursAccrualModule());
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
+
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
+        shiftEndTime);
+
+    String tenantId = timeEntry.getTenantId();
+
+    when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
+        .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
+
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID,
+        shiftStartTime.toLocalDate().minusDays(1),
+        AGREEMENT_END_DATE))
+        .thenReturn(loadAccrualsFromFile("data/accruals_nightHours.json"));
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
+
+    assertThat(accruals).hasSize(4);
+    assertThat(accruals.get(0).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal1);
+
+    assertThat(accruals.get(1).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal2);
+
+    assertThat(accruals.get(2).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal3);
+
+    assertThat(accruals.get(3).getCumulativeTotal()).usingComparator(
+            BigDecimal::compareTo)
+        .isEqualTo(expectedCumulativeTotal4);
+  }
+
   @Test
   void calculate_noAgreementFound_logWarningAndReturnEmptyList(CapturedOutput capturedOutput) {
+
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
 
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
@@ -180,7 +276,41 @@ class BalanceCalculatorCreateActionTest {
   }
 
   @Test
+  void calculate_missingAccruals_logWarningAndReturnEmptyList(CapturedOutput capturedOutput)
+      throws IOException {
+
+    accrualModules = List.of(new AnnualTargetHoursAccrualModule());
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
+
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
+        SHIFT_END_TIME);
+
+    Agreement agreement = mock(Agreement.class);
+    when(agreement.getStartDate()).thenReturn(AGREEMENT_START_DATE);
+    when(agreement.getEndDate()).thenReturn(AGREEMENT_END_DATE);
+    when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
+        .thenReturn(agreement);
+
+    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), PERSON_ID,
+        ACCRUAL_DATE.minusDays(1), agreement.getEndDate()))
+        .thenReturn(loadAccrualsFromFile("data/accruals_nightHours.json"));
+
+    List<Accrual> result = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
+
+    assertThat(result).isEmpty();
+
+    assertThat(capturedOutput.getOut()).contains("WARN");
+    assertThat(capturedOutput.getOut()).contains(
+        MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE, AccrualType.ANNUAL_TARGET_HOURS, AGREEMENT_START_DATE, AGREEMENT_END_DATE)
+    );
+  }
+
+  @Test
   void calculate_noAccrualsFound_logWarningAndReturnEmptyList(CapturedOutput capturedOutput) {
+
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
 
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
@@ -209,6 +339,11 @@ class BalanceCalculatorCreateActionTest {
   @Test
   void calculate_noAccrualFoundForReferenceDate_logErrorAndReturnEmptyList(
       CapturedOutput capturedOutput) {
+
+    accrualModules = List.of(new AnnualTargetHoursAccrualModule());
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
+
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
 
@@ -244,6 +379,10 @@ class BalanceCalculatorCreateActionTest {
 
   @Test
   void map_listOfAccruals_mappedByAccrualTypeAndDate() throws IOException {
+
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
+
     List<Accrual> accruals = loadAccrualsFromFile("data/accruals_convertToMap.json");
 
     Map<AccrualType, SortedMap<LocalDate, Accrual>> map =
