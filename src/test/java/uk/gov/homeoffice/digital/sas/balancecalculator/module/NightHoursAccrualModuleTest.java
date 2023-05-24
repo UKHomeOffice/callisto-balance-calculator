@@ -19,7 +19,6 @@ class NightHoursAccrualModuleTest {
   private final NightHoursAccrualModule module = new NightHoursAccrualModule();
 
   private static Stream<Arguments> testData() {
-    // TODO: add multi-day time entry
     return Stream.of(
         // Outside night hours
         Arguments.of(createTimeEntry(ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
@@ -77,7 +76,22 @@ class NightHoursAccrualModuleTest {
             new TreeMap<LocalDate, BigDecimal>() {{
               this.put(LocalDate.parse("2023-10-29"), BigDecimal.valueOf(180));
             }}
-        )
+        ),
+        // two day time entry
+        Arguments.of(createTimeEntry(ZonedDateTime.parse("2023-11-01T20:00:00+00:00"),
+                ZonedDateTime.parse("2023-11-02T10:00:00+00:00")),
+            new TreeMap<LocalDate, BigDecimal>() {{
+              this.put(LocalDate.parse("2023-11-01"), BigDecimal.valueOf(60));
+              this.put(LocalDate.parse("2023-11-02"), BigDecimal.valueOf(360));
+            }}),
+        // three day time entry
+        Arguments.of(createTimeEntry(ZonedDateTime.parse("2023-11-01T20:00:00+00:00"),
+                ZonedDateTime.parse("2023-11-03T10:00:00+00:00")),
+            new TreeMap<LocalDate, BigDecimal>() {{
+              this.put(LocalDate.parse("2023-11-01"), BigDecimal.valueOf(60));
+              this.put(LocalDate.parse("2023-11-02"), BigDecimal.valueOf(420));
+              this.put(LocalDate.parse("2023-11-03"), BigDecimal.valueOf(360));
+            }})
     );
   }
 

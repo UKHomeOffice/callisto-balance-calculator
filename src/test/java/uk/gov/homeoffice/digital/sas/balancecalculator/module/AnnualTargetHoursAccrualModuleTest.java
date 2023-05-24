@@ -18,7 +18,6 @@ class AnnualTargetHoursAccrualModuleTest {
 
   private final AnnualTargetHoursAccrualModule module = new AnnualTargetHoursAccrualModule();
 
-  // TODO: add multi-day time entry
   private static Stream<Arguments> testData() {
     return Stream.of(
         // Daylight saving switch
@@ -36,6 +35,21 @@ class AnnualTargetHoursAccrualModuleTest {
                 ZonedDateTime.parse("2023-10-29T02:00:00+00:00")),
             new TreeMap<LocalDate, BigDecimal>() {{
               this.put(LocalDate.parse("2023-10-29"), BigDecimal.valueOf(180));
+            }}),
+        // two day time entry
+        Arguments.of(createTimeEntry(ZonedDateTime.parse("2023-11-01T20:00:00+00:00"),
+                ZonedDateTime.parse("2023-11-02T10:00:00+00:00")),
+            new TreeMap<LocalDate, BigDecimal>() {{
+              this.put(LocalDate.parse("2023-11-01"), BigDecimal.valueOf(240));
+              this.put(LocalDate.parse("2023-11-02"), BigDecimal.valueOf(600));
+            }}),
+        // three day time entry
+        Arguments.of(createTimeEntry(ZonedDateTime.parse("2023-11-01T20:00:00+00:00"),
+                ZonedDateTime.parse("2023-11-03T10:00:00+00:00")),
+            new TreeMap<LocalDate, BigDecimal>() {{
+              this.put(LocalDate.parse("2023-11-01"), BigDecimal.valueOf(240));
+              this.put(LocalDate.parse("2023-11-02"), BigDecimal.valueOf(1440));
+              this.put(LocalDate.parse("2023-11-03"), BigDecimal.valueOf(600));
             }})
     );
   }
