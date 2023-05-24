@@ -16,10 +16,11 @@ import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 @SpringBootTest
 @AutoConfigureWireMock(port = 9999)
-class BalanceCalculatorIntegrationTest {
+class BalanceCalculatorCreateActionIntegrationTest {
 
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String TENANT_ID = "52a8188b-d41e-6768-19e9-09938016342f";
@@ -44,7 +45,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(8);
 
@@ -73,7 +74,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(8);
 
@@ -102,7 +103,7 @@ class BalanceCalculatorIntegrationTest {
         startTime,
         finishTime);
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
     assertThat(accruals).hasSize(6);
 

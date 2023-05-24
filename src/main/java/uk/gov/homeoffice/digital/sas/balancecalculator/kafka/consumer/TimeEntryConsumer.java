@@ -45,8 +45,8 @@ public class TimeEntryConsumer {
   }
 
   @KafkaListener(topics = {"${spring.kafka.template.default-topic}"},
-                groupId = "${spring.kafka.consumer.group-id}",
-                errorHandler = "kafkaConsumerErrorHandler")
+                 groupId = "${spring.kafka.consumer.group-id}",
+                 errorHandler = "kafkaConsumerErrorHandler")
   public void onMessage(@Payload String payload) throws JsonProcessingException {
 
     if (kafkaConsumerService.isResourceOfType(payload, TimeEntry.class)) {
@@ -57,8 +57,11 @@ public class TimeEntryConsumer {
         TimeEntry timeEntry = createTimeEntryFromKafkaEventMessage(kafkaEventMessage, payload);
         log.info(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION, payload));
 
-        List<Accrual> accrualsToBatchUpdate = balanceCalculator.calculate(timeEntry);
-        balanceCalculator.sendToAccruals(timeEntry.getTenantId(), accrualsToBatchUpdate);
+        List<Accrual> accrualsToBatchUpdate =
+            balanceCalculator.calculate(timeEntry, kafkaEventMessage.getAction());
+        if (!accrualsToBatchUpdate.isEmpty()) {
+          balanceCalculator.sendToAccruals(timeEntry.getTenantId(), accrualsToBatchUpdate);
+        }
       }
 
       // TODO What should we do with Kafka offset when errors are thrown during balance calculation?

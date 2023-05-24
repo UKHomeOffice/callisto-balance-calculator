@@ -42,6 +42,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 import uk.gov.homeoffice.digital.sas.kafka.exceptions.KafkaConsumerException;
+import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
 @SpringBootTest
 @ExtendWith({OutputCaptureExtension.class})
@@ -50,6 +51,9 @@ class TimeEntryConsumerTest {
 
   @Captor
   private ArgumentCaptor<TimeEntry> timeEntryCaptor;
+
+  @Captor
+  private ArgumentCaptor<KafkaAction> kafkaActionArgumentCaptor;
 
   @Captor
   private ArgumentCaptor<String> tenantIdCaptor;
@@ -83,14 +87,15 @@ class TimeEntryConsumerTest {
     accrualList.add(accrual2);
 
     //when
-    when(balanceCalculator.calculate(timeEntryCaptor.capture())).thenReturn(accrualList);
+    when(balanceCalculator.calculate(timeEntryCaptor.capture(), kafkaActionArgumentCaptor.capture())).thenReturn(accrualList);
     timeEntryConsumer.onMessage(message);
 
     // then
     assertThat(capturedOutput.getOut()).contains(String.format(KAFKA_SUCCESSFUL_DESERIALIZATION,
         message));
-    verify(balanceCalculator).calculate(timeEntryCaptor.capture());
+    verify(balanceCalculator).calculate(timeEntryCaptor.capture(), kafkaActionArgumentCaptor.capture());
     assertThat(timeEntryCaptor.getValue().getId()).isEqualTo(id);
+    assertThat(kafkaActionArgumentCaptor.getValue()).isEqualTo(KafkaAction.CREATE);
 
     verify(balanceCalculator).sendToAccruals(tenantIdCaptor.capture(), accrualsCaptor.capture());
     assertThat(tenantIdCaptor.getValue()).isEqualTo(VALID_TENANT_ID);

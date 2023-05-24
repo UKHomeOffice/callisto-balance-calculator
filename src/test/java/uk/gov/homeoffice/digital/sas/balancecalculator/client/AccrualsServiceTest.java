@@ -37,7 +37,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 
 @ExtendWith(MockitoExtension.class)
-class RestClientTest {
+class AccrualsServiceTest {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -53,15 +53,15 @@ class RestClientTest {
   @Mock
   RestTemplate restTemplate;
 
-  private RestClient restClient;
+  private AccrualsService accrualsService;
 
   @BeforeEach
   void setup() {
-    restClient = new RestClient();
-    ReflectionTestUtils.setField(restClient, "restTemplate", restTemplate);
-    ReflectionTestUtils.setField(restClient, "accrualsNoFilterUrl", "accruals/");
-    ReflectionTestUtils.setField(restClient, "accrualsFilterUrl", "accruals/");
-    ReflectionTestUtils.setField(restClient, "agreementsByIdUrl", "agreements/");
+    accrualsService = new AccrualsService();
+    ReflectionTestUtils.setField(accrualsService, "restTemplate", restTemplate);
+    ReflectionTestUtils.setField(accrualsService, "accrualsNoFilterUrl", "accruals/");
+    ReflectionTestUtils.setField(accrualsService, "accrualsFilterUrl", "accruals/");
+    ReflectionTestUtils.setField(accrualsService, "agreementsByIdUrl", "agreements/");
   }
 
   @Test
@@ -80,7 +80,7 @@ class RestClientTest {
     when(emptyAccrualResponse.getItems()).thenReturn(List.of());
 
     Agreement applicableAgreement =
-        restClient.getApplicableAgreement(tenantId, personId, accrualDate);
+        accrualsService.getApplicableAgreement(tenantId, personId, accrualDate);
 
     assertThat(applicableAgreement).isNull();
   }
@@ -99,7 +99,7 @@ class RestClientTest {
 
     when(emptyAgreementResponse.getItems()).thenReturn(List.of());
 
-    Agreement agreement = restClient.getAgreementById(tenantId, agreementId);
+    Agreement agreement = accrualsService.getAgreementById(tenantId, agreementId);
 
     assertThat(agreement).isNull();
   }
@@ -131,7 +131,7 @@ class RestClientTest {
         Mockito.<Map<String, ?>>any()))
         .thenReturn(new ResponseEntity<>(apiResponse, HttpStatus.OK));
 
-    restClient.patchAccruals(tenantId, accrualList);
+    accrualsService.updateAccruals(tenantId, accrualList);
 
     verify(restTemplate).exchange(any(String.class), eq(HttpMethod.PATCH), patchBodyListCaptor.capture(),
         Mockito.<ParameterizedTypeReference<ApiResponse<Accrual>>>any(),

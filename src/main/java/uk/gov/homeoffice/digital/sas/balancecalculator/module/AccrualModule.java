@@ -1,9 +1,11 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.module;
 
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
+import java.time.LocalDate;
+import java.util.SortedMap;
 import lombok.Getter;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 @Getter
 public abstract class AccrualModule {
@@ -14,7 +16,6 @@ public abstract class AccrualModule {
     this.accrualType = accrualType;
   }
 
-  public abstract BigDecimal calculateShiftContribution(ZonedDateTime startTime,
-                                                        ZonedDateTime endTime);
+  public abstract SortedMap<LocalDate, BigDecimal> getContributions(TimeEntry timeEntry);
 
 }

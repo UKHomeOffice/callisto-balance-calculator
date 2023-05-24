@@ -2,8 +2,10 @@ package uk.gov.homeoffice.digital.sas.balancecalculator.testutils;
 
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.EMPTY_STRING;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_PERSON_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_START_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TENANT_ID;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_ENTRY_ID;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_TIME_PERIOD_TYPE_ID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -14,15 +16,21 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.UUID;
-import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.util.ResourceUtils;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class CommonUtils {
 
   private static final ObjectMapper mapper = new ObjectMapper();
+
+  public static TimeEntry createTimeEntry(ZonedDateTime startTime,
+                                          ZonedDateTime finishTime) {
+    return createTimeEntry(VALID_TIME_ENTRY_ID, VALID_TENANT_ID, VALID_PERSON_ID,
+        startTime, finishTime);
+  }
 
   public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,
                                           ZonedDateTime finishTime) {
