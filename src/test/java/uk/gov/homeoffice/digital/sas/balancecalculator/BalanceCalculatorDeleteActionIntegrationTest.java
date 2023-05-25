@@ -1,6 +1,8 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.ANNUAL_TARGET_HOURS;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.NIGHT_HOURS;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 import java.math.BigDecimal;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
@@ -26,10 +29,10 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   private BalanceCalculator balanceCalculator;
 
   @Test
-  void calculate_deleteTimeEntryOneDay_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_deleteAnnualTargetHoursOneDayTimeEntry_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T10:00:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T12:00+00:00");
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T05:00:00+00:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T07:00+00:00");
 
     TimeEntry timeEntry = createTimeEntry("85cd140e-9eeb-4771-ab6c-6dea17fcfcba",
         TENANT_ID,
@@ -41,18 +44,39 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     assertThat(accruals).hasSize(8);
 
-    // Annual Target Hours
-    assertTotals(accruals.get(0), 480, 6960);
-    assertTotals(accruals.get(1), 240, 7200);
-    assertTotals(accruals.get(2), 720, 7920);
-    assertTotals(accruals.get(3), 120, 8040);
+    assertTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 480, 6960);
+    assertTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 240, 7200);
+    assertTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 720, 7920);
+    assertTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 120, 8040);
   }
 
   @Test
-  void calculate_deleteTimeEntryTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_deleteNightHoursOneDayTimeEntry_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T05:00:00+00:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T07:00+00:00");
+
+    TimeEntry timeEntry = createTimeEntry("85cd140e-9eeb-4771-ab6c-6dea17fcfcba",
+        TENANT_ID,
+        PERSON_ID,
+        startTime,
+        finishTime);
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
+
+    assertThat(accruals).hasSize(8);
+
+    assertTotals(accruals.get(4), NIGHT_HOURS, 0, 1000);
+    assertTotals(accruals.get(5), NIGHT_HOURS, 60, 1060);
+    assertTotals(accruals.get(6), NIGHT_HOURS, 0, 1060);
+    assertTotals(accruals.get(7), NIGHT_HOURS, 0, 1060);
+  }
+
+  @Test
+  void calculate_deleteAnnualTargetHoursTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T23:00:00+01:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T07:00:00+01:00");
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
@@ -64,15 +88,37 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     assertThat(accruals).hasSize(6);
 
-    // Annual Target Hours
-    assertTotals(accruals.get(0), 0, 8040);
-    assertTotals(accruals.get(1), 120, 8160);
-    assertTotals(accruals.get(2), 300, 8460);
+    assertTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 0, 8040);
+    assertTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 120, 8160);
+    assertTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 300, 8460);
+  }
+
+  @Test
+  void calculate_deleteNightHoursTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T23:00:00+01:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T07:00:00+01:00");
+
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        startTime,
+        finishTime);
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
+
+    assertThat(accruals).hasSize(6);
+
+    assertTotals(accruals.get(3), NIGHT_HOURS, 0, 1000);
+    assertTotals(accruals.get(4), NIGHT_HOURS, 60, 1060);
+    assertTotals(accruals.get(5), NIGHT_HOURS, 120, 1180);
   }
 
   private void assertTotals(Accrual accrual,
+                            AccrualType expectedAccrualType,
                             int expectedContributionTotal,
                             int expectedCumulativeTotal) {
+    assertThat(accrual.getAccrualType()).isEqualTo(expectedAccrualType);
     assertThat(accrual.getContributions().getTotal())
         .usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(expectedContributionTotal));
