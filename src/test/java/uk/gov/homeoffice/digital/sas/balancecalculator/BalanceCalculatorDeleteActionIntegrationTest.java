@@ -28,8 +28,8 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   @Test
   void calculate_deleteTimeEntryOneDay_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T10:00:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T12:00+00:00");
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T05:00:00+00:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T07:00+00:00");
 
     TimeEntry timeEntry = createTimeEntry("85cd140e-9eeb-4771-ab6c-6dea17fcfcba",
         TENANT_ID,
@@ -46,13 +46,19 @@ class BalanceCalculatorDeleteActionIntegrationTest {
     assertTotals(accruals.get(1), 240, 7200);
     assertTotals(accruals.get(2), 720, 7920);
     assertTotals(accruals.get(3), 120, 8040);
+
+    // Night Hours
+    assertTotals(accruals.get(4), 0, 1000);
+    assertTotals(accruals.get(5), 0, 1000);
+    assertTotals(accruals.get(6), 0, 1000);
+    assertTotals(accruals.get(7), 0, 1000);
   }
 
   @Test
   void calculate_deleteTimeEntryTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T06:00:00+00:00");
+    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T23:00:00+01:00");
+    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T07:00:00+01:00");
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
@@ -68,6 +74,11 @@ class BalanceCalculatorDeleteActionIntegrationTest {
     assertTotals(accruals.get(0), 0, 8040);
     assertTotals(accruals.get(1), 120, 8160);
     assertTotals(accruals.get(2), 300, 8460);
+
+    // Night Hours
+    assertTotals(accruals.get(3), 0, 1000);
+    assertTotals(accruals.get(4), 0, 1000);
+    assertTotals(accruals.get(5), 0, 1000);
   }
 
   private void assertTotals(Accrual accrual,

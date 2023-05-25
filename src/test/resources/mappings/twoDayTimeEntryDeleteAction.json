@@ -150,10 +150,12 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-22",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1000,
+              "cumulativeTotal": 1060,
               "cumulativeTarget": 1100,
               "contributions": {
-                "timeEntries": {},
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 60
+                },
                 "total": 0
               }
             },
@@ -164,10 +166,12 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-23",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1000,
+              "cumulativeTotal": 1420,
               "cumulativeTarget": 1200,
               "contributions": {
-                "timeEntries": {},
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 360
+                },
                 "total": 0
               }
             },
@@ -178,7 +182,7 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-24",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1000,
+              "cumulativeTotal": 1420,
               "cumulativeTarget": 1300,
               "contributions": {
                 "timeEntries": {},
