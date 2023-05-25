@@ -24,11 +24,11 @@ services:
     environment:
       HOME: /Users/1000
       MAVEN_USER_HOME: /Users/1000/.m2
-      KEYSTORE_LOCATION: file://keystore/kafka/kafka.keystore.jks
+      KEYSTORE_LOCATION: file://keystore/balance-calculator/balance-calculator.keystore.jks
       KEYSTORE_PASSWORD: changeit
       ACCRUALS_URL: "http://callisto-accruals-restapi:9090"
       SPRING_APPLICATION_JSON: '{
-          "spring.kafka.ssl.trust-store-location": "file://keystore/kafka/kafka.truststore.jks",
+          "spring.kafka.ssl.trust-store-location": "file://keystore/balance-calculator/balance-calculator.truststore.jks",
           "spring.kafka.ssl.trust-store-password": "changeit"
         }'
     networks:
