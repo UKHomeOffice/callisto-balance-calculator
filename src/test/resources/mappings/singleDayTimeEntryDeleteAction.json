@@ -187,11 +187,13 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-10-31",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1060,
+              "cumulativeTotal": 1120,
               "cumulativeTarget": 1200,
               "contributions": {
-                "timeEntries": {},
-                "total": 0.00
+                "timeEntries": {
+                  "4de36a99-b115-4151-be34-fd5dc9695d42": 60
+                },
+                "total": 60.00
               }
             },
             {
@@ -201,7 +203,7 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-11-01",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1060,
+              "cumulativeTotal": 1120,
               "cumulativeTarget": 1300,
               "contributions": {
                 "timeEntries": {},
@@ -215,7 +217,7 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-11-02",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1060,
+              "cumulativeTotal": 1120,
               "cumulativeTarget": 1400,
               "contributions": {
                 "timeEntries": {},

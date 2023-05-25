@@ -49,9 +49,9 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     // Night Hours
     assertTotals(accruals.get(4), 0, 1000);
-    assertTotals(accruals.get(5), 0, 1000);
-    assertTotals(accruals.get(6), 0, 1000);
-    assertTotals(accruals.get(7), 0, 1000);
+    assertTotals(accruals.get(5), 60, 1060);
+    assertTotals(accruals.get(6), 0, 1060);
+    assertTotals(accruals.get(7), 0, 1060);
   }
 
   @Test
@@ -77,8 +77,8 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     // Night Hours
     assertTotals(accruals.get(3), 0, 1000);
-    assertTotals(accruals.get(4), 0, 1000);
-    assertTotals(accruals.get(5), 0, 1000);
+    assertTotals(accruals.get(4), 60, 1060);
+    assertTotals(accruals.get(5), 120, 1180);
   }
 
   private void assertTotals(Accrual accrual,

@@ -156,7 +156,7 @@
                 "timeEntries": {
                   "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 60
                 },
-                "total": 0
+                "total": 60
               }
             },
             {
@@ -166,13 +166,14 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-23",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1420,
+              "cumulativeTotal": 1480,
               "cumulativeTarget": 1200,
               "contributions": {
                 "timeEntries": {
-                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 360
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 360,
+                  "85b2e556-b768-4276-b509-35ca17d22858": 60
                 },
-                "total": 0
+                "total": 420
               }
             },
             {
@@ -182,11 +183,13 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-24",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1420,
+              "cumulativeTotal": 1600,
               "cumulativeTarget": 1300,
               "contributions": {
-                "timeEntries": {},
-                "total": 0
+                "timeEntries": {
+                  "1cd996ca-9b40-495a-8dfb-29d10206958f": 120
+                },
+                "total": 120
               }
             }
           ]
