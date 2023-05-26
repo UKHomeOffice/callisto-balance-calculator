@@ -6,7 +6,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enu
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,14 +30,11 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   @Test
   void calculate_deleteAnnualTargetHoursOneDayTimeEntry_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T05:00:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T07:00+00:00");
-
     TimeEntry timeEntry = createTimeEntry("85cd140e-9eeb-4771-ab6c-6dea17fcfcba",
         TENANT_ID,
         PERSON_ID,
-        startTime,
-        finishTime);
+        "2023-10-30T05:00:00+00:00",
+        "2023-10-30T07:00+00:00");
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 
@@ -53,14 +49,11 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   @Test
   void calculate_deleteNightHoursOneDayTimeEntry_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-30T05:00:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-30T07:00+00:00");
-
     TimeEntry timeEntry = createTimeEntry("85cd140e-9eeb-4771-ab6c-6dea17fcfcba",
         TENANT_ID,
         PERSON_ID,
-        startTime,
-        finishTime);
+        "2023-10-30T05:00:00+00:00",
+        "2023-10-30T07:00+00:00");
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 
@@ -75,14 +68,11 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   @Test
   void calculate_deleteAnnualTargetHoursTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T23:00:00+01:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T07:00:00+01:00");
-
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
         PERSON_ID,
-        startTime,
-        finishTime);
+        "2023-04-22T23:00:00+01:00",
+        "2023-04-23T07:00:00+01:00");
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 
@@ -96,14 +86,11 @@ class BalanceCalculatorDeleteActionIntegrationTest {
   @Test
   void calculate_deleteNightHoursTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T23:00:00+01:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T07:00:00+01:00");
-
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
         PERSON_ID,
-        startTime,
-        finishTime);
+        "2023-04-22T23:00:00+01:00",
+        "2023-04-23T07:00:00+01:00");
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
 

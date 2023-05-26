@@ -50,12 +50,11 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BalanceCalculatorCreateActionTest {
 
-  private static final ZonedDateTime SHIFT_START_TIME =
-      ZonedDateTime.parse("2023-04-18T08:00:00+00:00");
-  private static final ZonedDateTime SHIFT_END_TIME =
-      ZonedDateTime.parse("2023-04-18T10:00:00+00:00");
+  private static final String SHIFT_START_TIME = "2023-04-18T08:00:00+00:00";
+  private static final String SHIFT_END_TIME = "2023-04-18T10:00:00+00:00";
 
-  private static final LocalDate ACCRUAL_DATE = SHIFT_START_TIME.toLocalDate();
+  private static final LocalDate ACCRUAL_DATE =
+      LocalDate.from(ZonedDateTime.parse(SHIFT_START_TIME));
   private static final String TIME_ENTRY_ID = "7f000001-879e-1b02-8187-9ef1640f0003";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
   private static final LocalDate AGREEMENT_START_DATE = LocalDate.of(2023, 4, 1);
@@ -73,29 +72,29 @@ class BalanceCalculatorCreateActionTest {
         // creating one day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 18),
-            ZonedDateTime.parse("2023-04-18T08:00:00+00:00"),
-            ZonedDateTime.parse("2023-04-18T10:00:00+00:00"),
+            "2023-04-18T08:00:00+00:00",
+            "2023-04-18T10:00:00+00:00",
             BigDecimal.valueOf(6600), BigDecimal.valueOf(7200),
             BigDecimal.valueOf(7440), BigDecimal.valueOf(8160)),
         // updating one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             LocalDate.of(2023, 4, 18),
-            ZonedDateTime.parse("2023-04-18T14:00:00+00:00"),
-            ZonedDateTime.parse("2023-04-18T14:30:00+00:00"),
+            "2023-04-18T14:00:00+00:00",
+            "2023-04-18T14:30:00+00:00",
             BigDecimal.valueOf(6150), BigDecimal.valueOf(6750),
             BigDecimal.valueOf(6990), BigDecimal.valueOf(7710)),
         // creating two day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
             LocalDate.of(2023, 4, 19),
-            ZonedDateTime.parse("2023-04-18T22:00:00+00:00"),
-            ZonedDateTime.parse("2023-04-19T06:00:00+00:00"),
+            "2023-04-18T22:00:00+00:00",
+            "2023-04-19T06:00:00+00:00",
             BigDecimal.valueOf(6540), BigDecimal.valueOf(7560),
             BigDecimal.valueOf(7800), BigDecimal.valueOf(8520)),
         // creating three day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0013",
             LocalDate.of(2023, 4, 20),
-            ZonedDateTime.parse("2023-04-18T21:00:00+00:00"),
-            ZonedDateTime.parse("2023-04-20T06:00:00+00:00"),
+            "2023-04-18T21:00:00+00:00",
+            "2023-04-20T06:00:00+00:00",
             BigDecimal.valueOf(6600), BigDecimal.valueOf(8640),
             BigDecimal.valueOf(9300), BigDecimal.valueOf(10020))
     );
@@ -106,36 +105,36 @@ class BalanceCalculatorCreateActionTest {
         // outside night hours
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 18),
-            ZonedDateTime.parse("2023-04-18T08:00:00+01:00"),
-            ZonedDateTime.parse("2023-04-18T10:00:00+01:00"),
+            "2023-04-18T08:00:00+01:00",
+            "2023-04-18T10:00:00+01:00",
             BigDecimal.valueOf(6180), BigDecimal.valueOf(6300),
             BigDecimal.valueOf(6300), BigDecimal.valueOf(6300)),
         // creating one day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 18),
-            ZonedDateTime.parse("2023-04-18T00:00:00+01:00"),
-            ZonedDateTime.parse("2023-04-18T03:00:00+01:00"),
+            "2023-04-18T00:00:00+01:00",
+            "2023-04-18T03:00:00+01:00",
             BigDecimal.valueOf(6360), BigDecimal.valueOf(6480),
             BigDecimal.valueOf(6480), BigDecimal.valueOf(6480)),
         // updating one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             LocalDate.of(2023, 4, 18),
-            ZonedDateTime.parse("2023-04-18T01:00:00+01:00"),
-            ZonedDateTime.parse("2023-04-18T05:00:00+01:00"),
+            "2023-04-18T01:00:00+01:00",
+            "2023-04-18T05:00:00+01:00",
             BigDecimal.valueOf(6240), BigDecimal.valueOf(6360),
             BigDecimal.valueOf(6360), BigDecimal.valueOf(6360)),
         // creating two day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 19),
-            ZonedDateTime.parse("2023-04-18T22:00:00+01:00"),
-            ZonedDateTime.parse("2023-04-19T06:00:00+01:00"),
+            "2023-04-18T22:00:00+01:00",
+            "2023-04-19T06:00:00+01:00",
             BigDecimal.valueOf(6240), BigDecimal.valueOf(6720),
             BigDecimal.valueOf(6720), BigDecimal.valueOf(6720)),
         // creating three day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 20),
-            ZonedDateTime.parse("2023-04-18T22:00:00+01:00"),
-            ZonedDateTime.parse("2023-04-20T07:00:00+01:00"),
+            "2023-04-18T22:00:00+01:00",
+            "2023-04-20T07:00:00+01:00",
             BigDecimal.valueOf(6240), BigDecimal.valueOf(6780),
             BigDecimal.valueOf(7140), BigDecimal.valueOf(7140))
     );
@@ -161,8 +160,8 @@ class BalanceCalculatorCreateActionTest {
   @MethodSource("annualTargetHoursTestData")
   void calculate_annualTargetHours_returnUpdateAccruals(String timeEntryId,
                                                         LocalDate referenceDate,
-                                                        ZonedDateTime shiftStartTime,
-                                                        ZonedDateTime shiftEndTime,
+                                                        String shiftStartTime,
+                                                        String shiftEndTime,
                                                         BigDecimal expectedCumulativeTotal1,
                                                         BigDecimal expectedCumulativeTotal2,
                                                         BigDecimal expectedCumulativeTotal3,
@@ -182,7 +181,7 @@ class BalanceCalculatorCreateActionTest {
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
     when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID,
-        shiftStartTime.toLocalDate().minusDays(1),
+        ACCRUAL_DATE.minusDays(1),
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
@@ -200,8 +199,8 @@ class BalanceCalculatorCreateActionTest {
   @MethodSource("nightHoursTestData")
   void calculate_nightHours_returnUpdatedAccruals(String timeEntryId,
                                                   LocalDate referenceDate,
-                                                  ZonedDateTime shiftStartTime,
-                                                  ZonedDateTime shiftEndTime,
+                                                  String shiftStartTime,
+                                                  String shiftEndTime,
                                                   BigDecimal expectedCumulativeTotal1,
                                                   BigDecimal expectedCumulativeTotal2,
                                                   BigDecimal expectedCumulativeTotal3,
@@ -221,7 +220,7 @@ class BalanceCalculatorCreateActionTest {
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
     when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID,
-        shiftStartTime.toLocalDate().minusDays(1),
+        ACCRUAL_DATE.minusDays(1),
         AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_nightHours.json"));
 

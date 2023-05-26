@@ -73,8 +73,8 @@ class KafkaConsumerIntegrationTest {
     // Given
 
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
-        SHIFT_START_TIME,
-        SHIFT_END_TIME);
+        SHIFT_START_TIME.toString(),
+        SHIFT_END_TIME.toString());
     kafkaEventMessage = new KafkaEventMessage<>(MESSAGE_VALID_VERSION, timeEntry,
         KafkaAction.CREATE);
 
@@ -96,8 +96,8 @@ class KafkaConsumerIntegrationTest {
   void should_throwException_when_versionInvalid() throws JsonProcessingException {
     // Given
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
-        SHIFT_START_TIME,
-        SHIFT_END_TIME);
+        SHIFT_START_TIME.toString(),
+        SHIFT_END_TIME.toString());
 
     String message = createKafkaMessage(VALID_RESOURCE_SCHEMA, MESSAGE_INVALID_VERSION
         , TIME_ENTRY_ID, OWNER_ID);
@@ -121,8 +121,8 @@ class KafkaConsumerIntegrationTest {
   void should_throwException_when_resourceInvalid() throws JsonProcessingException {
     // Given
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, OWNER_ID,
-        SHIFT_START_TIME,
-        SHIFT_END_TIME);
+        SHIFT_START_TIME.toString(),
+        SHIFT_END_TIME.toString());
 
     String message = createKafkaMessage(INVALID_RESOURCE_SCHEMA, MESSAGE_VALID_VERSION
         , TIME_ENTRY_ID, OWNER_ID);

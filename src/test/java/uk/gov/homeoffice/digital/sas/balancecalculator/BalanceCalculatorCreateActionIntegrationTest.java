@@ -6,7 +6,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enu
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 import java.math.BigDecimal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,14 +35,11 @@ class BalanceCalculatorCreateActionIntegrationTest {
   @Test
   void calculate_endToEndInGmtToBst_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-03-26T00:59:00+00:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-03-26T03:59:00+01:00");
-
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
         PERSON_ID,
-        startTime,
-        finishTime);
+        "2023-03-26T00:59:00+00:00",
+        "2023-03-26T03:59:00+01:00");
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
@@ -65,14 +61,11 @@ class BalanceCalculatorCreateActionIntegrationTest {
   @Test
   void calculate_endToEndInBstToGmt_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-10-29T01:59:00+01:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-10-29T02:59:00+00:00");
-
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
         PERSON_ID,
-        startTime,
-        finishTime);
+        "2023-10-29T01:59:00+01:00",
+        "2023-10-29T02:59:00+00:00");
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
@@ -94,14 +87,11 @@ class BalanceCalculatorCreateActionIntegrationTest {
   @Test
   void calculate_timeEntryHasTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
-    ZonedDateTime startTime = ZonedDateTime.parse("2023-04-22T22:00:00+01:00");
-    ZonedDateTime finishTime = ZonedDateTime.parse("2023-04-23T07:00:00+01:00");
-
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
         PERSON_ID,
-        startTime,
-        finishTime);
+        "2023-04-22T22:00:00+01:00",
+        "2023-04-23T07:00:00+01:00");
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
 
