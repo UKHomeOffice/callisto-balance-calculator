@@ -33,7 +33,7 @@ class BalanceCalculatorCreateActionIntegrationTest {
   }
 
   @Test
-  void calculate_endToEndInGmtToBst_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_annualTargetHoursGmtToBst_contributionsAndCumulativeTotalsAsExpected() {
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
@@ -45,13 +45,25 @@ class BalanceCalculatorCreateActionIntegrationTest {
 
     assertThat(accruals).hasSize(8);
 
-    // Annual Target Hours
     assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
     assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
     assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
     assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
+  }
 
-    // Night Hours
+  @Test
+  void calculate_nightHoursGmtToBst_contributionsAndCumulativeTotalsAsExpected() {
+
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        "2023-03-26T00:59:00+00:00",
+        "2023-03-26T03:59:00+01:00");
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
+
+    assertThat(accruals).hasSize(8);
+
     assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
     assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
     assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
@@ -59,7 +71,7 @@ class BalanceCalculatorCreateActionIntegrationTest {
   }
 
   @Test
-  void calculate_endToEndInBstToGmt_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_annualTargetHoursBstToGmt_contributionsAndCumulativeTotalsAsExpected() {
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
@@ -71,13 +83,25 @@ class BalanceCalculatorCreateActionIntegrationTest {
 
     assertThat(accruals).hasSize(8);
 
-    // Annual Target Hours
     assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
     assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
     assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
     assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
+  }
 
-    // Night Hours
+  @Test
+  void calculate_nightHoursBstToGmt_contributionsAndCumulativeTotalsAsExpected() {
+
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        "2023-10-29T01:59:00+01:00",
+        "2023-10-29T02:59:00+00:00");
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
+
+    assertThat(accruals).hasSize(8);
+
     assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
     assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
     assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
@@ -85,7 +109,7 @@ class BalanceCalculatorCreateActionIntegrationTest {
   }
 
   @Test
-  void calculate_timeEntryHasTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+  void calculate_annualTargetHoursTimeEntryTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
         TENANT_ID,
@@ -97,12 +121,24 @@ class BalanceCalculatorCreateActionIntegrationTest {
 
     assertThat(accruals).hasSize(6);
 
-    // Annual Target Hours
     assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 120, 8160);
     assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 420, 8580);
     assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 0, 8580);
+  }
 
-    // Night Hours
+  @Test
+  void calculate_nightHoursTimeEntryTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        "2023-04-22T22:00:00+01:00",
+        "2023-04-23T07:00:00+01:00");
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
+
+    assertThat(accruals).hasSize(6);
+
     assertTypeAndTotals(accruals.get(3), NIGHT_HOURS, 60, 1060);
     assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 360, 1420);
     assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1540);
