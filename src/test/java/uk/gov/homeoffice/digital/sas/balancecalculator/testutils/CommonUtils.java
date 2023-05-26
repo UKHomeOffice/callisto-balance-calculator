@@ -26,19 +26,19 @@ public class CommonUtils {
 
   private static final ObjectMapper mapper = new ObjectMapper();
 
-  public static TimeEntry createTimeEntry(ZonedDateTime startTime,
-                                          ZonedDateTime finishTime) {
+  public static TimeEntry createTimeEntry(String startTime,
+                                          String finishTime) {
     return createTimeEntry(VALID_TIME_ENTRY_ID, VALID_TENANT_ID, VALID_PERSON_ID,
         startTime, finishTime);
   }
 
-  public static TimeEntry createTimeEntry(String id, String ownerId, ZonedDateTime startTime,
-                                          ZonedDateTime finishTime) {
+  public static TimeEntry createTimeEntry(String id, String ownerId, String startTime,
+                                          String finishTime) {
     return createTimeEntry(id, VALID_TENANT_ID, ownerId, startTime, finishTime);
   }
 
   public static TimeEntry createTimeEntry(String id, String tenantId, String ownerId,
-                                          ZonedDateTime startTime, ZonedDateTime finishTime) {
+                                          String startTime, String finishTime) {
 
     var timeEntry = new TimeEntry();
     timeEntry.setId(id);
@@ -46,8 +46,8 @@ public class CommonUtils {
     timeEntry.setOwnerId(ownerId);
     timeEntry.setTimePeriodTypeId(VALID_TIME_PERIOD_TYPE_ID);
     timeEntry.setShiftType(EMPTY_STRING);
-    timeEntry.setActualStartTime(startTime);
-    timeEntry.setActualEndTime(finishTime);
+    timeEntry.setActualStartTime(ZonedDateTime.parse(startTime));
+    timeEntry.setActualEndTime(ZonedDateTime.parse(finishTime));
     return timeEntry;
   }
 
