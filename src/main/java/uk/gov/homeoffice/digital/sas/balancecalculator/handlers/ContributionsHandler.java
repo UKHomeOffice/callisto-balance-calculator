@@ -9,7 +9,6 @@ import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.SortedMap;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -43,9 +42,10 @@ public class ContributionsHandler {
       AccrualType accrualType = module.getAccrualType();
       SortedMap<LocalDate, Accrual> accruals = allAccruals.get(accrualType);
 
+      LocalDate agreementStartDate = applicableAgreement.getStartDate();
       if (accruals == null) {
         log.error(MessageFormat.format(NO_ACCRUALS_FOUND_FOR_TYPE,
-            accrualType, applicableAgreement.getStartDate(), applicableAgreement.getEndDate()));
+            accrualType, agreementStartDate, applicableAgreement.getEndDate()));
         return false;
       }
 
@@ -70,7 +70,8 @@ public class ContributionsHandler {
         this.updateAccrualContribution(timeEntry.getId(), contribution, accrual, action);
       }
 
-      this.cascadeCumulativeTotal(accruals, applicableAgreement.getStartDate());
+      LocalDate priorDate = timeEntry.getActualStartTime().toLocalDate().minusDays(1);
+      this.cascadeCumulativeTotal(accruals, priorDate, agreementStartDate);
     }
     return true;
   }
@@ -91,47 +92,55 @@ public class ContributionsHandler {
   }
 
   void cascadeCumulativeTotal(SortedMap<LocalDate, Accrual> accruals,
+                              LocalDate priorDate,
                               LocalDate agreementStartDate) {
 
-    Optional<LocalDate> optional = accruals.keySet().stream().findFirst();
-    if (optional.isPresent()) {
-      LocalDate priorAccrualDate = optional.get();
-      Accrual priorAccrual = accruals.get(priorAccrualDate);
+    if (!accruals.isEmpty()) {
+      BigDecimal baseCumulativeTotal = calculateBaseCumulativeTotal(accruals, priorDate,
+          agreementStartDate);
 
-      BigDecimal baseCumulativeTotal = BigDecimal.ZERO;
-      // if prior accrual is related to the same agreement then use its cumulative total
-      // as starting point; otherwise, start at 0
-      if (isPriorAccrualRelatedToTheSameAgreement(priorAccrualDate, agreementStartDate)) {
-        baseCumulativeTotal = priorAccrual.getCumulativeTotal();
-      }
-
-      // the first element is only used to calculate base cumulative total so shouldn't be included
-      List<Accrual> accrualsFromReferenceDate = accruals.values().stream().skip(1).toList();
-      this.updateSubsequentAccruals(accrualsFromReferenceDate, baseCumulativeTotal);
+      this.updateSubsequentAccruals(accruals, priorDate, baseCumulativeTotal);
     } else {
       throw new IllegalArgumentException(ACCRUALS_MAP_EMPTY);
     }
   }
 
   private boolean isPriorAccrualRelatedToTheSameAgreement(LocalDate priorAccrualDate,
-                                                          LocalDate agreementStatDate) {
-    return !priorAccrualDate.isBefore(agreementStatDate);
+                                                          LocalDate agreementStartDate) {
+    return !priorAccrualDate.isBefore(agreementStartDate);
   }
 
-  void updateSubsequentAccruals(List<Accrual> accruals,
+  void updateSubsequentAccruals(SortedMap<LocalDate, Accrual> accruals,
+                                LocalDate priorDate,
                                 BigDecimal priorCumulativeTotal) {
 
+    accruals.remove(priorDate);
+    List<Accrual> accrualsToBeUpdated = accruals.values().stream().toList();
+
     //update the cumulative total for referenceDate
-    accruals.get(0).setCumulativeTotal(
-        priorCumulativeTotal.add(accruals.get(0).getContributions().getTotal()));
+    accrualsToBeUpdated.get(0).setCumulativeTotal(
+        priorCumulativeTotal.add(accrualsToBeUpdated.get(0).getContributions().getTotal()));
 
     //cascade through until end of agreement
-    for (int i = 1; i < accruals.size(); i++) {
+    for (int i = 1; i < accrualsToBeUpdated.size(); i++) {
       BigDecimal priorTotal =
-          accruals.get(i - 1).getCumulativeTotal();
-      Accrual currentAccrual = accruals.get(i);
+          accrualsToBeUpdated.get(i - 1).getCumulativeTotal();
+      Accrual currentAccrual = accrualsToBeUpdated.get(i);
       currentAccrual.setCumulativeTotal(
           priorTotal.add(currentAccrual.getContributions().getTotal()));
     }
+  }
+
+  BigDecimal calculateBaseCumulativeTotal(SortedMap<LocalDate, Accrual> accruals,
+                                          LocalDate priorDate, LocalDate agreementStartDate) {
+    BigDecimal baseCumulativeTotal = BigDecimal.ZERO;
+
+    Accrual priorAccrual = accruals.get(priorDate);
+
+    if (priorAccrual != null && isPriorAccrualRelatedToTheSameAgreement(priorDate,
+        agreementStartDate)) {
+      baseCumulativeTotal = priorAccrual.getCumulativeTotal();
+    }
+    return baseCumulativeTotal;
   }
 }
