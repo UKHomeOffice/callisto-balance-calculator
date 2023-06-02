@@ -100,10 +100,11 @@ class ContributionsHandlerTest {
 
     LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
     LocalDate referenceDate = LocalDate.of(2023, 4, 18);
+    LocalDate priorDate = referenceDate.minusDays(1);
 
-    contributionsHandler.cascadeCumulativeTotal(map, agreementStartDate);
+    contributionsHandler.cascadeCumulativeTotal(map, priorDate, agreementStartDate);
 
-    assertThat(map).hasSize(5);
+    assertThat(map).hasSize(4);
     assertThat(map.get(referenceDate)
         .getCumulativeTotal()).usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(6480));
@@ -125,10 +126,11 @@ class ContributionsHandlerTest {
   void cascadeCumulativeTotal_emptyMapOfAccruals_throwException() {
     SortedMap<LocalDate, Accrual> map = new TreeMap<>();
 
+    LocalDate timeEntryStartDate = LocalDate.of(2023, 4, 15);
     LocalDate agreementStartDate = LocalDate.of(2023, 4, 1);
 
     assertThatThrownBy(() ->
-        contributionsHandler.cascadeCumulativeTotal(map, agreementStartDate))
+        contributionsHandler.cascadeCumulativeTotal(map, timeEntryStartDate, agreementStartDate))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining(ACCRUALS_MAP_EMPTY);
   }

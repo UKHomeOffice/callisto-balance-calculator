@@ -195,6 +195,43 @@ class BalanceCalculatorCreateActionTest {
     assertCumulativeTotal(accruals.get(3), expectedCumulativeTotal4);
   }
 
+  @Test
+  void calculate_noPriorDateAccrual_useZeroAsBaseCumulativeTotal()
+      throws IOException {
+
+    accrualModules = List.of(new AnnualTargetHoursAccrualModule());
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    balanceCalculator = new BalanceCalculator(accrualsService, contributionsHandler);
+
+    String shiftStartTime = "2023-04-01T10:00:00+00:00";
+    String shiftEndTime = "2023-04-01T12:00:00+00:00";
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(shiftStartTime,
+        shiftEndTime);
+
+    LocalDate referenceDate = AGREEMENT_START_DATE;
+
+    String tenantId = timeEntry.getTenantId();
+    String personId = timeEntry.getOwnerId();
+
+    when(accrualsService.getApplicableAgreement(tenantId, personId, referenceDate))
+        .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
+
+    when(accrualsService.getImpactedAccruals(tenantId, personId,
+        referenceDate.minusDays(1),
+        AGREEMENT_END_DATE))
+        .thenReturn(loadAccrualsFromFile("data/accruals_noPriorDateAccrual.json"));
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
+
+    assertThat(accruals).hasSize(4);
+
+    assertAccrualDateAndCumulativeTotal(
+        accruals.get(0), "2023-04-01", new BigDecimal(600));
+    assertAccrualDateAndCumulativeTotal(accruals.get(1), "2023-04-02", new BigDecimal(1200));
+    assertAccrualDateAndCumulativeTotal(accruals.get(2), "2023-04-03", new BigDecimal(1440));
+    assertAccrualDateAndCumulativeTotal(accruals.get(3), "2023-04-04", new BigDecimal(2160));
+  }
+
   @ParameterizedTest
   @MethodSource("nightHoursTestData")
   void calculate_nightHours_returnUpdatedAccruals(String timeEntryId,
@@ -393,5 +430,9 @@ class BalanceCalculatorCreateActionTest {
         .isEqualTo(expectedCumulativeTotal);
   }
 
-
+  private void assertAccrualDateAndCumulativeTotal(Accrual accrual, String expectedAccrualDate,
+                                                BigDecimal expectedCumulativeTotal) {
+    assertCumulativeTotal(accrual, expectedCumulativeTotal);
+    assertThat(accrual.getAccrualDate()).isEqualTo(LocalDate.parse(expectedAccrualDate));
+  }
 }

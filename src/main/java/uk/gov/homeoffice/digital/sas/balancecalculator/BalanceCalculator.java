@@ -63,15 +63,15 @@ public class BalanceCalculator {
       return List.of();
     }
 
-    // Get accruals of all types between the day just before the time entry and the end date of the
+    // Get accruals of all types between the day prior to the time entry and the end date of the
     // latest applicable agreement
+    LocalDate priorDate = timeEntryStartDate.minusDays(1);
     SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
-        getImpactedAccruals(tenantId, personId,
-            timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate());
+        getImpactedAccruals(tenantId, personId, priorDate, applicableAgreement.getEndDate());
 
     if (isEmpty(allAccruals)) {
       log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId,
-          timeEntryStartDate.minusDays(1), applicableAgreement.getEndDate()));
+          priorDate, applicableAgreement.getEndDate()));
       return List.of();
     }
 
@@ -86,7 +86,7 @@ public class BalanceCalculator {
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
     for (SortedMap<LocalDate, Accrual> value : allAccruals.values()) {
-      value.remove(value.firstKey());
+      value.remove(priorDate);
     }
 
     return allAccruals.values().stream()
