@@ -116,9 +116,8 @@ class BalanceCalculatorDeleteActionTest {
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID,
-        LocalDate.from(ZonedDateTime.parse(shiftStartTime).minusDays(1)),
-        AGREEMENT_END_DATE))
+    when(accrualsService.getImpactedAccruals(tenantId, timeEntryId,
+        LocalDate.from(timeEntry.getActualStartTime()), AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHoursDeleteAction.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
@@ -155,9 +154,8 @@ class BalanceCalculatorDeleteActionTest {
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID,
-        LocalDate.from(ZonedDateTime.parse(shiftStartTime).minusDays(1)),
-        AGREEMENT_END_DATE))
+    when(accrualsService.getImpactedAccruals(tenantId, timeEntryId,
+        LocalDate.from(timeEntry.getActualStartTime()), AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_nightHoursDeleteAction.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);

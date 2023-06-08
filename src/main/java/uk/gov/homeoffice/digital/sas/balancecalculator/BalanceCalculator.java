@@ -33,7 +33,8 @@ public class BalanceCalculator {
   static final String AGREEMENT_NOT_FOUND =
       "Agreement record not found for tenantId {0}, personId {1} and date {2}";
   static final String ACCRUALS_NOT_FOUND =
-      "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
+      "No Accrual records found for tenantId {0} and timeEntryId {1} timeEntryStartDate {2} "
+          + "and agreementEndDate {3}";
 
   private final AccrualsService accrualsService;
   private final ContributionsHandler contributionsHandler;
@@ -49,6 +50,7 @@ public class BalanceCalculator {
 
     String tenantId = timeEntry.getTenantId();
     String personId = timeEntry.getOwnerId();
+    String timeEntryId = timeEntry.getId();
     ZonedDateTime timeEntryStart = timeEntry.getActualStartTime();
     ZonedDateTime timeEntryEnd = timeEntry.getActualEndTime();
     LocalDate timeEntryStartDate = timeEntryStart.toLocalDate();
@@ -67,11 +69,12 @@ public class BalanceCalculator {
     // latest applicable agreement
     LocalDate priorDate = timeEntryStartDate.minusDays(1);
     SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
-        getImpactedAccruals(tenantId, personId, priorDate, applicableAgreement.getEndDate());
+        getImpactedAccruals(tenantId, timeEntryId, timeEntryStartDate,
+            applicableAgreement.getEndDate());
 
     if (isEmpty(allAccruals)) {
-      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId,
-          priorDate, applicableAgreement.getEndDate()));
+      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, timeEntryId,
+          timeEntryStartDate, applicableAgreement.getEndDate()));
       return List.of();
     }
 
@@ -107,10 +110,11 @@ public class BalanceCalculator {
   }
 
   SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getImpactedAccruals(
-      String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
+      String tenantId, String timeEntryId,
+      LocalDate timeEntryStartDate, LocalDate agreementEndDate) {
 
-    List<Accrual> accruals = accrualsService.getImpactedAccruals(tenantId, personId,
-        startDate, endDate);
+    List<Accrual> accruals = accrualsService.getImpactedAccruals(
+        tenantId, timeEntryId, timeEntryStartDate, agreementEndDate);
 
     return map(accruals);
   }
