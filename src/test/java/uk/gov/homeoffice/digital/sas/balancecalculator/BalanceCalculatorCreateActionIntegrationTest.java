@@ -46,9 +46,9 @@ class BalanceCalculatorCreateActionIntegrationTest {
     assertThat(accruals).hasSize(8);
 
     assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
-    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
-    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
-    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 480, 7080);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7320);
+    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8040);
   }
 
   @Test
@@ -65,9 +65,9 @@ class BalanceCalculatorCreateActionIntegrationTest {
     assertThat(accruals).hasSize(8);
 
     assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
-    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
-    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
-    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1240);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 0, 1120);
+    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1120);
+    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1120);
   }
 
   @Test
@@ -84,9 +84,9 @@ class BalanceCalculatorCreateActionIntegrationTest {
     assertThat(accruals).hasSize(8);
 
     assertTypeAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 600, 6600);
-    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 600, 7200);
-    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7440);
-    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8160);
+    assertTypeAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 480, 7080);
+    assertTypeAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 240, 7320);
+    assertTypeAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 720, 8040);
   }
 
   @Test
@@ -103,9 +103,9 @@ class BalanceCalculatorCreateActionIntegrationTest {
     assertThat(accruals).hasSize(8);
 
     assertTypeAndTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
-    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 120, 1240);
-    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1240);
-    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1240);
+    assertTypeAndTotals(accruals.get(5), NIGHT_HOURS, 0, 1120);
+    assertTypeAndTotals(accruals.get(6), NIGHT_HOURS, 0, 1120);
+    assertTypeAndTotals(accruals.get(7), NIGHT_HOURS, 0, 1120);
   }
 
   @Test

@@ -87,6 +87,11 @@ public class ContributionsHandler {
       timeEntries.put(UUID.fromString(timeEntryId), shiftContribution);
     }
 
+    updateContributionsTotal(contributions);
+  }
+
+  private void updateContributionsTotal(Contributions contributions) {
+    Map<UUID, BigDecimal> timeEntries = contributions.getTimeEntries();
     BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
     contributions.setTotal(total);
   }
@@ -126,6 +131,9 @@ public class ContributionsHandler {
       BigDecimal priorTotal =
           accrualsToBeUpdated.get(i - 1).getCumulativeTotal();
       Accrual currentAccrual = accrualsToBeUpdated.get(i);
+
+      updateContributionsTotal(currentAccrual.getContributions());
+
       currentAccrual.setCumulativeTotal(
           priorTotal.add(currentAccrual.getContributions().getTotal()));
     }

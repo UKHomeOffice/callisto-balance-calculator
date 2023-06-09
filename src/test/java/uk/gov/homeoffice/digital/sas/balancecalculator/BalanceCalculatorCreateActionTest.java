@@ -77,12 +77,12 @@ class BalanceCalculatorCreateActionTest {
             BigDecimal.valueOf(6600), BigDecimal.valueOf(7200),
             BigDecimal.valueOf(7440), BigDecimal.valueOf(8160)),
         // updating one day time entry
-        Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
+        Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
             LocalDate.of(2023, 4, 18),
             "2023-04-18T14:00:00+00:00",
             "2023-04-18T14:30:00+00:00",
-            BigDecimal.valueOf(6150), BigDecimal.valueOf(6750),
-            BigDecimal.valueOf(6990), BigDecimal.valueOf(7710)),
+            BigDecimal.valueOf(6390), BigDecimal.valueOf(6990),
+            BigDecimal.valueOf(7230), BigDecimal.valueOf(7950)),
         // creating two day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
             LocalDate.of(2023, 4, 19),
