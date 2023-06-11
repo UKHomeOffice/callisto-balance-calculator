@@ -8,7 +8,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUt
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,16 +30,8 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class BalanceCalculatorUpdateActionTest {
 
-  private static final String SHIFT_START_TIME = "2023-04-18T08:00:00+00:00";
-  private static final String SHIFT_END_TIME = "2023-04-18T10:00:00+00:00";
-
-  private static final LocalDate ACCRUAL_DATE =
-      LocalDate.from(ZonedDateTime.parse(SHIFT_START_TIME));
-  private static final String TIME_ENTRY_ID = "e7d85e42-f0fb-4e2a-8211-874e27d1e888";
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
-  private static final LocalDate AGREEMENT_START_DATE = LocalDate.of(2023, 4, 1);
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
-
   private static final KafkaAction kafkaAction = KafkaAction.UPDATE;
 
   private List<AccrualModule> accrualModules;
@@ -52,15 +43,32 @@ class BalanceCalculatorUpdateActionTest {
 
   private static Stream<Arguments> annualTargetHoursTestData() {
     return Stream.of(
+        // updating one day time entry
+        Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
+            "2023-04-18T09:00:00+00:00",
+            "2023-04-18T12:00:00+00:00",
+            BigDecimal.valueOf(6540), BigDecimal.valueOf(7140),
+            BigDecimal.valueOf(7380), BigDecimal.valueOf(8100),
+            BigDecimal.valueOf(540), BigDecimal.valueOf(600),
+            BigDecimal.valueOf(240), BigDecimal.valueOf(720)),
+        // updating one day time entry to become three day time entry
+        Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
+            "2023-04-18T22:00:00+00:00",
+            "2023-04-20T02:00:00+00:00",
+            BigDecimal.valueOf(6420), BigDecimal.valueOf(8460),
+            BigDecimal.valueOf(8880), BigDecimal.valueOf(9600),
+            BigDecimal.valueOf(420), BigDecimal.valueOf(2040),
+            BigDecimal.valueOf(420), BigDecimal.valueOf(720)),
         // updating two day time entry to one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             "2023-04-18T14:00:00+00:00",
             "2023-04-18T15:00:00+00:00",
             BigDecimal.valueOf(6180), BigDecimal.valueOf(6420),
-            BigDecimal.valueOf(6660), BigDecimal.valueOf(7380))
+            BigDecimal.valueOf(6660), BigDecimal.valueOf(7380),
+            BigDecimal.valueOf(180), BigDecimal.valueOf(240),
+            BigDecimal.valueOf(240), BigDecimal.valueOf(720))
     );
   }
-
 
   @ParameterizedTest
   @MethodSource("annualTargetHoursTestData")
@@ -70,7 +78,11 @@ class BalanceCalculatorUpdateActionTest {
                                                         BigDecimal expectedCumulativeTotal1,
                                                         BigDecimal expectedCumulativeTotal2,
                                                         BigDecimal expectedCumulativeTotal3,
-                                                        BigDecimal expectedCumulativeTotal4)
+                                                        BigDecimal expectedCumulativeTotal4,
+                                                        BigDecimal expectedContributionsTotal1,
+                                                        BigDecimal expectedContributionsTotal2,
+                                                        BigDecimal expectedContributionsTotal3,
+                                                        BigDecimal expectedContributionsTotal4)
       throws IOException {
 
     accrualModules = List.of(new AnnualTargetHoursAccrualModule());
@@ -98,6 +110,17 @@ class BalanceCalculatorUpdateActionTest {
     assertCumulativeTotal(accruals.get(1), expectedCumulativeTotal2);
     assertCumulativeTotal(accruals.get(2), expectedCumulativeTotal3);
     assertCumulativeTotal(accruals.get(3), expectedCumulativeTotal4);
+
+    assertContributionsTotal(accruals.get(0), expectedContributionsTotal1);
+    assertContributionsTotal(accruals.get(1), expectedContributionsTotal2);
+    assertContributionsTotal(accruals.get(2), expectedContributionsTotal3);
+    assertContributionsTotal(accruals.get(3), expectedContributionsTotal4);
+
+  }
+
+  private void assertContributionsTotal(Accrual accrual, BigDecimal expectedContributionsTotal) {
+    assertThat(accrual.getContributions().getTotal()).usingComparator(
+        BigDecimal::compareTo).isEqualTo(expectedContributionsTotal);
   }
 
 
@@ -107,9 +130,5 @@ class BalanceCalculatorUpdateActionTest {
         .isEqualTo(expectedCumulativeTotal);
   }
 
-  private void assertAccrualDateAndCumulativeTotal(Accrual accrual, String expectedAccrualDate,
-                                                BigDecimal expectedCumulativeTotal) {
-    assertCumulativeTotal(accrual, expectedCumulativeTotal);
-    assertThat(accrual.getAccrualDate()).isEqualTo(LocalDate.parse(expectedAccrualDate));
-  }
+
 }

@@ -123,6 +123,7 @@ public class ContributionsHandler {
     List<Accrual> accrualsToBeUpdated = accruals.values().stream().toList();
 
     //update the cumulative total for referenceDate
+    updateContributionsTotal(accrualsToBeUpdated.get(0).getContributions());
     accrualsToBeUpdated.get(0).setCumulativeTotal(
         priorCumulativeTotal.add(accrualsToBeUpdated.get(0).getContributions().getTotal()));
 
