@@ -32,7 +32,6 @@ class BalanceCalculatorUpdateActionTest {
 
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
   private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
-  private static final KafkaAction kafkaAction = KafkaAction.UPDATE;
 
   private List<AccrualModule> accrualModules;
 
@@ -102,7 +101,7 @@ class BalanceCalculatorUpdateActionTest {
         timeEntry.getActualStartTime().toLocalDate(),AGREEMENT_END_DATE))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
-    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, kafkaAction);
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
 
     assertThat(accruals).hasSize(4);
 
