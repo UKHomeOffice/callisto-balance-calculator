@@ -180,8 +180,8 @@ class BalanceCalculatorCreateActionTest {
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(accrualsService.getImpactedAccruals(tenantId, timeEntryId,
-        timeEntry.getActualStartTime().toLocalDate(),AGREEMENT_END_DATE))
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID, timeEntryId,
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHours.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
@@ -215,8 +215,8 @@ class BalanceCalculatorCreateActionTest {
     when(accrualsService.getApplicableAgreement(tenantId, personId, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(accrualsService.getImpactedAccruals(tenantId, timeEntry.getId(),
-        timeEntry.getActualStartTime().toLocalDate(), AGREEMENT_END_DATE))
+    when(accrualsService.getImpactedAccruals(tenantId, personId, timeEntry.getId(),
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(loadAccrualsFromFile("data/accruals_noPriorDateAccrual.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
@@ -254,8 +254,8 @@ class BalanceCalculatorCreateActionTest {
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(accrualsService.getImpactedAccruals(tenantId, timeEntryId,
-        timeEntry.getActualStartTime().toLocalDate(),AGREEMENT_END_DATE))
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID, timeEntryId,
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(loadAccrualsFromFile("data/accruals_nightHours.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
@@ -307,8 +307,8 @@ class BalanceCalculatorCreateActionTest {
     when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
         .thenReturn(agreement);
 
-    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), timeEntry.getId(),
-        timeEntry.getActualStartTime().toLocalDate(), agreement.getEndDate()))
+    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), PERSON_ID, timeEntry.getId(),
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(loadAccrualsFromFile("data/accruals_nightHours.json"));
 
     List<Accrual> result = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
@@ -332,13 +332,13 @@ class BalanceCalculatorCreateActionTest {
         SHIFT_END_TIME);
 
     Agreement agreement = mock(Agreement.class);
-    when(agreement.getEndDate()).thenReturn(AGREEMENT_END_DATE);
+
     when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
         .thenReturn(agreement);
 
     List<Accrual> noAccruals = List.of();
-    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), timeEntry.getId(),
-        timeEntry.getActualStartTime().toLocalDate(), agreement.getEndDate()))
+    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), PERSON_ID, timeEntry.getId(),
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(noAccruals);
 
     List<Accrual> result = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);
@@ -348,7 +348,7 @@ class BalanceCalculatorCreateActionTest {
     assertThat(capturedOutput.getOut()).contains(WARNING_LOG);
     assertThat(capturedOutput.getOut()).contains(
         MessageFormat.format(ACCRUALS_NOT_FOUND, timeEntry.getTenantId(), timeEntry.getId(),
-            timeEntry.getActualStartTime().toLocalDate(), AGREEMENT_END_DATE)
+            LocalDate.from(timeEntry.getActualStartTime()), LocalDate.from(timeEntry.getActualEndTime()))
     );
   }
 
@@ -364,7 +364,7 @@ class BalanceCalculatorCreateActionTest {
         SHIFT_END_TIME);
 
     Agreement agreement = mock(Agreement.class);
-    when(agreement.getEndDate()).thenReturn(AGREEMENT_END_DATE);
+
     when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
         .thenReturn(agreement);
 
@@ -378,8 +378,8 @@ class BalanceCalculatorCreateActionTest {
         .contributions(Contributions.builder().timeEntries(emptyMap).build())
         .build();
     List<Accrual> accruals = List.of(accrual);
-    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), timeEntry.getId(),
-        timeEntry.getActualStartTime().toLocalDate(), agreement.getEndDate()))
+    when(accrualsService.getImpactedAccruals(timeEntry.getTenantId(), PERSON_ID, timeEntry.getId(),
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(accruals);
 
     List<Accrual> result = balanceCalculator.calculate(timeEntry, KafkaAction.CREATE);

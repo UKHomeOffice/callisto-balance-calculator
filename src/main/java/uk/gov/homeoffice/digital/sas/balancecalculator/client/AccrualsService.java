@@ -45,8 +45,9 @@ public class AccrualsService {
     this.agreementsByIdUrl =
         accrualsUrl + "/resources/agreements/{agreementId}?tenantId={tenantId}";
     this.impactedAccrualsUrl =
-        accrualsUrl + "/resources/accruals?tenantId={tenantId}&timeEntryId={timeEntryId}"
-          + "&timeEntryStartDate={timeEntryStartDate}&agreementEndDate={agreementEndDate}";
+        accrualsUrl + "/resources/accruals?tenantId={tenantId}&personId={personId}&timeEntryId"
+          +  "={timeEntryId}"
+          + "&timeEntryStartDate={timeEntryStartDate}&timeEntryEndDate={timeEntryEndDate}";
   }
 
   public Accrual getAccrualByTypeAndDate(String tenantId, String personId, String accrualTypeId,
@@ -86,14 +87,15 @@ public class AccrualsService {
   }
 
   public List<Accrual> getImpactedAccruals(
-      String tenantId, String timeEntryId,
-      LocalDate timeEntryStartDate, LocalDate agreementEndDate) {
+      String tenantId, String personId, String timeEntryId,
+      LocalDate timeEntryStartDate, LocalDate timeEntryEndDate) {
 
     Map<String, String> parameters = Map.of(
         TENANT_ID_STRING_IDENTIFIER, tenantId,
+        "personId", personId,
         "timeEntryId", timeEntryId,
         "timeEntryStartDate", timeEntryStartDate.toString(),
-        "agreementEndDate", agreementEndDate.toString()
+        "timeEntryEndDate", timeEntryEndDate.toString()
         );
 
     ResponseEntity<ApiResponse<Accrual>> entity

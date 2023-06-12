@@ -8,7 +8,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUt
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +32,6 @@ import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 class BalanceCalculatorDeleteActionTest {
 
   private static final String PERSON_ID = "0936e7a6-2b2e-1696-2546-5dd25dcae6a0";
-  private static final LocalDate AGREEMENT_END_DATE = LocalDate.of(2024, 3, 31);
 
   @Mock
   private AccrualsService accrualsService;
@@ -116,8 +114,8 @@ class BalanceCalculatorDeleteActionTest {
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(accrualsService.getImpactedAccruals(tenantId, timeEntryId,
-        LocalDate.from(timeEntry.getActualStartTime()), AGREEMENT_END_DATE))
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID, timeEntryId,
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(loadAccrualsFromFile("data/accruals_annualTargetHoursDeleteAction.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);
@@ -154,8 +152,8 @@ class BalanceCalculatorDeleteActionTest {
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
-    when(accrualsService.getImpactedAccruals(tenantId, timeEntryId,
-        LocalDate.from(timeEntry.getActualStartTime()), AGREEMENT_END_DATE))
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID, timeEntryId,
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
         .thenReturn(loadAccrualsFromFile("data/accruals_nightHoursDeleteAction.json"));
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.DELETE);

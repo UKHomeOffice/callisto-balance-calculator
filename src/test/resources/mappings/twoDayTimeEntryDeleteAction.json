@@ -50,14 +50,17 @@
           "tenantId": {
             "equalTo": "52a8188b-d41e-6768-19e9-09938016342f"
           },
+          "personId": {
+            "equalTo": "b810a175-9b87-473c-94f3-9bcdf87f3a58"
+          },
           "timeEntryId": {
             "equalTo": "a90a037a-a6c5-4fc0-9e72-a533c8c89c68"
           },
           "timeEntryStartDate": {
             "equalTo": "2023-04-22"
           },
-          "agreementEndDate": {
-            "equalTo": "2024-03-31"
+          "timeEntryEndDate": {
+            "equalTo": "2023-04-23"
           }
         }
       },

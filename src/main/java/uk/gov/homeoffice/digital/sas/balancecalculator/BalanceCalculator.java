@@ -69,12 +69,12 @@ public class BalanceCalculator {
     // latest applicable agreement
     LocalDate priorDate = timeEntryStartDate.minusDays(1);
     SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
-        getImpactedAccruals(tenantId, timeEntryId, timeEntryStartDate,
-            applicableAgreement.getEndDate());
+        getImpactedAccruals(tenantId, personId, timeEntryId, timeEntryStartDate,
+            timeEntryEndDate);
 
     if (isEmpty(allAccruals)) {
       log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, timeEntryId,
-          timeEntryStartDate, applicableAgreement.getEndDate()));
+          timeEntryStartDate, timeEntryEndDate));
       return List.of();
     }
 
@@ -110,11 +110,11 @@ public class BalanceCalculator {
   }
 
   SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getImpactedAccruals(
-      String tenantId, String timeEntryId,
+      String tenantId, String personId, String timeEntryId,
       LocalDate timeEntryStartDate, LocalDate agreementEndDate) {
 
     List<Accrual> accruals = accrualsService.getImpactedAccruals(
-        tenantId, timeEntryId, timeEntryStartDate, agreementEndDate);
+        tenantId, personId, timeEntryId, timeEntryStartDate, agreementEndDate);
 
     return map(accruals);
   }
