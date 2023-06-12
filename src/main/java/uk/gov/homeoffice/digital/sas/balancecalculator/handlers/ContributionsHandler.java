@@ -87,13 +87,15 @@ public class ContributionsHandler {
       timeEntries.put(UUID.fromString(timeEntryId), shiftContribution);
     }
 
-    updateContributionsTotal(contributions);
+    updateAccrualsContributionsTotal(List.of(accrual));
   }
 
-  private void updateContributionsTotal(Contributions contributions) {
-    Map<UUID, BigDecimal> timeEntries = contributions.getTimeEntries();
-    BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    contributions.setTotal(total);
+  private void updateAccrualsContributionsTotal(List<Accrual> accruals) {
+    accruals.forEach(
+        accrual -> accrual.getContributions().setTotal(
+              accrual.getContributions().getTimeEntries().values().stream()
+                  .reduce(BigDecimal.ZERO, BigDecimal::add))
+    );
   }
 
   void cascadeCumulativeTotal(SortedMap<LocalDate, Accrual> accruals,
@@ -122,8 +124,9 @@ public class ContributionsHandler {
     accruals.remove(priorDate);
     List<Accrual> accrualsToBeUpdated = accruals.values().stream().toList();
 
+    // Calculate and update contributions total for all accruals within range
+    updateAccrualsContributionsTotal(accrualsToBeUpdated);
     //update the cumulative total for referenceDate
-    updateContributionsTotal(accrualsToBeUpdated.get(0).getContributions());
     accrualsToBeUpdated.get(0).setCumulativeTotal(
         priorCumulativeTotal.add(accrualsToBeUpdated.get(0).getContributions().getTotal()));
 
@@ -132,8 +135,6 @@ public class ContributionsHandler {
       BigDecimal priorTotal =
           accrualsToBeUpdated.get(i - 1).getCumulativeTotal();
       Accrual currentAccrual = accrualsToBeUpdated.get(i);
-
-      updateContributionsTotal(currentAccrual.getContributions());
 
       currentAccrual.setCumulativeTotal(
           priorTotal.add(currentAccrual.getContributions().getTotal()));
