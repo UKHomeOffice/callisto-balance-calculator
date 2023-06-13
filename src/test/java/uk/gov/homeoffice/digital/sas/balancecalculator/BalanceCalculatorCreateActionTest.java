@@ -207,12 +207,10 @@ class BalanceCalculatorCreateActionTest {
     TimeEntry timeEntry = CommonUtils.createTimeEntry(shiftStartTime,
         shiftEndTime);
 
-    LocalDate referenceDate = AGREEMENT_START_DATE;
-
     String tenantId = timeEntry.getTenantId();
     String personId = timeEntry.getOwnerId();
 
-    when(accrualsService.getApplicableAgreement(tenantId, personId, referenceDate))
+    when(accrualsService.getApplicableAgreement(tenantId, personId, AGREEMENT_START_DATE))
         .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
 
     when(accrualsService.getImpactedAccruals(tenantId, personId, timeEntry.getId(),
@@ -363,7 +361,8 @@ class BalanceCalculatorCreateActionTest {
     TimeEntry timeEntry = CommonUtils.createTimeEntry(TIME_ENTRY_ID, PERSON_ID, SHIFT_START_TIME,
         SHIFT_END_TIME);
 
-    Agreement agreement = mock(Agreement.class);
+    Agreement agreement = new Agreement();
+    agreement.setStartDate(LocalDate.of(2023, 1, 1));
 
     when(accrualsService.getApplicableAgreement(timeEntry.getTenantId(), PERSON_ID, ACCRUAL_DATE))
         .thenReturn(agreement);

@@ -67,7 +67,6 @@ public class BalanceCalculator {
 
     // Get accruals of all types between the day prior to the time entry and the end date of the
     // latest applicable agreement
-    LocalDate priorDate = timeEntryStartDate.minusDays(1);
     SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
         getImpactedAccruals(tenantId, personId, timeEntryId, timeEntryStartDate,
             timeEntryEndDate);
@@ -78,13 +77,18 @@ public class BalanceCalculator {
       return List.of();
     }
 
+    LocalDate priorDate = allAccruals.entrySet().iterator().next().getValue().firstKey();
+
+    if(priorDate.isEqual(applicableAgreement.getStartDate())) {
+      priorDate = priorDate.minusDays(1);
+    }
+
     boolean handledSuccessfully =
-        contributionsHandler.handle(timeEntry, action, applicableAgreement, allAccruals);
+        contributionsHandler.handle(timeEntry, action, applicableAgreement, allAccruals, priorDate);
     if (!handledSuccessfully) {
 
       return List.of();
     }
-
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map

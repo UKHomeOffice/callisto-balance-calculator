@@ -1,0 +1,268 @@
+{
+  "mappings": [
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/resources/accruals",
+        "queryParameters": {
+          "tenantId": {
+            "equalTo": "52a8188b-d41e-6768-19e9-09938016342f"
+          },
+          "filter": {
+            "equalTo": "personId=='b810a175-9b87-473c-94f3-9bcdf87f3a58'&&accrualTypeId=='e502eebb-4663-4e5b-9445-9a20441c18d9'&&accrualDate=='2023-03-26'"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "meta": {
+            "next": null
+          },
+          "items": [
+            {
+              "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-22",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 8040,
+              "cumulativeTarget": 11520,
+              "contributions": {
+                "timeEntries": {
+                },
+                "total": 0.00
+              }
+            }
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    },
+    {
+      "request": {
+        "method": "GET",
+        "urlPathPattern": "/resources/accruals",
+        "queryParameters": {
+          "tenantId": {
+            "equalTo": "52a8188b-d41e-6768-19e9-09938016342f"
+          },
+          "personId": {
+            "equalTo": "b810a175-9b87-473c-94f3-9bcdf87f3a58"
+          },
+          "timeEntryId": {
+            "equalTo": "02e78cf4-8467-4d10-9816-c18f646c9061"
+          },
+          "timeEntryStartDate": {
+            "equalTo": "2023-03-26"
+          },
+          "timeEntryEndDate": {
+            "equalTo": "2023-03-26"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "jsonBody": {
+          "meta": {
+            "next": null
+          },
+          "items": [
+            {
+              "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-22",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 8100,
+              "cumulativeTarget": 11040,
+              "contributions": {
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 60
+                },
+                "total": 60
+              }
+            },
+            {
+              "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-23",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 8640,
+              "cumulativeTarget": 11520,
+              "contributions": {
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 420,
+                  "02e78cf4-8467-4d10-9816-c18f646c9061": 120
+                },
+                "total": 540
+              }
+            },
+            {
+              "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-24",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 8940,
+              "cumulativeTarget": 12000,
+              "contributions": {
+                "timeEntries": {
+                  "26ed3944-a2f9-452f-b00e-588a2c8ee410": 300
+                },
+                "total": 300
+              }
+            },
+            {
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6265",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-25",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 8940,
+              "cumulativeTarget": 1000,
+              "contributions": {
+                "timeEntries": {},
+                "total": 0
+              }
+            },
+            {
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6266",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-26",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 1060,
+              "cumulativeTarget": 1100,
+              "contributions": {
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 60
+                },
+                "total": 60
+              }
+            },
+            {
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6266",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-27",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 1060,
+              "cumulativeTarget": 1100,
+              "contributions": {
+                "timeEntries": {
+                  "d653f392-9f0f-454e-8b8f-4efff80bbf16": 60
+                },
+                "total": 60
+              }
+            },
+            {
+              "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-22",
+              "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
+              "cumulativeTotal": 0,
+              "cumulativeTarget": 11040,
+              "contributions": {
+                "timeEntries": {
+                },
+                "total": 0
+              }
+            },
+            {
+              "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-23",
+              "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
+              "cumulativeTotal": 8640,
+              "cumulativeTarget": 11520,
+              "contributions": {
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 420,
+                  "02e78cf4-8467-4d10-9816-c18f646c9061": 120
+                },
+                "total": 540
+              }
+            },
+            {
+              "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-24",
+              "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
+              "cumulativeTotal": 0,
+              "cumulativeTarget": 12000,
+              "contributions": {
+                "timeEntries": {
+                },
+                "total": 0
+              }
+            },
+            {
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6265",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-25",
+              "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
+              "cumulativeTotal": 0,
+              "cumulativeTarget": 1000,
+              "contributions": {
+                "timeEntries": {},
+                "total": 0
+              }
+            },
+            {
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6266",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-26",
+              "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
+              "cumulativeTotal": 0,
+              "cumulativeTarget": 1100,
+              "contributions": {
+                "timeEntries": {
+                },
+                "total": 0
+              }
+            },
+            {
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6266",
+              "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
+              "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
+              "accrualDate": "2023-03-27",
+              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "cumulativeTotal": 0,
+              "cumulativeTarget": 1100,
+              "contributions": {
+                "timeEntries": {
+                },
+                "total": 0
+              }
+            }
+          ]
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      }
+    }
+  ]
+}

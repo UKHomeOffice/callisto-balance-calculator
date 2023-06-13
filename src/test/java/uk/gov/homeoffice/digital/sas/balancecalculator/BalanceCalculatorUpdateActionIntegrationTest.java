@@ -81,6 +81,39 @@ class BalanceCalculatorUpdateActionIntegrationTest {
     assertTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 300, 8640);
   }
 
+  @Test
+  void calculate_updateTimeEntryToPast_contributionsAndCumulativeTotalsAsExpected() {
+    TimeEntry timeEntry = createTimeEntry("cc01b98e-12d4-4b06-8941-9919a2db45a9",
+        TENANT_ID,
+        PERSON_ID,
+        "2023-03-22T09:00:00+00:00",
+        "2023-03-22T10:00:00+00:00");
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
+
+    assertTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 120, 8160);
+    assertTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 420, 8580);
+    assertTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 300, 8880);
+  }
+
+  @Test
+  void calculate_updateTimeEntryToFuture_contributionsAndCumulativeTotalsAsExpected() {
+    TimeEntry timeEntry = createTimeEntry("02e78cf4-8467-4d10-9816-c18f646c9061",
+        TENANT_ID,
+        PERSON_ID,
+        "2023-03-26T09:00:00+00:00",
+        "2023-03-26T10:00:00+00:00");
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
+
+    assertTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 420, 8520);
+    assertTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 300, 8820);
+    assertTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 0, 8820);
+    assertTotals(accruals.get(3), ANNUAL_TARGET_HOURS, 120, 8940);
+    assertTotals(accruals.get(4), ANNUAL_TARGET_HOURS, 60, 9000);
+
+  }
+
   private void assertTotals(Accrual accrual,
                             AccrualType expectedAccrualType,
                             int expectedContributionTotal,
@@ -93,4 +126,5 @@ class BalanceCalculatorUpdateActionIntegrationTest {
         .usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(expectedCumulativeTotal));
   }
+
 }
