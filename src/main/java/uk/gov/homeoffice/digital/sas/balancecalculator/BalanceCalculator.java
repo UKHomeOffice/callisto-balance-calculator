@@ -79,7 +79,7 @@ public class BalanceCalculator {
 
     LocalDate priorDate = allAccruals.entrySet().iterator().next().getValue().firstKey();
 
-    if(priorDate.isEqual(applicableAgreement.getStartDate())) {
+    if (priorDate.isEqual(applicableAgreement.getStartDate())) {
       priorDate = priorDate.minusDays(1);
     }
 

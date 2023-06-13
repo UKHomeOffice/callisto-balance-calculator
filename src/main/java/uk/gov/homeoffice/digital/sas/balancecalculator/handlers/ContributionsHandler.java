@@ -36,7 +36,8 @@ public class ContributionsHandler {
   public boolean handle(TimeEntry timeEntry,
                         KafkaAction action,
                         Agreement applicableAgreement,
-                        Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals, LocalDate priorDate) {
+                        Map<AccrualType,
+                            SortedMap<LocalDate, Accrual>> allAccruals, LocalDate priorDate) {
 
     for (AccrualModule module : accrualModules) {
       AccrualType accrualType = module.getAccrualType();
