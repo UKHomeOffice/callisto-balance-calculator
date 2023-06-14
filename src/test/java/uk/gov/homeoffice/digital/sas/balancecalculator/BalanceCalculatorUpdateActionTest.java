@@ -110,6 +110,7 @@ class BalanceCalculatorUpdateActionTest {
   }
 
 
+
   @ParameterizedTest
   @MethodSource("annualTargetHoursTestData")
   void calculate_annualTargetHours_returnUpdateAccruals(String timeEntryId,
@@ -153,6 +154,7 @@ class BalanceCalculatorUpdateActionTest {
     assertContributionsTotal(accruals.get(3), expectedContributionsTotal4);
 
   }
+
 
   @ParameterizedTest
   @MethodSource("nightHoursTestData")
