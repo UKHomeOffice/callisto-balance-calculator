@@ -178,7 +178,7 @@ class BalanceCalculatorCreateActionTest {
     String tenantId = timeEntry.getTenantId();
 
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
-        .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
+        .thenReturn(loadObjectFromFile("data/agreement2023.json", Agreement.class));
 
     when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID, timeEntryId,
         timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
@@ -213,7 +213,7 @@ class BalanceCalculatorCreateActionTest {
     String personId = timeEntry.getOwnerId();
 
     when(accrualsService.getApplicableAgreement(tenantId, personId, referenceDate))
-        .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
+        .thenReturn(loadObjectFromFile("data/agreement2023.json", Agreement.class));
 
     when(accrualsService.getImpactedAccruals(tenantId, personId, timeEntry.getId(),
         timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
@@ -252,7 +252,7 @@ class BalanceCalculatorCreateActionTest {
     String tenantId = timeEntry.getTenantId();
 
     when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID, referenceDate))
-        .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
+        .thenReturn(loadObjectFromFile("data/agreement2023.json", Agreement.class));
 
     when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID, timeEntryId,
         timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
