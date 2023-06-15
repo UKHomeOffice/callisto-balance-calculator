@@ -142,16 +142,10 @@ class BalanceCalculatorUpdateActionTest {
 
     assertThat(accruals).hasSize(4);
 
-    assertCumulativeTotal(accruals.get(0), expectedCumulativeTotal1);
-    assertCumulativeTotal(accruals.get(1), expectedCumulativeTotal2);
-    assertCumulativeTotal(accruals.get(2), expectedCumulativeTotal3);
-    assertCumulativeTotal(accruals.get(3), expectedCumulativeTotal4);
-
-
-    assertContributionsTotal(accruals.get(0), expectedContributionsTotal1);
-    assertContributionsTotal(accruals.get(1), expectedContributionsTotal2);
-    assertContributionsTotal(accruals.get(2), expectedContributionsTotal3);
-    assertContributionsTotal(accruals.get(3), expectedContributionsTotal4);
+    assertTotals(accruals.get(0), expectedCumulativeTotal1, expectedContributionsTotal1);
+    assertTotals(accruals.get(1), expectedCumulativeTotal2, expectedContributionsTotal2);
+    assertTotals(accruals.get(2), expectedCumulativeTotal3, expectedContributionsTotal3);
+    assertTotals(accruals.get(3), expectedCumulativeTotal4, expectedContributionsTotal4);
 
   }
 
@@ -187,28 +181,21 @@ class BalanceCalculatorUpdateActionTest {
 
     assertThat(accruals).hasSize(4);
 
-    assertCumulativeTotal(accruals.get(0), expectedCumulativeTotal1);
-    assertCumulativeTotal(accruals.get(1), expectedCumulativeTotal2);
-    assertCumulativeTotal(accruals.get(2), expectedCumulativeTotal3);
-    assertCumulativeTotal(accruals.get(3), expectedCumulativeTotal4);
+    assertTotals(accruals.get(0), expectedCumulativeTotal1, expectedContributionsTotal1);
+    assertTotals(accruals.get(1), expectedCumulativeTotal2, expectedContributionsTotal2);
+    assertTotals(accruals.get(2), expectedCumulativeTotal3, expectedContributionsTotal3);
+    assertTotals(accruals.get(3), expectedCumulativeTotal4, expectedContributionsTotal4);
 
-
-    assertContributionsTotal(accruals.get(0), expectedContributionsTotal1);
-    assertContributionsTotal(accruals.get(1), expectedContributionsTotal2);
-    assertContributionsTotal(accruals.get(2), expectedContributionsTotal3);
-    assertContributionsTotal(accruals.get(3), expectedContributionsTotal4);
   }
 
-  private void assertContributionsTotal(Accrual accrual, BigDecimal expectedContributionsTotal) {
-    assertThat(accrual.getContributions().getTotal()).usingComparator(
-        BigDecimal::compareTo).isEqualTo(expectedContributionsTotal);
-  }
-
-
-  private void assertCumulativeTotal(Accrual accrual, BigDecimal expectedCumulativeTotal) {
+  private void assertTotals(Accrual accrual, BigDecimal expectedCumulativeTotal,
+        BigDecimal expectedContributionsTotal) {
     assertThat(accrual.getCumulativeTotal()).usingComparator(
             BigDecimal::compareTo)
         .isEqualTo(expectedCumulativeTotal);
+
+    assertThat(accrual.getContributions().getTotal()).usingComparator(
+        BigDecimal::compareTo).isEqualTo(expectedContributionsTotal);
   }
 
 

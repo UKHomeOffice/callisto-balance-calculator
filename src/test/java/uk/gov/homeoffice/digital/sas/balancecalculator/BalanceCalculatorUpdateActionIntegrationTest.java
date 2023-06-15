@@ -2,6 +2,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.ANNUAL_TARGET_HOURS;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.NIGHT_HOURS;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
 import java.math.BigDecimal;
@@ -46,6 +47,26 @@ class BalanceCalculatorUpdateActionIntegrationTest {
   }
 
   @Test
+  void calculate_updateNightHoursOneDayTimeEntry_contributionsAndCumulativeTotalsAsExpected() {
+
+    TimeEntry timeEntry = createTimeEntry("85cd140e-9eeb-4771-ab6c-6dea17fcfcba",
+        TENANT_ID,
+        PERSON_ID,
+        "2023-10-30T04:00:00+00:00",
+        "2023-10-30T07:00+00:00");
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
+
+    assertThat(accruals).hasSize(8);
+
+    assertTotals(accruals.get(4), NIGHT_HOURS, 120, 1120);
+    assertTotals(accruals.get(5), NIGHT_HOURS, 60, 1180);
+    assertTotals(accruals.get(6), NIGHT_HOURS, 0, 1180);
+    assertTotals(accruals.get(7), NIGHT_HOURS, 0, 1180);
+  }
+
+
+  @Test
   void calculate_updateAthTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
 
     TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
@@ -61,6 +82,24 @@ class BalanceCalculatorUpdateActionIntegrationTest {
     assertTotals(accruals.get(0), ANNUAL_TARGET_HOURS, 120, 8160);
     assertTotals(accruals.get(1), ANNUAL_TARGET_HOURS, 300, 8460);
     assertTotals(accruals.get(2), ANNUAL_TARGET_HOURS, 300, 8760);
+  }
+
+  @Test
+  void calculate_updateNightHoursTwoDaysSpan_contributionsAndCumulativeTotalsAsExpected() {
+
+    TimeEntry timeEntry = createTimeEntry(TIME_ENTRY_ID,
+        TENANT_ID,
+        PERSON_ID,
+        "2023-04-22T23:30:00+01:00",
+        "2023-04-23T02:00:00+01:00");
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
+
+    assertThat(accruals).hasSize(6);
+
+    assertTotals(accruals.get(3), NIGHT_HOURS, 30, 1030);
+    assertTotals(accruals.get(4), NIGHT_HOURS, 180, 1210);
+    assertTotals(accruals.get(5), NIGHT_HOURS, 120, 1330);
   }
 
   @Test
