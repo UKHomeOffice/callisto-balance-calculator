@@ -13,6 +13,7 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestCons
 import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.ANNUAL_TARGET_HOURS;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.NIGHT_HOURS;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotals;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotalsForMultipleAccruals;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createAccrual;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
@@ -77,29 +78,38 @@ class BalanceCalculatorCreateActionTest {
             LocalDate.of(2023, 4, 18),
             "2023-04-18T08:00:00+00:00",
             "2023-04-18T10:00:00+00:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6600, 7200, 7440, 8160, 600, 600, 240, 720),
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6600, 7200, 7440, 8160},
+            new int[] {600, 600, 240, 720}
+        ),
             // updating one day time entry
         Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
             LocalDate.of(2023, 4, 18),
             "2023-04-18T14:00:00+00:00",
             "2023-04-18T14:30:00+00:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6390, 6990, 7230, 7950, 390, 600, 240, 720),
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6390, 6990, 7230, 7950},
+            new int[] {390, 600, 240, 720}
+        ),
             // creating two day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0014",
             LocalDate.of(2023, 4, 19),
             "2023-04-18T22:00:00+00:00",
             "2023-04-19T06:00:00+00:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6540, 7560, 7800, 8520, 540, 1020, 240, 720),
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6540, 7560, 7800, 8520},
+            new int[] {540, 1020, 240, 720}
+        ),
             // creating three day time entry
         Arguments.of("7f000001-879e-1b02-8187-9ef1640f0013",
             LocalDate.of(2023, 4, 20),
             "2023-04-18T21:00:00+00:00",
             "2023-04-20T06:00:00+00:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6600, 8640, 9300, 10020, 600, 2040, 660, 720));
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6600, 8640, 9300, 10020},
+            new int[] {600, 2040, 660, 720}
+        )
+        );
   }
 
   private static Stream<Arguments> nightHoursTestData() {
@@ -109,36 +119,46 @@ class BalanceCalculatorCreateActionTest {
             LocalDate.of(2023, 4, 18),
             "2023-04-18T08:00:00+01:00",
             "2023-04-18T10:00:00+01:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6180, 6300, 6300, 6300, 180, 120, 0, 0),
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6180, 6300, 6300, 6300},
+            new int[] {180, 120, 0, 0}
+        ),
         // creating one day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 18),
             "2023-04-18T00:00:00+01:00",
             "2023-04-18T03:00:00+01:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6360, 6480, 6480, 6480, 360, 120, 0, 0),
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6360, 6480, 6480, 6480},
+            new int[] {360, 120, 0, 0}
+        ),
         // updating one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             LocalDate.of(2023, 4, 18),
             "2023-04-18T01:00:00+01:00",
             "2023-04-18T05:00:00+01:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6240, 6360, 6360, 6360, 240, 120, 0, 0),
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6240, 6360, 6360, 6360},
+            new int[] {240, 120, 0, 0}
+        ),
         // creating two day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 19),
             "2023-04-18T22:00:00+01:00",
             "2023-04-19T06:00:00+01:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6240, 6720, 6720, 6720, 240, 480, 0, 0),
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6240, 6720, 6720, 6720},
+            new int[] {240, 480, 0, 0}
+        ),
         // creating three day time entry
         Arguments.of(TIME_ENTRY_ID,
             LocalDate.of(2023, 4, 20),
             "2023-04-18T22:00:00+01:00",
             "2023-04-20T07:00:00+01:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6240, 6780, 7140, 7140, 240, 540, 360, 0)
+            new String[] {"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[] {6240, 6780, 7140, 7140},
+            new int[] {240, 540, 360, 0}
+        )
     );
   }
 
@@ -164,18 +184,9 @@ class BalanceCalculatorCreateActionTest {
                                                         LocalDate referenceDate,
                                                         String shiftStartTime,
                                                         String shiftEndTime,
-                                                        String expectedDate1,
-                                                        String expectedDate2,
-                                                        String expectedDate3,
-                                                        String expectedDate4,
-                                                        Integer expectedCumulativeTotal1,
-                                                        Integer expectedCumulativeTotal2,
-                                                        Integer expectedCumulativeTotal3,
-                                                        Integer expectedCumulativeTotal4,
-                                                        Integer expectedContributionsTotal1,
-                                                        Integer expectedContributionsTotal2,
-                                                        Integer expectedContributionsTotal3,
-                                                        Integer expectedContributionsTotal4)
+                                                        String[] expectedDates,
+                                                        int[] expectedCumulativeTotals,
+                                                        int[] expectedContributionsTotals)
       throws IOException {
 
     accrualModules = List.of(new AnnualTargetHoursAccrualModule());
@@ -198,17 +209,8 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(accruals).hasSize(4);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, expectedDate1,
-        expectedContributionsTotal1, expectedCumulativeTotal1);
-
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, expectedDate2,
-        expectedContributionsTotal2, expectedCumulativeTotal2);
-
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, expectedDate3,
-        expectedContributionsTotal3, expectedCumulativeTotal3);
-
-    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, expectedDate4,
-        expectedContributionsTotal4, expectedCumulativeTotal4);
+    assertTypeAndDateAndTotalsForMultipleAccruals(accruals, ANNUAL_TARGET_HOURS, expectedDates,
+            expectedCumulativeTotals, expectedContributionsTotals);
   }
 
   @Test
@@ -251,18 +253,9 @@ class BalanceCalculatorCreateActionTest {
                                                   LocalDate referenceDate,
                                                   String shiftStartTime,
                                                   String shiftEndTime,
-                                                  String expectedDate1,
-                                                  String expectedDate2,
-                                                  String expectedDate3,
-                                                  String expectedDate4,
-                                                  Integer expectedCumulativeTotal1,
-                                                  Integer expectedCumulativeTotal2,
-                                                  Integer expectedCumulativeTotal3,
-                                                  Integer expectedCumulativeTotal4,
-                                                  Integer expectedContributionsTotal1,
-                                                  Integer expectedContributionsTotal2,
-                                                  Integer expectedContributionsTotal3,
-                                                  Integer expectedContributionsTotal4)
+                                                  String[] expectedDates,
+                                                  int[] expectedCumulativeTotals,
+                                                  int[] expectedContributionsTotals)
       throws IOException {
 
     accrualModules = List.of(new NightHoursAccrualModule());
@@ -285,18 +278,8 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(accruals).hasSize(4);
 
-    assertTypeAndDateAndTotals(accruals.get(0), NIGHT_HOURS, expectedDate1,
-        expectedContributionsTotal1, expectedCumulativeTotal1);
-
-    assertTypeAndDateAndTotals(accruals.get(1), NIGHT_HOURS, expectedDate2,
-        expectedContributionsTotal2, expectedCumulativeTotal2);
-
-    assertTypeAndDateAndTotals(accruals.get(2), NIGHT_HOURS, expectedDate3,
-        expectedContributionsTotal3, expectedCumulativeTotal3);
-
-    assertTypeAndDateAndTotals(accruals.get(3), NIGHT_HOURS, expectedDate4,
-        expectedContributionsTotal4, expectedCumulativeTotal4);
-
+    assertTypeAndDateAndTotalsForMultipleAccruals(accruals, NIGHT_HOURS, expectedDates,
+        expectedCumulativeTotals, expectedContributionsTotals);
   }
 
   @Test

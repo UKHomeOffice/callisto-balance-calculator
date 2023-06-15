@@ -3,7 +3,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.ANNUAL_TARGET_HOURS;
-import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotals;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotalsForMultipleAccruals;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 
@@ -41,19 +41,25 @@ class BalanceCalculatorUpdateActionTest {
         Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
             "2023-04-18T09:00:00+00:00",
             "2023-04-18T12:00:00+00:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6540, 7140, 7380, 8100, 540, 600, 240, 720),
+            new String[]{"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[]{6540, 7140, 7380, 8100},
+            new int[]{540, 600, 240, 720}
+        ),
         // updating one day time entry to become three day time entry
         Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
             "2023-04-18T22:00:00+00:00",
             "2023-04-20T02:00:00+00:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6420, 8460, 8880, 9600, 420, 2040, 420, 720,
+            new String[]{"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[]{6420, 8460, 8880, 9600},
+            new int[]{420, 2040, 420, 720}
+        ),
         // updating two day time entry to one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
             "2023-04-18T14:00:00+00:00", "2023-04-18T15:00:00+00:00",
-            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
-            6180, 6420, 6660, 7380, 180, 240, 240, 72))
+            new String[]{"2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21"},
+            new int[]{6180, 6420, 6660, 7380},
+            new int[]{180, 240, 240, 720}
+        )
     );
   }
 
@@ -62,18 +68,9 @@ class BalanceCalculatorUpdateActionTest {
   void calculate_annualTargetHours_returnUpdateAccruals(String timeEntryId,
                                                         String shiftStartTime,
                                                         String shiftEndTime,
-                                                        String expectedDate1,
-                                                        String expectedDate2,
-                                                        String expectedDate3,
-                                                        String expectedDate4,
-                                                        Integer expectedCumulativeTotal1,
-                                                        Integer expectedCumulativeTotal2,
-                                                        Integer expectedCumulativeTotal3,
-                                                        Integer expectedCumulativeTotal4,
-                                                        Integer expectedContributionsTotal1,
-                                                        Integer expectedContributionsTotal2,
-                                                        Integer expectedContributionsTotal3,
-                                                        Integer expectedContributionsTotal4)
+                                                        String[] expectedDates,
+                                                        int[] expectedCumulativeTotals,
+                                                        int[] expectedContributionsTotals)
       throws IOException {
 
     List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
@@ -98,17 +95,7 @@ class BalanceCalculatorUpdateActionTest {
 
     assertThat(accruals).hasSize(4);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, expectedDate1,
-        expectedContributionsTotal1, expectedCumulativeTotal1);
-
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, expectedDate2,
-        expectedContributionsTotal2, expectedCumulativeTotal2);
-
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, expectedDate3,
-        expectedContributionsTotal3, expectedCumulativeTotal3);
-
-    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, expectedDate4,
-        expectedContributionsTotal4, expectedCumulativeTotal4);
-
+    assertTypeAndDateAndTotalsForMultipleAccruals(accruals, ANNUAL_TARGET_HOURS, expectedDates,
+        expectedCumulativeTotals, expectedContributionsTotals);
   }
 }

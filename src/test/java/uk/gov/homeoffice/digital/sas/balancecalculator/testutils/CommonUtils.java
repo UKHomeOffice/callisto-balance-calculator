@@ -1,6 +1,7 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.testutils;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.EMPTY_STRING;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_PERSON_ID;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import org.springframework.util.ResourceUtils;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
@@ -145,5 +147,27 @@ public class CommonUtils {
     assertThat(accrual.getCumulativeTotal())
         .usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(expectedCumulativeTotal));
+  }
+
+  public static void assertTypeAndDateAndTotalsForMultipleAccruals(List<Accrual> accruals,
+                                                                   AccrualType expectedAccrualType,
+                                                                   String[] expectedAccrualDates,
+                                                                   int[] expectedCumulativeTotals,
+                                                                   int[] expectedContributionTotals) {
+
+    // Check the 4 collections have the same size
+    assertEquals(accruals.size(), expectedAccrualDates.length);
+    assertEquals(expectedAccrualDates.length, expectedCumulativeTotals.length, expectedContributionTotals.length);
+
+    IntStream.range(0, expectedAccrualDates.length).forEach(i -> {
+      assertThat(accruals.get(i).getAccrualType()).isEqualTo(expectedAccrualType);
+      assertThat(accruals.get(i).getAccrualDate()).hasToString(expectedAccrualDates[i]);
+      assertThat(accruals.get(i).getCumulativeTotal())
+          .usingComparator(BigDecimal::compareTo)
+          .isEqualTo(BigDecimal.valueOf(expectedCumulativeTotals[i]));
+      assertThat(accruals.get(i).getContributions().getTotal())
+          .usingComparator(BigDecimal::compareTo)
+          .isEqualTo(BigDecimal.valueOf(expectedContributionTotals[i]));
+    });
   }
 }
