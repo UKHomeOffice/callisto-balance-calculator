@@ -2,11 +2,12 @@ package uk.gov.homeoffice.digital.sas.balancecalculator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.ANNUAL_TARGET_HOURS;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotals;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,26 +41,19 @@ class BalanceCalculatorUpdateActionTest {
         Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
             "2023-04-18T09:00:00+00:00",
             "2023-04-18T12:00:00+00:00",
-            BigDecimal.valueOf(6540), BigDecimal.valueOf(7140),
-            BigDecimal.valueOf(7380), BigDecimal.valueOf(8100),
-            BigDecimal.valueOf(540), BigDecimal.valueOf(600),
-            BigDecimal.valueOf(240), BigDecimal.valueOf(720)),
+            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
+            6540, 7140, 7380, 8100, 540, 600, 240, 720),
         // updating one day time entry to become three day time entry
         Arguments.of("85cd140e-9eeb-4771-ab6c-6dea17fcfcbe",
             "2023-04-18T22:00:00+00:00",
             "2023-04-20T02:00:00+00:00",
-            BigDecimal.valueOf(6420), BigDecimal.valueOf(8460),
-            BigDecimal.valueOf(8880), BigDecimal.valueOf(9600),
-            BigDecimal.valueOf(420), BigDecimal.valueOf(2040),
-            BigDecimal.valueOf(420), BigDecimal.valueOf(720)),
+            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
+            6420, 8460, 8880, 9600, 420, 2040, 420, 720,
         // updating two day time entry to one day time entry
         Arguments.of("e7d85e42-f0fb-4e2a-8211-874e27d1e888",
-            "2023-04-18T14:00:00+00:00",
-            "2023-04-18T15:00:00+00:00",
-            BigDecimal.valueOf(6180), BigDecimal.valueOf(6420),
-            BigDecimal.valueOf(6660), BigDecimal.valueOf(7380),
-            BigDecimal.valueOf(180), BigDecimal.valueOf(240),
-            BigDecimal.valueOf(240), BigDecimal.valueOf(720))
+            "2023-04-18T14:00:00+00:00", "2023-04-18T15:00:00+00:00",
+            "2023-04-18", "2023-04-19", "2023-04-20", "2023-04-21",
+            6180, 6420, 6660, 7380, 180, 240, 240, 72))
     );
   }
 
@@ -68,14 +62,18 @@ class BalanceCalculatorUpdateActionTest {
   void calculate_annualTargetHours_returnUpdateAccruals(String timeEntryId,
                                                         String shiftStartTime,
                                                         String shiftEndTime,
-                                                        BigDecimal expectedCumulativeTotal1,
-                                                        BigDecimal expectedCumulativeTotal2,
-                                                        BigDecimal expectedCumulativeTotal3,
-                                                        BigDecimal expectedCumulativeTotal4,
-                                                        BigDecimal expectedContributionsTotal1,
-                                                        BigDecimal expectedContributionsTotal2,
-                                                        BigDecimal expectedContributionsTotal3,
-                                                        BigDecimal expectedContributionsTotal4)
+                                                        String expectedDate1,
+                                                        String expectedDate2,
+                                                        String expectedDate3,
+                                                        String expectedDate4,
+                                                        Integer expectedCumulativeTotal1,
+                                                        Integer expectedCumulativeTotal2,
+                                                        Integer expectedCumulativeTotal3,
+                                                        Integer expectedCumulativeTotal4,
+                                                        Integer expectedContributionsTotal1,
+                                                        Integer expectedContributionsTotal2,
+                                                        Integer expectedContributionsTotal3,
+                                                        Integer expectedContributionsTotal4)
       throws IOException {
 
     List<AccrualModule> accrualModules = List.of(new AnnualTargetHoursAccrualModule());
@@ -100,29 +98,17 @@ class BalanceCalculatorUpdateActionTest {
 
     assertThat(accruals).hasSize(4);
 
-    assertCumulativeTotal(accruals.get(0), expectedCumulativeTotal1);
-    assertCumulativeTotal(accruals.get(1), expectedCumulativeTotal2);
-    assertCumulativeTotal(accruals.get(2), expectedCumulativeTotal3);
-    assertCumulativeTotal(accruals.get(3), expectedCumulativeTotal4);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, expectedDate1,
+        expectedContributionsTotal1, expectedCumulativeTotal1);
 
-    assertContributionsTotal(accruals.get(0), expectedContributionsTotal1);
-    assertContributionsTotal(accruals.get(1), expectedContributionsTotal2);
-    assertContributionsTotal(accruals.get(2), expectedContributionsTotal3);
-    assertContributionsTotal(accruals.get(3), expectedContributionsTotal4);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, expectedDate2,
+        expectedContributionsTotal2, expectedCumulativeTotal2);
+
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, expectedDate3,
+        expectedContributionsTotal3, expectedCumulativeTotal3);
+
+    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, expectedDate4,
+        expectedContributionsTotal4, expectedCumulativeTotal4);
 
   }
-
-  private void assertContributionsTotal(Accrual accrual, BigDecimal expectedContributionsTotal) {
-    assertThat(accrual.getContributions().getTotal()).usingComparator(
-        BigDecimal::compareTo).isEqualTo(expectedContributionsTotal);
-  }
-
-
-  private void assertCumulativeTotal(Accrual accrual, BigDecimal expectedCumulativeTotal) {
-    assertThat(accrual.getCumulativeTotal()).usingComparator(
-            BigDecimal::compareTo)
-        .isEqualTo(expectedCumulativeTotal);
-  }
-
-
 }
