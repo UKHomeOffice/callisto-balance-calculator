@@ -5,7 +5,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enu
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotals;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
-import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,18 +38,10 @@ class BalanceCalculatorUpdateActionIntegrationTest {
 
     assertThat(accruals).hasSize(8);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 10, 30),
-        540, 7020);
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 10, 31),
-        240, 7260);
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 11, 1),
-        720, 7980);
-    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 11, 2),
-        120, 8100);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, "2023-10-30", 540, 7020);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, "2023-10-31", 240, 7260);
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, "2023-11-01", 720, 7980);
+    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, "2023-11-02", 120, 8100);
   }
 
   @Test
@@ -66,15 +57,9 @@ class BalanceCalculatorUpdateActionIntegrationTest {
 
     assertThat(accruals).hasSize(6);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 22),
-        120, 8160);
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 23),
-        300, 8460);
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 24),
-        300, 8760);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, "2023-04-22", 120, 8160);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, "2023-04-23", 300, 8460);
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, "2023-04-24", 300, 8760);
   }
 
   @Test
@@ -90,15 +75,9 @@ class BalanceCalculatorUpdateActionIntegrationTest {
 
     assertThat(accruals).hasSize(6);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 22),
-        180, 8220);
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 23),
-        120, 8340);
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 24),
-        300, 8640);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, "2023-04-22", 180, 8220);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, "2023-04-23", 120, 8340);
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, "2023-04-24", 300, 8640);
   }
 
   @Test
@@ -111,15 +90,9 @@ class BalanceCalculatorUpdateActionIntegrationTest {
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 22),
-        120, 8160);
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 23),
-        420, 8580);
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 24),
-        300, 8880);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, "2023-03-22", 120, 8160);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, "2023-03-23", 420, 8580);
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, "2023-03-24", 300, 8880);
   }
 
   @Test
@@ -132,23 +105,13 @@ class BalanceCalculatorUpdateActionIntegrationTest {
 
     List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 23),
-        420, 8520);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, "2023-03-23", 420, 8520);
 
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 24),
-        300, 8820);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, "2023-03-24", 300, 8820);
 
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 25),
-        0, 8820);
-    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 26),
-        120, 8940);
-    assertTypeAndDateAndTotals(accruals.get(4), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 3, 27),
-        60, 9000);
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, "2023-03-25", 0, 8820);
+    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, "2023-03-26", 120, 8940);
+    assertTypeAndDateAndTotals(accruals.get(4), ANNUAL_TARGET_HOURS, "2023-03-27", 60, 9000);
 
   }
 }

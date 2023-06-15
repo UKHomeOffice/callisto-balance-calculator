@@ -17,7 +17,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -135,11 +134,11 @@ public class CommonUtils {
   }
 
   public static void assertTypeAndDateAndTotals(Accrual accrual, AccrualType expectedAccrualType,
-                                                LocalDate expectedAccrualDate,
+                                                String expectedAccrualDate,
                                                 int expectedContributionTotal,
                                                 int expectedCumulativeTotal) {
     assertThat(accrual.getAccrualType()).isEqualTo(expectedAccrualType);
-    assertThat(accrual.getAccrualDate()).isEqualTo(expectedAccrualDate);
+    assertThat(accrual.getAccrualDate()).hasToString(expectedAccrualDate);
     assertThat(accrual.getContributions().getTotal())
         .usingComparator(BigDecimal::compareTo)
         .isEqualTo(BigDecimal.valueOf(expectedContributionTotal));

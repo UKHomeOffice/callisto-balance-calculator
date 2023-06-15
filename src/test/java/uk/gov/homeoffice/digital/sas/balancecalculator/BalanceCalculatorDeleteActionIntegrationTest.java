@@ -6,7 +6,6 @@ import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enu
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotals;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.createTimeEntry;
 
-import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,18 +39,10 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     assertThat(accruals).hasSize(8);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 10, 30),
-        480, 6960);
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 10, 31),
-        240, 7200);
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 11, 1),
-        720, 7920);
-    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 11, 2),
-        120, 8040);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, "2023-10-30", 480, 6960);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, "2023-10-31", 240, 7200);
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, "2023-11-01", 720, 7920);
+    assertTypeAndDateAndTotals(accruals.get(3), ANNUAL_TARGET_HOURS, "2023-11-02", 120, 8040);
   }
 
   @Test
@@ -67,18 +58,10 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     assertThat(accruals).hasSize(8);
 
-    assertTypeAndDateAndTotals(accruals.get(4), NIGHT_HOURS,
-        LocalDate.of(2023, 10, 30),
-        0, 1000);
-    assertTypeAndDateAndTotals(accruals.get(5), NIGHT_HOURS,
-        LocalDate.of(2023, 10, 31),
-        60, 1060);
-    assertTypeAndDateAndTotals(accruals.get(6), NIGHT_HOURS,
-        LocalDate.of(2023, 11, 1),
-        0, 1060);
-    assertTypeAndDateAndTotals(accruals.get(7), NIGHT_HOURS,
-        LocalDate.of(2023, 11, 2),
-        0, 1060);
+    assertTypeAndDateAndTotals(accruals.get(4), NIGHT_HOURS, "2023-10-30", 0, 1000);
+    assertTypeAndDateAndTotals(accruals.get(5), NIGHT_HOURS, "2023-10-31", 60, 1060);
+    assertTypeAndDateAndTotals(accruals.get(6), NIGHT_HOURS, "2023-11-01", 0, 1060);
+    assertTypeAndDateAndTotals(accruals.get(7), NIGHT_HOURS, "2023-11-02", 0, 1060);
   }
 
   @Test
@@ -94,15 +77,9 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     assertThat(accruals).hasSize(6);
 
-    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 22),
-        0, 8040);
-    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 23),
-        120, 8160);
-    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS,
-        LocalDate.of(2023, 4, 24),
-        300, 8460);
+    assertTypeAndDateAndTotals(accruals.get(0), ANNUAL_TARGET_HOURS, "2023-04-22", 0, 8040);
+    assertTypeAndDateAndTotals(accruals.get(1), ANNUAL_TARGET_HOURS, "2023-04-23", 120, 8160);
+    assertTypeAndDateAndTotals(accruals.get(2), ANNUAL_TARGET_HOURS, "2023-04-24", 300, 8460);
   }
 
   @Test
@@ -118,15 +95,9 @@ class BalanceCalculatorDeleteActionIntegrationTest {
 
     assertThat(accruals).hasSize(6);
 
-    assertTypeAndDateAndTotals(accruals.get(3), NIGHT_HOURS,
-        LocalDate.of(2023, 4, 22),
-        0, 1000);
-    assertTypeAndDateAndTotals(accruals.get(4), NIGHT_HOURS,
-        LocalDate.of(2023, 4, 23),
-        60, 1060);
-    assertTypeAndDateAndTotals(accruals.get(5), NIGHT_HOURS,
-        LocalDate.of(2023, 4, 24),
-        120, 1180);
+    assertTypeAndDateAndTotals(accruals.get(3), NIGHT_HOURS, "2023-04-22", 0, 1000);
+    assertTypeAndDateAndTotals(accruals.get(4), NIGHT_HOURS, "2023-04-23", 60, 1060);
+    assertTypeAndDateAndTotals(accruals.get(5), NIGHT_HOURS, "2023-04-24", 120, 1180);
   }
 
 }

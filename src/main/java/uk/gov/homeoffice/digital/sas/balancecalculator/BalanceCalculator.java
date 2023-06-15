@@ -34,7 +34,7 @@ public class BalanceCalculator {
       "Agreement record not found for tenantId {0}, personId {1} and date {2}";
   static final String ACCRUALS_NOT_FOUND =
       "No Accrual records found for tenantId {0} , personId {1} timeEntryId {2} "
-          + "timeEntryStartDate {3} and agreementEndDate {4}";
+          + "timeEntryStartDate {3} and timeEntryEndDate {4}";
 
   private final AccrualsService accrualsService;
   private final ContributionsHandler contributionsHandler;
@@ -115,10 +115,10 @@ public class BalanceCalculator {
 
   SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getImpactedAccruals(
       String tenantId, String personId, String timeEntryId,
-      LocalDate timeEntryStartDate, LocalDate agreementEndDate) {
+      LocalDate timeEntryStartDate, LocalDate timeEntryEndDate) {
 
     List<Accrual> accruals = accrualsService.getImpactedAccruals(
-        tenantId, personId, timeEntryId, timeEntryStartDate, agreementEndDate);
+        tenantId, personId, timeEntryId, timeEntryStartDate, timeEntryEndDate);
 
     return map(accruals);
   }
