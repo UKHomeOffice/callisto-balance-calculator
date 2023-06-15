@@ -72,7 +72,7 @@ public class BalanceCalculator {
             timeEntryEndDate);
 
     if (isEmpty(allAccruals)) {
-      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId,timeEntryId,
+      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId, timeEntryId,
           timeEntryStartDate, timeEntryEndDate));
       return List.of();
     }
