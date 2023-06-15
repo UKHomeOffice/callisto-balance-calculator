@@ -33,8 +33,8 @@ public class BalanceCalculator {
   static final String AGREEMENT_NOT_FOUND =
       "Agreement record not found for tenantId {0}, personId {1} and date {2}";
   static final String ACCRUALS_NOT_FOUND =
-      "No Accrual records found for tenantId {0} and timeEntryId {1} timeEntryStartDate {2} "
-          + "and agreementEndDate {3}";
+      "No Accrual records found for tenantId {0} , personId {1} timeEntryId {2} "
+          + "timeEntryStartDate {3} and agreementEndDate {4}";
 
   private final AccrualsService accrualsService;
   private final ContributionsHandler contributionsHandler;
@@ -72,7 +72,7 @@ public class BalanceCalculator {
             timeEntryEndDate);
 
     if (isEmpty(allAccruals)) {
-      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, timeEntryId,
+      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId,timeEntryId,
           timeEntryStartDate, timeEntryEndDate));
       return List.of();
     }

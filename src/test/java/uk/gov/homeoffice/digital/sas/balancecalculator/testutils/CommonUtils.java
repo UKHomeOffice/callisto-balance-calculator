@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.digital.sas.balancecalculator.testutils;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.EMPTY_STRING;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_END_TIME;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.constants.TestConstants.VALID_PERSON_ID;
@@ -15,11 +16,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.util.ResourceUtils;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Accrual;
+import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 
 public class CommonUtils {
@@ -128,5 +132,19 @@ public class CommonUtils {
     File file = ResourceUtils.getFile("classpath:" + filePath);
 
     return mapper.readValue(file, type);
+  }
+
+  public static void assertTypeAndDateAndTotals(Accrual accrual, AccrualType expectedAccrualType,
+                                                LocalDate expectedAccrualDate,
+                                                int expectedContributionTotal,
+                                                int expectedCumulativeTotal) {
+    assertThat(accrual.getAccrualType()).isEqualTo(expectedAccrualType);
+    assertThat(accrual.getAccrualDate()).isEqualTo(expectedAccrualDate);
+    assertThat(accrual.getContributions().getTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedContributionTotal));
+    assertThat(accrual.getCumulativeTotal())
+        .usingComparator(BigDecimal::compareTo)
+        .isEqualTo(BigDecimal.valueOf(expectedCumulativeTotal));
   }
 }

@@ -345,8 +345,10 @@ class BalanceCalculatorCreateActionTest {
 
     assertThat(capturedOutput.getOut()).contains(WARNING_LOG);
     assertThat(capturedOutput.getOut()).contains(
-        MessageFormat.format(ACCRUALS_NOT_FOUND, timeEntry.getTenantId(), timeEntry.getId(),
-            LocalDate.from(timeEntry.getActualStartTime()), LocalDate.from(timeEntry.getActualEndTime()))
+        MessageFormat.format(ACCRUALS_NOT_FOUND, timeEntry.getTenantId(),
+            timeEntry.getOwnerId(), timeEntry.getId(),
+            LocalDate.from(timeEntry.getActualStartTime()),
+            LocalDate.from(timeEntry.getActualEndTime()))
     );
   }
 
