@@ -33,7 +33,8 @@ public class BalanceCalculator {
   static final String AGREEMENT_NOT_FOUND =
       "Agreement record not found for tenantId {0}, personId {1} and date {2}";
   static final String ACCRUALS_NOT_FOUND =
-      "No Accrual records found for tenantId {0} and personId {1} between {2} and {3}";
+      "No Accrual records found for tenantId {0} , personId {1} timeEntryId {2} "
+          + "timeEntryStartDate {3} and timeEntryEndDate {4}";
 
   private final AccrualsService accrualsService;
   private final ContributionsHandler contributionsHandler;
@@ -49,6 +50,7 @@ public class BalanceCalculator {
 
     String tenantId = timeEntry.getTenantId();
     String personId = timeEntry.getOwnerId();
+    String timeEntryId = timeEntry.getId();
     ZonedDateTime timeEntryStart = timeEntry.getActualStartTime();
     ZonedDateTime timeEntryEnd = timeEntry.getActualEndTime();
     LocalDate timeEntryStartDate = timeEntryStart.toLocalDate();
@@ -65,23 +67,28 @@ public class BalanceCalculator {
 
     // Get accruals of all types between the day prior to the time entry and the end date of the
     // latest applicable agreement
-    LocalDate priorDate = timeEntryStartDate.minusDays(1);
     SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals =
-        getImpactedAccruals(tenantId, personId, priorDate, applicableAgreement.getEndDate());
+        getImpactedAccruals(tenantId, personId, timeEntryId, timeEntryStartDate,
+            timeEntryEndDate);
 
     if (isEmpty(allAccruals)) {
-      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId,
-          priorDate, applicableAgreement.getEndDate()));
+      log.warn(MessageFormat.format(ACCRUALS_NOT_FOUND, tenantId, personId, timeEntryId,
+          timeEntryStartDate, timeEntryEndDate));
       return List.of();
     }
 
+    LocalDate priorDate = allAccruals.entrySet().iterator().next().getValue().firstKey();
+
+    if (priorDate.isEqual(applicableAgreement.getStartDate())) {
+      priorDate = priorDate.minusDays(1);
+    }
+
     boolean handledSuccessfully =
-        contributionsHandler.handle(timeEntry, action, applicableAgreement, allAccruals);
+        contributionsHandler.handle(timeEntry, action, applicableAgreement, allAccruals, priorDate);
     if (!handledSuccessfully) {
 
       return List.of();
     }
-
 
     // Each AccrualType within allAccruals map still containing entry for prior day
     // which shouldn't be sent to batch update. Lines below removing that entry from the Map
@@ -107,10 +114,11 @@ public class BalanceCalculator {
   }
 
   SortedMap<AccrualType, SortedMap<LocalDate, Accrual>> getImpactedAccruals(
-      String tenantId, String personId, LocalDate startDate, LocalDate endDate) {
+      String tenantId, String personId, String timeEntryId,
+      LocalDate timeEntryStartDate, LocalDate timeEntryEndDate) {
 
-    List<Accrual> accruals = accrualsService.getImpactedAccruals(tenantId, personId,
-        startDate, endDate);
+    List<Accrual> accruals = accrualsService.getImpactedAccruals(
+        tenantId, personId, timeEntryId, timeEntryStartDate, timeEntryEndDate);
 
     return map(accruals);
   }

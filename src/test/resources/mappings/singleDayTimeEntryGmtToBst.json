@@ -52,8 +52,17 @@
           "tenantId": {
             "equalTo": "52a8188b-d41e-6768-19e9-09938016342f"
           },
-          "filter": {
-            "equalTo": "personId=='0936e7a6-2b2e-1696-2546-5dd25dcae6a0'&&accrualDate<='2024-03-31'&&accrualDate>='2023-03-25'"
+          "personId": {
+            "equalTo": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0"
+          },
+          "timeEntryId": {
+            "equalTo": "7f000001-879e-1b02-8187-9ef1640f0003"
+          },
+          "timeEntryStartDate": {
+            "equalTo": "2023-03-26"
+          },
+          "timeEntryEndDate": {
+            "equalTo": "2023-03-26"
           }
         }
       },

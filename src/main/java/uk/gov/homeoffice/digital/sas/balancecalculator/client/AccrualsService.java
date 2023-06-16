@@ -32,6 +32,8 @@ public class AccrualsService {
   private String agreementsByIdUrl;
   private String accrualsNoFilterUrl;
 
+  private String impactedAccrualsUrl;
+
 
   @Autowired
   public AccrualsService(RestTemplateBuilder builder,
@@ -42,6 +44,10 @@ public class AccrualsService {
         accrualsUrl + "/resources/accruals?tenantId={tenantId}&filter={filter}";
     this.agreementsByIdUrl =
         accrualsUrl + "/resources/agreements/{agreementId}?tenantId={tenantId}";
+    this.impactedAccrualsUrl =
+        accrualsUrl + "/resources/accruals?tenantId={tenantId}&personId={personId}&timeEntryId"
+          +  "={timeEntryId}"
+          + "&timeEntryStartDate={timeEntryStartDate}&timeEntryEndDate={timeEntryEndDate}";
   }
 
   public Accrual getAccrualByTypeAndDate(String tenantId, String personId, String accrualTypeId,
@@ -80,17 +86,20 @@ public class AccrualsService {
     return null;
   }
 
-  // TODO: Implementation will be modified when addressing Update Action
-  public List<Accrual> getImpactedAccruals(String tenantId, String personId,
-                                               LocalDate startDate, LocalDate endDate) {
-    Map<String, String> parameters = Map.of(TENANT_ID_STRING_IDENTIFIER, tenantId,
-        FILTER_STRING_IDENTIFIER,
-        "personId=='" + personId + "'"
-            + "&&accrualDate<='" + endDate + "'"
-            + "&&accrualDate>='" + startDate + "'");
+  public List<Accrual> getImpactedAccruals(
+      String tenantId, String personId, String timeEntryId,
+      LocalDate timeEntryStartDate, LocalDate timeEntryEndDate) {
+
+    Map<String, String> parameters = Map.of(
+        TENANT_ID_STRING_IDENTIFIER, tenantId,
+        "personId", personId,
+        "timeEntryId", timeEntryId,
+        "timeEntryStartDate", timeEntryStartDate.toString(),
+        "timeEntryEndDate", timeEntryEndDate.toString()
+        );
 
     ResponseEntity<ApiResponse<Accrual>> entity
-        = restTemplate.exchange(accrualsFilterUrl, HttpMethod.GET, null,
+        = restTemplate.exchange(impactedAccrualsUrl, HttpMethod.GET, null,
           new ParameterizedTypeReference<>() {
           }, parameters);
 

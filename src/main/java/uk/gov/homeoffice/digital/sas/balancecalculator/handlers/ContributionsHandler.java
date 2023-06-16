@@ -36,7 +36,8 @@ public class ContributionsHandler {
   public boolean handle(TimeEntry timeEntry,
                         KafkaAction action,
                         Agreement applicableAgreement,
-                        Map<AccrualType, SortedMap<LocalDate, Accrual>> allAccruals) {
+                        Map<AccrualType,
+                            SortedMap<LocalDate, Accrual>> allAccruals, LocalDate priorDate) {
 
     for (AccrualModule module : accrualModules) {
       AccrualType accrualType = module.getAccrualType();
@@ -70,7 +71,6 @@ public class ContributionsHandler {
         this.updateAccrualContribution(timeEntry.getId(), contribution, accrual, action);
       }
 
-      LocalDate priorDate = timeEntry.getActualStartTime().toLocalDate().minusDays(1);
       this.cascadeCumulativeTotal(accruals, priorDate, agreementStartDate);
     }
     return true;
@@ -87,8 +87,15 @@ public class ContributionsHandler {
       timeEntries.put(UUID.fromString(timeEntryId), shiftContribution);
     }
 
-    BigDecimal total = timeEntries.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-    contributions.setTotal(total);
+    updateAccrualsContributionsTotal(List.of(accrual));
+  }
+
+  private void updateAccrualsContributionsTotal(List<Accrual> accruals) {
+    accruals.forEach(
+        accrual -> accrual.getContributions().setTotal(
+              accrual.getContributions().getTimeEntries().values().stream()
+                  .reduce(BigDecimal.ZERO, BigDecimal::add))
+    );
   }
 
   void cascadeCumulativeTotal(SortedMap<LocalDate, Accrual> accruals,
@@ -117,6 +124,8 @@ public class ContributionsHandler {
     accruals.remove(priorDate);
     List<Accrual> accrualsToBeUpdated = accruals.values().stream().toList();
 
+    // Calculate and update contributions total for all accruals within range
+    updateAccrualsContributionsTotal(accrualsToBeUpdated);
     //update the cumulative total for referenceDate
     accrualsToBeUpdated.get(0).setCumulativeTotal(
         priorCumulativeTotal.add(accrualsToBeUpdated.get(0).getContributions().getTotal()));
@@ -126,6 +135,7 @@ public class ContributionsHandler {
       BigDecimal priorTotal =
           accrualsToBeUpdated.get(i - 1).getCumulativeTotal();
       Accrual currentAccrual = accrualsToBeUpdated.get(i);
+
       currentAccrual.setCumulativeTotal(
           priorTotal.add(currentAccrual.getContributions().getTotal()));
     }

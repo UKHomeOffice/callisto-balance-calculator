@@ -9,7 +9,7 @@
             "equalTo": "52a8188b-d41e-6768-19e9-09938016342f"
           },
           "filter": {
-            "equalTo": "personId=='0936e7a6-2b2e-1696-2546-5dd25dcae6a0'&&accrualTypeId=='e502eebb-4663-4e5b-9445-9a20441c18d9'&&accrualDate=='2023-04-23'"
+            "equalTo": "personId=='b810a175-9b87-473c-94f3-9bcdf87f3a58'&&accrualTypeId=='e502eebb-4663-4e5b-9445-9a20441c18d9'&&accrualDate=='2023-04-22'"
           }
         }
       },
@@ -23,7 +23,7 @@
             {
               "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-23",
               "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
@@ -51,16 +51,16 @@
             "equalTo": "52a8188b-d41e-6768-19e9-09938016342f"
           },
           "personId": {
-            "equalTo": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0"
+            "equalTo": "b810a175-9b87-473c-94f3-9bcdf87f3a58"
           },
           "timeEntryId": {
-            "equalTo": "7f000001-879e-1b02-8187-9ef1640f0003"
+            "equalTo": "a90a037a-a6c5-4fc0-9e72-a533c8c89c68"
           },
           "timeEntryStartDate": {
             "equalTo": "2023-04-22"
           },
           "timeEntryEndDate": {
-            "equalTo": "2023-04-23"
+            "equalTo": "2023-04-22"
           }
         }
       },
@@ -74,7 +74,7 @@
             {
               "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-21",
               "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
@@ -91,105 +91,114 @@
             {
               "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-22",
               "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
-              "cumulativeTotal": 8040,
+              "cumulativeTotal": 8100,
               "cumulativeTarget": 11040,
               "contributions": {
                 "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68" : 60
                 },
-                "total": 0.00
+                "total": 60
               }
             },
             {
               "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-23",
               "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
-              "cumulativeTotal": 8040,
+              "cumulativeTotal": 8640,
               "cumulativeTarget": 11520,
               "contributions": {
                 "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68" : 420,
+                  "208ddc73-677f-482f-b2af-ee1015ab4736" : 120
                 },
-                "total": 0.00
+                "total": 540
               }
             },
             {
               "id": "c0a80193-87a3-1ff0-8187-a4277b0b0008",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-24",
               "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
-              "cumulativeTotal": 8040,
+              "cumulativeTotal": 8940,
               "cumulativeTarget": 12000,
               "contributions": {
                 "timeEntries": {
+                  "26ed3944-a2f9-452f-b00e-588a2c8ee410" : 300
                 },
-                "total": 0.00
+                "total": 300
               }
             },
 
             {
-              "id": "0a3048f7-22f4-4763-8520-4fd3c6c74960",
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6265",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-21",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
               "cumulativeTotal": 1000,
-              "cumulativeTarget": 1500,
+              "cumulativeTarget": 1000,
               "contributions": {
                 "timeEntries": {},
-                "total": 0.00
+                "total": 0
               }
             },
             {
-              "id": "0a3048f7-22f4-4763-8520-4fd3c6c74961",
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6266",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-22",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1000,
-              "cumulativeTarget": 1600,
+              "cumulativeTotal": 1060,
+              "cumulativeTarget": 1100,
               "contributions": {
-                "timeEntries": {},
-                "total": 0.00
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 60
+                },
+                "total": 60
               }
             },
             {
-              "id": "0a3048f7-22f4-4763-8520-4fd3c6c74962",
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6267",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-23",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1000,
-              "cumulativeTarget": 1700,
+              "cumulativeTotal": 1480,
+              "cumulativeTarget": 1200,
               "contributions": {
-                "timeEntries": {},
-                "total": 0.00
+                "timeEntries": {
+                  "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 360,
+                  "85b2e556-b768-4276-b509-35ca17d22858": 60
+                },
+                "total": 420
               }
             },
             {
-              "id": "0a3048f7-22f4-4763-8520-4fd3c6c74963",
+              "id": "a5f1c7f4-6c87-4841-b71f-955b714b6268",
               "tenantId": "52a8188b-d41e-6768-19e9-09938016342f",
-              "personId": "0936e7a6-2b2e-1696-2546-5dd25dcae6a0",
+              "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-04-24",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 1120,
-              "cumulativeTarget": 1800,
+              "cumulativeTotal": 1600,
+              "cumulativeTarget": 1300,
               "contributions": {
                 "timeEntries": {
-                  "7f000001-879e-1b02-8187-9ef1640f0033": 120.00
+                  "1cd996ca-9b40-495a-8dfb-29d10206958f": 120
                 },
-                "total": 120.00
+                "total": 120
               }
             }
           ]
