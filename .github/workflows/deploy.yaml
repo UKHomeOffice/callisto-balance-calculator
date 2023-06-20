@@ -14,12 +14,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'adopt'
-      - name: maven-settings
-        uses: s4u/maven-settings-action@v2
-        with:
-          servers: '[{"id": "github", "username": "dummy", "password": "${GITHUB_TOKEN}"}]'
-          githubServer: false
       - name: Build Service
-        run: mvn clean install
+        run: |
+          echo $GITHUB_ACTOR
+          mvn -s ./balance_calculator_settings.xml clean install
         env:
+          GITHUB_ACTOR: ${{ secrets.GITHUB_ACTOR }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
