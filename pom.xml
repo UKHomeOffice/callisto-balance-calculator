@@ -13,6 +13,15 @@
     <version>0.0.1-SNAPSHOT</version>
     <name>callisto-balance-calculator</name>
     <description>Callisto balance calculator service backend</description>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub OWNER Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/UKHomeOffice/callisto-kafka-commons</url>
+        </repository>
+    </distributionManagement>
+
     <properties>
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -22,6 +31,7 @@
         <checkstyle-maven-plugin.version>3.2.0</checkstyle-maven-plugin.version>
         <spring.kafka.version>3.0.4</spring.kafka.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
