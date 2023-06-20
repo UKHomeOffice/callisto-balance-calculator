@@ -110,7 +110,8 @@ steps:
       ARTIFACTORY_TOKEN:
         from_secret: artifactory_token
     commands:
-      - mvn -s ./balance_calculator_settings.xml clean verify
+      - mvn -s clean verify
+#      if using artifactory add ./balance_calculator_settings.xml
 
   - name: sonar
     image: maven:3.8.3-openjdk-17
@@ -122,7 +123,7 @@ steps:
       SONAR_TOKEN:
         from_secret: sonar_cloud_token
     commands:
-      - mvn -s ./balance_calculator_settings.xml sonar:sonar
+      - mvn -s sonar:sonar
         -Dsonar.host.url=$${SONAR_HOST}
         -Dsonar.login=$${SONAR_TOKEN}
         -Dsonar.organization=ukhomeoffice
@@ -130,6 +131,7 @@ steps:
         -Dsonar.branch.name=$DRONE_BRANCH
         -Dsonar.projectName=callisto-balance-calculator
         -Dsonar.qualitygate.wait=true
+      #      if using artifactory add ./balance_calculator_settings.xml
     when:
       event:
         exclude:
