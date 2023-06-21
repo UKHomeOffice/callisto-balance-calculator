@@ -5,7 +5,6 @@
     <servers>
         <server>
             <id>callisto-kafka-commons</id>
-            <username>JWeston-HO</username>
             <password>${env.GITHUB_TOKEN}</password>
         </server>
     </servers>
