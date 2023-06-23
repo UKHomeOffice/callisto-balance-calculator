@@ -4,8 +4,16 @@ Callisto Balance Calculator Service is a part of Callisto project (Check section
 
 ## 1. Building the project
 
+### Github Package dependencies
+In order to pull in Github package dependencies you will need a Github Personal Access Token.
+This token will need the minimum of 'packages:read' permissions.
+
+Assign the value of the token to an environment variable with the name GITHUB_TOKEN
+
+Then run the following to build the project
+
 ```sh
-$ mvn clean install
+$ mvn -s ./timecard_settings.xml clean install
 ```
 
 ## 2. Running project locally

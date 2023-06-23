@@ -107,10 +107,10 @@ steps:
     depends_on:
       - fetch
     environment:
-      ARTIFACTORY_TOKEN:
-        from_secret: artifactory_token
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
-      - mvn -s ./balance_calculator_settings.xml clean verify
+      - mvn clean verify -s ./balance_calculator_settings.xml
 
   - name: sonar
     image: maven:3.8.3-openjdk-17
@@ -122,7 +122,7 @@ steps:
       SONAR_TOKEN:
         from_secret: sonar_cloud_token
     commands:
-      - mvn -s ./balance_calculator_settings.xml sonar:sonar
+      - mvn sonar:sonar -s ./balance_calculator_settings.xml
         -Dsonar.host.url=$${SONAR_HOST}
         -Dsonar.login=$${SONAR_TOKEN}
         -Dsonar.organization=ukhomeoffice
