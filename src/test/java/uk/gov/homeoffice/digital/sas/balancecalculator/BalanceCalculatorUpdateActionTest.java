@@ -3,6 +3,7 @@ package uk.gov.homeoffice.digital.sas.balancecalculator;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.ANNUAL_TARGET_HOURS;
+import static uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.enums.AccrualType.NIGHT_HOURS;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.assertTypeAndDateAndTotalsForMultipleAccruals;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadAccrualsFromFile;
 import static uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils.loadObjectFromFile;
@@ -24,6 +25,7 @@ import uk.gov.homeoffice.digital.sas.balancecalculator.models.accrual.Agreement;
 import uk.gov.homeoffice.digital.sas.balancecalculator.models.timecard.TimeEntry;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.module.AnnualTargetHoursAccrualModule;
+import uk.gov.homeoffice.digital.sas.balancecalculator.module.NightHoursAccrualModule;
 import uk.gov.homeoffice.digital.sas.balancecalculator.testutils.CommonUtils;
 import uk.gov.homeoffice.digital.sas.kafka.message.KafkaAction;
 
@@ -63,6 +65,43 @@ class BalanceCalculatorUpdateActionTest {
     );
   }
 
+  private static Stream<Arguments> nightHoursTestData() {
+    return Stream.of(
+        // updating one day time entry
+        Arguments.of("008ca0f2-ab26-42a0-ba1d-f9eb49287f5b",
+            "2023-04-01T01:00:00+01:00",
+            "2023-04-01T02:00:00+01:00",
+            new String[]{"2023-04-01", "2023-04-02", "2023-04-03", "2023-04-04"},
+            new int[]{ 60, 120, 360, 360},
+            new int[]{ 60, 60, 240, 0}
+        ),
+        // update two day time entry to one day entry
+        Arguments.of("67c77e84-5bdf-44de-ae9a-9028db97a797",
+            "2023-04-02T22:00:00+01:00",
+            "2023-04-03T00:00:00+01:00",
+            new String[]{"2023-04-01", "2023-04-02", "2023-04-03", "2023-04-04"},
+            new int[]{ 120, 180, 180, 180},
+            new int[]{ 120, 60, 0, 0}
+        ),
+        // update one day time entry to two day entry
+        Arguments.of("008ca0f2-ab26-42a0-ba1d-f9eb49287f5b",
+            "2023-04-01T21:00:00+01:00",
+            "2023-04-02T06:00:00+01:00",
+            new String[]{"2023-04-01", "2023-04-02", "2023-04-03", "2023-04-04"},
+            new int[]{ 60, 480, 720, 720},
+            new int[]{ 60, 420, 240, 0}
+        ),
+        // update time entry to start day before
+        Arguments.of("67c77e84-5bdf-44de-ae9a-9028db97a797",
+            "2023-04-01T21:00:00+01:00",
+            "2023-04-02T06:00:00+01:00",
+            new String[]{"2023-04-01", "2023-04-02", "2023-04-03", "2023-04-04"},
+            new int[]{ 180, 540, 540, 540},
+            new int[]{ 180, 360, 0, 0}
+        )
+    );
+  }
+
   @ParameterizedTest
   @MethodSource("annualTargetHoursTestData")
   void calculate_annualTargetHours_returnUpdateAccruals(String timeEntryId,
@@ -98,4 +137,41 @@ class BalanceCalculatorUpdateActionTest {
     assertTypeAndDateAndTotalsForMultipleAccruals(accruals, ANNUAL_TARGET_HOURS, expectedDates,
         expectedCumulativeTotals, expectedContributionsTotals);
   }
+
+  @ParameterizedTest
+  @MethodSource("nightHoursTestData")
+  void calculate_nightHours_returnUpdateAccruals(String timeEntryId,
+                                                        String shiftStartTime,
+                                                        String shiftEndTime,
+                                                        String[] expectedDates,
+                                                        int[] expectedCumulativeTotals,
+                                                        int[] expectedContributionsTotals)
+      throws IOException {
+
+    List<AccrualModule> accrualModules = List.of(new NightHoursAccrualModule());
+    ContributionsHandler contributionsHandler = new ContributionsHandler(accrualModules);
+    BalanceCalculator balanceCalculator = new BalanceCalculator(accrualsService,
+        contributionsHandler);
+
+    TimeEntry timeEntry = CommonUtils.createTimeEntry(timeEntryId, PERSON_ID, shiftStartTime,
+        shiftEndTime);
+
+    String tenantId = timeEntry.getTenantId();
+
+    when(accrualsService.getApplicableAgreement(tenantId, PERSON_ID,
+        timeEntry.getActualEndTime().toLocalDate()))
+        .thenReturn(loadObjectFromFile("data/agreement.json", Agreement.class));
+
+    when(accrualsService.getImpactedAccruals(tenantId, PERSON_ID, timeEntryId,
+        timeEntry.getActualStartTime().toLocalDate(), timeEntry.getActualEndTime().toLocalDate()))
+        .thenReturn(loadAccrualsFromFile("data/accruals_nightHoursUpdateAction.json"));
+
+    List<Accrual> accruals = balanceCalculator.calculate(timeEntry, KafkaAction.UPDATE);
+
+    assertThat(accruals).hasSize(4);
+
+    assertTypeAndDateAndTotalsForMultipleAccruals(accruals, NIGHT_HOURS, expectedDates,
+        expectedCumulativeTotals, expectedContributionsTotals);
+  }
+
 }

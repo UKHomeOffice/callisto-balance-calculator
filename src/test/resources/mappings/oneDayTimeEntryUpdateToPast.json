@@ -189,12 +189,12 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-03-23",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 8640,
+              "cumulativeTotal": 540,
               "cumulativeTarget": 11520,
               "contributions": {
                 "timeEntries": {
                   "a90a037a-a6c5-4fc0-9e72-a533c8c89c68": 420,
-                  "02e78cf4-8467-4d10-9816-c18f646c9061": 120
+                  "cc01b98e-12d4-4b06-8941-9919a2db45a9": 120
                 },
                 "total": 540
               }
@@ -206,7 +206,7 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-03-24",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 0,
+              "cumulativeTotal": 540,
               "cumulativeTarget": 12000,
               "contributions": {
                 "timeEntries": {
@@ -221,7 +221,7 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-03-25",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 0,
+              "cumulativeTotal": 540,
               "cumulativeTarget": 1000,
               "contributions": {
                 "timeEntries": {},
@@ -235,7 +235,7 @@
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-03-26",
               "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
-              "cumulativeTotal": 0,
+              "cumulativeTotal": 540,
               "cumulativeTarget": 1100,
               "contributions": {
                 "timeEntries": {
@@ -249,7 +249,7 @@
               "personId": "b810a175-9b87-473c-94f3-9bcdf87f3a58",
               "agreementId": "c0a80193-87a3-1ff0-8187-a3bfe2b80004",
               "accrualDate": "2023-03-27",
-              "accrualTypeId": "e502eebb-4663-4e5b-9445-9a20441c18d9",
+              "accrualTypeId": "5f06e6ce-1422-4a0c-89dd-f4952e735202",
               "cumulativeTotal": 0,
               "cumulativeTarget": 1100,
               "contributions": {
