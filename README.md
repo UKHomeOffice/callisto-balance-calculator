@@ -1,87 +1,50 @@
 # Callisto Balance Calculator Service
 
-Callisto Balance Calculator Service is a part of Callisto project (Check section [All Callisto Repositories](#headAllRepo) for links to all Callisto repositories)
+Callisto Balance Calculator is a part of Callisto project.
+The best way to run the service is to leverage the [callisto-localdev solution](https://github.com/UKHomeOffice/callisto-localdev).
 
-## 1. Building the project
+## Running as part of the LocalDev environment
 
-### Github Package dependencies
+1. Clone LocalDev repository from https://github.com/UKHomeOffice/callisto-localdev and run it locally as described in [Scenario 1](https://github.com/UKHomeOffice/callisto-localdev#scenario-1-running-callisto-without-need-to-edit-code-base-eg-demo-purposes).
+
+2. From the LocalDev project root, stop the service by running `docker compose stop callisto-balance-calculator` command.
+
+3. Ensure you have configured your [Authentication for GitHub Packages](#authentication-for-github-packages)
+
+4. Clone the service repository, and from its root directory run command `docker compose up -d`
+
+After successful start, you should be able to work with the service code, and see all changes without restaring the docker container.
+
+## Authentication for Github Packages
+
 In order to pull in Github package dependencies you will need a Github Personal Access Token.
 This token will need the minimum of 'packages:read' permissions.
 
-Update your .m2/settings.xml file to contain the <servers><server> tags like timecard_settings.xml
-The token will need to live within your local .m2/settings.xml file as the password
+This can be configured in your .m2/settings.xml file.
+
+E.g.
+
+```xml
+<servers>
+  <server>
+      <id>github-packages</id>
+      <username>[Insert GitHub username here]</username>
+      <password>{[Insert GitHub Personal Access Token here]}</password>
+  </server>
+</servers>
+```
 
 For more info see:
 [https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry)
 
 Then run the following to build the project
 
-```sh
-$ mvn clean install
-```
+## Debugging
 
-## 2. Running project locally
+Assuming you know how to debug java service, the principal is the same when using [callisto-localdev solution](https://github.com/UKHomeOffice/callisto-localdev). When running using docker compose, the debugger is exposed on the default port (50211). In the case of the debugger port conflicts, change both the ports and the entrypoint section in the docker-compose.yml
 
-#### Ports
+## Kafka
 
-- Standalone service runs on port 9090.
-- LocalDev solution runs on port 50210.
-- Java Debugger runs on port 50211.
+Project requires a Kafka instance with all required permissions to write to topic. If [running the service within LocalDev solution](#running-as-part-of-the-localdev-environment), no futher configuration is required.
 
-  Check `docker-compose.yml` for any port mappings.
-
-## <a name="headLocalDev"></a> 3. Running project locally as part of LocalDev environment.
-
-1. Download LocalDev repository from https://github.com/UKHomeOffice/callisto-localdev and run it locally as described in Scenario 1.
-
-2. From the LocalDev project root, stop service by running `docker compose stop balance-calculator` command.
-
-3. Pull Callisto Balance Calculator Service repository and from its root directory, run command `docker compose up -d`
-
-After successful start, you should be able to work with code and all changes will be reflected within LocalDev environment.
-
-### 3.1 Attaching Debugger
-
-The service can also be debugged. To do so in a JetBrains IDE, a debugger has to be added (Run -> Edit Configurations.. -> Add Remote JVM Debug), with the port matching the external port mapped in the docker compose file of the service to debug. For example, that would be 5005 for this service.
-
-## 4. Devtools Hot Deployment in local environment
-
-Devtools allows you to reload the application after making any changes to the project files.
-However, it may need stage of building project manually (InteliJ IDEA: Build/Build Project)
-or IntelliJ IDEA has 2 properties that will allow you to execute `Build Project` automatically. To enable that :
-
-1.  Go to `Preferences/Build,Execution,Deployment/Compiler` and select option
-    `Build project automatically`
-2.  [Optional] Go to `Preferences/Advanced Settings` and select `Allow auto-make to start even if developed application is currently running`
-
-## 5. Actuator Kafka Error Endpoint
-
-## Actuator Kafka Error Endpoint
-
-We have a counter configured for actuator which will give a metric on how many times deserialization has failed for kafka event messages.  
-This can be accessed at
-
-```sh
-/actuator/metrics/balance.calculator.messages
-```
-
-## <a name="headAllRepo"></a> 6. All Callisto repositories
-
-- https://github.com/UKHomeOffice/callisto-accruals-restapi
-- https://github.com/UKHomeOffice/callisto-balance-calculator
-- https://github.com/UKHomeOffice/callisto-person-restapi
-- https://github.com/UKHomeOffice/callisto-timecard-restapi
-- https://github.com/UKHomeOffice/callisto-accruals-person-consumer
-- https://github.com/UKHomeOffice/callisto-auth-keycloak
-- https://github.com/UKHomeOffice/callisto-build-github
-- https://github.com/UKHomeOffice/callisto-kafka-commons
-- https://github.com/UKHomeOffice/callisto-devops
-- https://github.com/UKHomeOffice/callisto-docs
-- https://github.com/UKHomeOffice/callisto-helm-charts
-- https://github.com/UKHomeOffice/callisto-ingress-nginx
-- https://github.com/UKHomeOffice/callisto-jparest
-- https://github.com/UKHomeOffice/callisto-localdev
-- https://github.com/UKHomeOffice/callisto-postman-collections
-- https://github.com/UKHomeOffice/callisto-service-template
-- https://github.com/UKHomeOffice/callisto-ui
-- https://github.com/UKHomeOffice/callisto-ui-nginx
+All Kafka settings can be found in application.properties file.
