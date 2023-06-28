@@ -175,7 +175,16 @@ depends_on:
 
 trigger:
   event:
-    - pull_request
+    exclude:
+      - push
+      - pull_request
+      - tag
+      - promote
+      - rollback
+#to reinstate branch deploys on pull requests change trigger to
+#trigger:
+# event:
+#   - pull_request
 
 steps:
   - name: deploy_to_branch
@@ -213,10 +222,17 @@ depends_on:
 
 trigger:
   event:
-    include:
-      - push
     exclude:
+      - push
+      - pull_request
+      - tag
       - promote
+      - rollback
+  #to reinstate dev deploy on pull requests change trigger to
+  #trigger:
+  # event:
+  #    include:
+  #      - push
   branch:
     - main
 
@@ -255,9 +271,17 @@ depends_on:
 
 trigger:
   event:
-    - push
-  exclude:
-    - promote
+    exclude:
+      - push
+      - pull_request
+      - tag
+      - promote
+      - rollback
+  #to reinstate test deploy on pull requests change trigger to
+  #trigger:
+  # event:
+  #    include:
+  #      - push
   branch:
     - main
 
