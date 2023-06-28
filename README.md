@@ -45,6 +45,10 @@ Assuming you know how to debug java service, the principal is the same when usin
 
 ## Kafka
 
-Project requires a Kafka instance with all required permissions to write to topic. If [running the service within LocalDev solution](#running-as-part-of-the-localdev-environment), no futher configuration is required.
+Project requires a Kafka instance with all required permissions to read from Kafka topic. If [running the service within LocalDev solution](#running-as-part-of-the-localdev-environment), no futher configuration is required.
 
 All Kafka settings can be found in application.properties file.
+
+## Actuator Kafka Error Endpoint
+
+We have a counter configured for actuator which will give a metric on how many times deserialization has failed for kafka event messages.
